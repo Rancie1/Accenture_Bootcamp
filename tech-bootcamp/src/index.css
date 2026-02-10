@@ -1,0 +1,55 @@
+/* Reset */
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Container */
+.index-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Creature image */
+.creature-img {
+  width: 180px;
+  max-width: 60%;
+}
+
+/* Level text */
+h2 {
+  margin: 0;
+}
+
+/* Start button */
+.start-btn {
+  padding: 18px 40px;
+  font-size: 20px;
+  border: none;
+  border-radius: 12px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* Hover */
+.start-btn:hover {
+  background-color: #3e9442;
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .creature-img {
+    width: 140px;
+  }
+
+  .start-btn {
+    width: 80%;
+    font-size: 18px;
+  }
+}
