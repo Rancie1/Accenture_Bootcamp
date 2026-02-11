@@ -74,12 +74,12 @@ const Leaderboard = () => {
     <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24">
       {/* Header */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm sticky top-0 z-10 animate-fade-in">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center mb-2 ml-2">
           <Trophy className="text-primary animate-bounce-slow" size={28} />
           <h1 className="text-2xl font-bold text-primary">Budget Challenge</h1>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Top budgeters this week • Higher % = Better
+          Top budgeters this week • The higher per cent saved, the higher you climb the ranks.
         </p>
       </div>
 
