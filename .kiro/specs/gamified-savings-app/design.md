@@ -10,10 +10,35 @@ Koko is a React-based mobile web application built with Vite that helps users sa
 - **Build Tool**: Vite 7.3.1
 - **Routing**: React Router v6
 - **State Management**: React Context API + useState hooks
-- **Styling**: CSS with vibrant purple primary color (#8B5CF6 or similar Apple HIG-compliant purple)
-- **Typography**: Josefin Sans (various weights for hierarchy)
-- **Mascot Color**: #9e8fb2 (muted purple for koala)
+- **Styling**: Tailwind CSS with custom purple theme configuration
+- **Typography**: Josefin Sans (configured in Tailwind, various weights for hierarchy)
+- **Mascot Color**: #9e8fb2 (muted purple for koala, configured as custom color)
 - **External Integration**: n8n for chat interface processing
+
+### Tailwind CSS Configuration
+
+```javascript
+// tailwind.config.js
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: 'class', // Enable class-based dark mode
+  theme: {
+    extend: {
+      colors: {
+        primary: '#8B5CF6',      // Vibrant purple
+        mascot: '#9e8fb2',       // Muted purple for koala
+      },
+      fontFamily: {
+        sans: ['Josefin Sans', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+}
+```
 
 ### Key Design Decisions
 
@@ -200,6 +225,18 @@ const weeklyXp = weeklyHistory.reduce((sum, item) => sum + item.xpEarned, 0);
 - Purple Koala mascot image (centered)
 - "Start" button (bottom, full-width, vibrant purple)
 
+**Tailwind Classes**:
+```jsx
+<div className="flex flex-col items-center justify-between min-h-screen bg-white dark:bg-gray-900 p-6">
+  <div className="flex-1 flex items-center justify-center">
+    <img src={koalaMascot} alt="Koko" className="w-64 h-64" />
+  </div>
+  <button className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform">
+    Start
+  </button>
+</div>
+```
+
 **Behavior**:
 - On mount: Display splash screen
 - On "Start" click: Navigate to `/register`
@@ -217,6 +254,47 @@ const weeklyXp = weeklyHistory.reduce((sum, item) => sum + item.xpEarned, 0);
   - Button 1: "Public Transport"
   - Button 2: "Driving"
 - Submit button: "Get Started" (vibrant purple)
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-white dark:bg-gray-900 p-6">
+  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Welcome to Koko</h1>
+  
+  <div className="space-y-6">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+      <input 
+        type="text" 
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Budget</label>
+      <input 
+        type="number" 
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transport Preference</label>
+      <div className="grid grid-cols-2 gap-4">
+        <button className="py-3 border-2 border-primary bg-primary text-white rounded-lg font-medium">
+          Public Transport
+        </button>
+        <button className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium">
+          Driving
+        </button>
+      </div>
+    </div>
+    
+    <button className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-8">
+      Get Started
+    </button>
+  </div>
+</div>
+```
 
 **Behavior**:
 - Validate inputs (name non-empty, budget > 0, transport selected)
@@ -240,6 +318,36 @@ const weeklyXp = weeklyHistory.reduce((sum, item) => sum + item.xpEarned, 0);
 - "+ New default item" card at bottom of grid
 - Bottom button: "Start a new list" (full-width, vibrant purple)
 - Bottom navigation bar: Dashboard | Saved | Shop | Leaderboard
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+  <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
+    <h1 className="text-2xl font-bold text-primary">Level {level}</h1>
+  </div>
+  
+  <div className="p-4">
+    <div className="grid grid-cols-2 gap-4">
+      {defaultItems.map(item => (
+        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md active:scale-95 transition-transform">
+          <div className="text-4xl mb-2">{item.icon}</div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
+        </div>
+      ))}
+      
+      <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 border-2 border-dashed border-primary flex items-center justify-center">
+        <span className="text-primary font-medium">+ New Item</span>
+      </div>
+    </div>
+    
+    <button className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-6">
+      Start a new list
+    </button>
+  </div>
+  
+  <BottomNavigation />
+</div>
+```
 
 **Behavior**:
 - On card click: Add item to shoppingList
@@ -279,6 +387,41 @@ const initialDefaultItems = [
 - Message input field (bottom)
 - Voice input button (records voice and sends to n8n, vibrant purple accent)
 - Checkmark button (bottom right, vibrant purple)
+
+**Tailwind Classes**:
+```jsx
+<div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    {messages.map(msg => (
+      <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+        <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+          msg.isUser 
+            ? 'bg-primary text-white' 
+            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+        }`}>
+          {msg.text}
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+    <div className="flex items-center gap-2">
+      <input 
+        type="text" 
+        placeholder="Describe your items..."
+        className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+      <button className="p-3 bg-primary text-white rounded-full active:scale-95 transition-transform">
+        🎤
+      </button>
+      <button className="p-3 bg-primary text-white rounded-full active:scale-95 transition-transform">
+        ✓
+      </button>
+    </div>
+  </div>
+</div>
+```
 
 **Behavior**:
 - Display chat interface linked to n8n
@@ -325,6 +468,56 @@ const initialDefaultItems = [
   - "Try Again" (outline)
   - "Save for Later" (outline)
   - "Submit" (filled, vibrant purple)
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+    <div className="flex justify-between items-start mb-4">
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{storeName}</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{location}</p>
+      </div>
+      <button className="text-primary">🔄</button>
+    </div>
+    
+    <div className="space-y-4">
+      <div className="flex justify-between">
+        <span className="text-gray-600 dark:text-gray-400">Total Price</span>
+        <span className="font-semibold text-gray-900 dark:text-white">${totalPrice}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-gray-600 dark:text-gray-400">Travel Time</span>
+        <span className="font-semibold text-gray-900 dark:text-white">{travelTime} min</span>
+      </div>
+    </div>
+    
+    <div className="mt-6 text-center">
+      <div className="text-6xl font-bold text-primary mb-2">{savingsPercentage}%</div>
+      <p className="text-gray-600 dark:text-gray-400">Savings</p>
+      <div className="mt-4 inline-block bg-primary/10 dark:bg-primary/20 px-6 py-3 rounded-full">
+        <span className="text-primary font-bold text-xl">+{xpEarned} XP</span>
+      </div>
+    </div>
+    
+    <button className="w-full mt-4 py-2 text-primary border border-primary rounded-lg font-medium">
+      Adjust Cost
+    </button>
+  </div>
+  
+  <div className="grid grid-cols-3 gap-3">
+    <button className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium">
+      Try Again
+    </button>
+    <button className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium">
+      Save for Later
+    </button>
+    <button className="py-3 bg-primary text-white rounded-lg font-medium shadow-lg">
+      Submit
+    </button>
+  </div>
+</div>
+```
 
 **Behavior**:
 - On mount: Calculate optimal store, price, travel time, and savings percentage
@@ -407,6 +600,43 @@ history.push({
 - Current user position display (if not in top 100)
 - Bottom navigation bar: Dashboard | Saved | Shop | Leaderboard
 
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+  <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
+    <h1 className="text-2xl font-bold text-primary">Leaderboard</h1>
+  </div>
+  
+  <div className="p-4 space-y-2">
+    {leaderboard.map((user, index) => (
+      <div 
+        key={user.userId} 
+        className={`rounded-xl p-4 flex items-center gap-4 ${
+          user.isCurrentUser 
+            ? 'bg-primary/20 dark:bg-primary/30 border-2 border-primary' 
+            : 'bg-white dark:bg-gray-800'
+        }`}
+      >
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+          index < 3 ? 'bg-yellow-400 text-gray-900' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+        }`}>
+          {user.rank}
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-gray-900 dark:text-white">{user.userName}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Level {user.level}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-primary">{user.xp} XP</p>
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <BottomNavigation />
+</div>
+```
+
 **Behavior**:
 - On mount: Fetch leaderboard data
 - Display top 100 users sorted by XP (then by level as tiebreaker)
@@ -448,6 +678,67 @@ history.push({
   - Swipe left to delete (subtracts XP from weekly score)
 - Bottom navigation bar: Dashboard | Saved | Shop | Mascot | Leaderboard
 
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+  <div className="bg-white dark:bg-gray-800 p-6">
+    <div className="flex justify-between items-center mb-6">
+      <img src={profilePic} alt="Profile" className="w-12 h-12 rounded-full" />
+      <button className="text-gray-600 dark:text-gray-400">⚙️</button>
+    </div>
+    
+    <div className="flex flex-col items-center">
+      <div className="relative mb-4">
+        <img src={mascot} alt="Koko" className="w-48 h-48" style={{filter: 'hue-rotate(270deg)'}} />
+        <span className="absolute -top-2 -right-2 bg-primary text-white px-3 py-1 rounded-full font-bold text-sm">
+          Level {level}
+        </span>
+      </div>
+      
+      <p className="text-gray-600 dark:text-gray-400 mb-2">{xp} XP</p>
+      
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-6">
+        <div 
+          className="bg-primary h-3 rounded-full transition-all duration-300" 
+          style={{width: `${progress}%`}}
+        />
+      </div>
+      
+      <div className="flex gap-4 mb-4">
+        <div className="bg-primary/10 dark:bg-primary/20 px-6 py-3 rounded-full">
+          <span className="text-primary font-bold">🔥 {streak} day streak</span>
+        </div>
+      </div>
+      
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">This week: {weeklyXp} XP</p>
+      <p className="text-primary font-semibold text-lg">You've saved ${savings}</p>
+    </div>
+  </div>
+  
+  <div className="p-4">
+    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">History</h3>
+    <div className="space-y-3">
+      {history.map(item => (
+        <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">{item.date}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{item.itemCount} items</p>
+            </div>
+            <div className="text-right">
+              <p className="text-primary font-bold">+{item.xpEarned} XP</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">${item.totalSpent}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+  
+  <BottomNavigation />
+</div>
+```
+
 **Behavior**:
 - Display mascot with equipped customization items (koala color: #9e8fb2)
 - Show level, XP, progress bar, and streak
@@ -459,8 +750,8 @@ history.push({
 - Apply dark mode styles when darkMode is true
 
 **Typography**:
-- Headers (Level, Streak, Weekly Score): Josefin Sans 600-700
-- Body text (XP, savings, history items): Josefin Sans 400-500
+- Headers (Level, Streak, Weekly Score): font-bold or font-semibold (Tailwind applies Josefin Sans)
+- Body text (XP, savings, history items): font-normal or font-medium
 
 **Weekly Score Logic**:
 ```javascript
@@ -503,6 +794,34 @@ const deleteHistoryItem = (itemId) => {
 - Tap to view details (navigate to results view with saved data)
 - Bottom navigation bar: Dashboard | Saved | Shop | Mascot | Leaderboard
 
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+  <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
+    <h1 className="text-2xl font-bold text-primary">Saved Lists</h1>
+  </div>
+  
+  <div className="p-4 space-y-3">
+    {savedLists.map(list => (
+      <div key={list.id} className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm active:scale-95 transition-transform">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="font-medium text-gray-900 dark:text-white">{list.date}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{list.itemCount} items</p>
+          </div>
+          <div className="text-right">
+            <p className="font-semibold text-gray-900 dark:text-white">${list.totalPrice}</p>
+            <p className="text-sm text-primary font-medium">{list.savings}% saved</p>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <BottomNavigation />
+</div>
+```
+
 **Behavior**:
 - Display all saved shopping lists from savedLists context
 - On list tap: Navigate to `/results` with saved data pre-loaded
@@ -516,14 +835,65 @@ const deleteHistoryItem = (itemId) => {
 **Props**: None (uses AppContext and `useNavigate`)
 
 **UI Elements**:
-- Title: "Settings" (vibrant purple accent, Josefin Sans 600-700)
+- Title: "Settings" (vibrant purple accent)
 - Back button (top left, returns to Dashboard)
 - Editable fields:
-  - Name (text input, Josefin Sans 400)
-  - Budget (number input, Josefin Sans 400)
+  - Name (text input)
+  - Budget (number input)
   - Transport preference (two-button selector, vibrant purple when selected)
 - Dark mode toggle switch
 - Save button (bottom, full-width, vibrant purple)
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+  <div className="flex items-center mb-6">
+    <button className="text-gray-600 dark:text-gray-400 mr-4">←</button>
+    <h1 className="text-2xl font-bold text-primary">Settings</h1>
+  </div>
+  
+  <div className="space-y-6">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
+      <input 
+        type="text" 
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Budget</label>
+      <input 
+        type="number" 
+        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Transport Preference</label>
+      <div className="grid grid-cols-2 gap-4">
+        <button className="py-3 border-2 border-primary bg-primary text-white rounded-lg font-medium">
+          Public Transport
+        </button>
+        <button className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium">
+          Driving
+        </button>
+      </div>
+    </div>
+    
+    <div className="flex items-center justify-between py-3">
+      <span className="text-gray-700 dark:text-gray-300 font-medium">Dark Mode</span>
+      <button className="relative w-14 h-8 bg-primary rounded-full transition-colors">
+        <div className="absolute top-1 right-1 w-6 h-6 bg-white rounded-full transition-transform" />
+      </button>
+    </div>
+    
+    <button className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-8">
+      Save Changes
+    </button>
+  </div>
+</div>
+```
 
 **Behavior**:
 - Display current user preferences
@@ -561,6 +931,97 @@ const deleteHistoryItem = (itemId) => {
   - Purchase button
   - On purchase: Trigger IAP flow, show lootbox animation, reveal random premium item
 - Bottom navigation bar: Dashboard | Saved | Shop | Mascot | Leaderboard
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+  <div className="bg-white dark:bg-gray-800 p-6">
+    <div className="flex justify-between items-center mb-4">
+      <div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">XP Balance</p>
+        <p className="text-xl font-bold text-primary">{xp} XP</p>
+      </div>
+      <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full">
+        <span className="text-primary font-medium">🛡️ {streakSavers}</span>
+      </div>
+    </div>
+    
+    <div className="flex justify-center mb-6">
+      <div className="relative">
+        <img src={mascot} alt="Koko" className="w-56 h-56" />
+        {/* Equipped items overlay */}
+      </div>
+    </div>
+    
+    <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+      <button className="flex-1 py-3 text-primary border-b-2 border-primary font-medium">
+        Customize
+      </button>
+      <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-medium">
+        Shop
+      </button>
+      <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-medium">
+        Lootbox
+      </button>
+    </div>
+  </div>
+  
+  <div className="p-4">
+    {/* Customize Tab */}
+    <div className="grid grid-cols-3 gap-4">
+      {mascotItems.map(item => (
+        <div 
+          key={item.id} 
+          className={`bg-white dark:bg-gray-800 rounded-xl p-3 text-center ${
+            equippedItems[item.type] === item.id ? 'ring-2 ring-primary' : ''
+          }`}
+        >
+          <img src={item.imageUrl} alt={item.name} className="w-full h-20 object-contain mb-2" />
+          <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{item.name}</p>
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            item.rarity === 'legendary' ? 'bg-yellow-400 text-gray-900' :
+            item.rarity === 'epic' ? 'bg-purple-400 text-white' :
+            item.rarity === 'rare' ? 'bg-blue-400 text-white' :
+            'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
+          }`}>
+            {item.rarity}
+          </span>
+        </div>
+      ))}
+    </div>
+    
+    {/* Shop Tab */}
+    <div className="grid grid-cols-2 gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4">
+        <div className="text-center mb-3">
+          <span className="text-4xl">🛡️</span>
+          <p className="font-medium text-gray-900 dark:text-white mt-2">Streak Saver</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">Protect your streak once</p>
+        </div>
+        <button className="w-full py-2 bg-primary text-white rounded-lg font-medium text-sm">
+          50 XP
+        </button>
+      </div>
+      {/* More shop items */}
+    </div>
+    
+    {/* Lootbox Tab */}
+    <div className="flex flex-col items-center">
+      <div className="relative mb-6">
+        <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse" />
+        <span className="absolute inset-0 flex items-center justify-center text-6xl">📦</span>
+      </div>
+      <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mystery Lootbox</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">Get a random premium item!</p>
+      <button className="px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform">
+        Purchase for $0.99
+      </button>
+    </div>
+  </div>
+  
+  <BottomNavigation />
+</div>
+```
 
 **Behavior**:
 - Display mascot with currently equipped items (koala color: #9e8fb2)
@@ -643,9 +1104,37 @@ const purchaseLootbox = async () => {
   - Leaderboard (icon + label)
 - Active tab highlighted (vibrant purple)
 
+**Tailwind Classes**:
+```jsx
+<nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe">
+  <div className="flex justify-around items-center h-16">
+    <button className="flex flex-col items-center gap-1 text-primary">
+      <span className="text-xl">📊</span>
+      <span className="text-xs font-medium">Dashboard</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400">
+      <span className="text-xl">💾</span>
+      <span className="text-xs font-medium">Saved</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400">
+      <span className="text-xl">🛒</span>
+      <span className="text-xs font-medium">Shop</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400">
+      <span className="text-xl">🐨</span>
+      <span className="text-xs font-medium">Mascot</span>
+    </button>
+    <button className="flex flex-col items-center gap-1 text-gray-500 dark:text-gray-400">
+      <span className="text-xl">🏆</span>
+      <span className="text-xs font-medium">Leaderboard</span>
+    </button>
+  </div>
+</nav>
+```
+
 **Behavior**:
 - On tab click: Navigate to corresponding route
-- Highlight current active tab based on current route
+- Highlight current active tab based on current route (apply text-primary class)
 
 ### 13. Grimace Easter Egg Component
 
@@ -661,6 +1150,36 @@ const purchaseLootbox = async () => {
 - Fun animations or effects
 - Back button to return to Dashboard
 - Optional: Special Grimace-themed mascot item unlock
+
+**Tailwind Classes**:
+```jsx
+<div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-900 flex flex-col items-center justify-center p-6">
+  <button 
+    onClick={() => navigate('/dashboard')}
+    className="absolute top-6 left-6 text-white text-2xl"
+  >
+    ←
+  </button>
+  
+  <div className="animate-bounce">
+    <div className="text-9xl mb-8">🟣</div>
+  </div>
+  
+  <h1 className="text-4xl font-bold text-white mb-4 animate-pulse">
+    You found Grimace!
+  </h1>
+  
+  <p className="text-white text-center mb-8">
+    Special purple friend unlocked!
+  </p>
+  
+  <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-center">
+    <p className="text-white font-medium">
+      🎉 Grimace Hat added to your collection!
+    </p>
+  </div>
+</div>
+```
 
 **Behavior**:
 - Display Grimace character with animations
@@ -1107,7 +1626,7 @@ src/
 ├── context/
 │   └── AppContext.jsx     # Global state context provider
 ├── main.jsx               # Entry point
-├── index.css              # Global styles (vibrant purple theme)
+├── index.css              # Tailwind directives and global styles
 ├── pages/
 │   ├── SplashScreen.jsx
 │   ├── Registration.jsx
@@ -1145,34 +1664,85 @@ src/
 
 ### Styling Approach
 
-**Mobile-First CSS with Vibrant Purple Theme**:
-- Primary color: Vibrant purple (#8B5CF6 or similar Apple HIG-compliant)
-- Mascot color: #9e8fb2 (muted purple for koala)
-- Typography: Josefin Sans
-  - Headers: 600-700 weight
-  - Body: 400-500 weight
-- Use flexbox for layouts
-- Touch-friendly button sizes (minimum 44x44px)
-- Clear visual feedback for interactions (purple highlights)
-- Smooth transitions between states
-- Purple accents on active states, buttons, progress bars
+**Tailwind CSS with Custom Purple Theme**:
 
-**Dark Mode**:
-- Background: #1a1a1a (dark gray)
-- Text: #f5f5f5 (light gray)
-- Cards/surfaces: #2d2d2d (slightly lighter gray)
-- Primary purple remains #8B5CF6 (vibrant in both modes)
-- Mascot color remains #9e8fb2
-- Borders: #404040 (subtle gray)
-- Shadows: Reduced opacity in dark mode
+The app uses Tailwind CSS utility classes throughout with a custom configuration for the vibrant purple theme.
+
+**index.css**:
+```css
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}
+```
+
+**tailwind.config.js**:
+```javascript
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: 'class', // Enable class-based dark mode
+  theme: {
+    extend: {
+      colors: {
+        primary: '#8B5CF6',      // Vibrant purple (Apple HIG-compliant)
+        mascot: '#9e8fb2',       // Muted purple for koala
+      },
+      fontFamily: {
+        sans: ['Josefin Sans', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+**Dark Mode Implementation**:
+- Uses Tailwind's `dark:` variant for all dark mode styles
+- Toggle dark mode by adding/removing `dark` class on root element
+- Example: `<html className={darkMode ? 'dark' : ''}>`
+- All components use `dark:` prefixed classes for dark mode variants
+
+**Color System**:
+- Primary purple: `text-primary`, `bg-primary`, `border-primary`
+- Mascot color: `text-mascot`, `bg-mascot` (for koala-specific elements)
+- Gray scale: Tailwind's default gray palette for backgrounds and text
+- Dark mode: `dark:bg-gray-900`, `dark:text-white`, etc.
+
+**Typography**:
+- Josefin Sans applied globally via Tailwind config
+- Headers: `font-bold` (700) or `font-semibold` (600)
+- Body text: `font-normal` (400) or `font-medium` (500)
+- Tailwind's text size utilities: `text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`, `text-3xl`, etc.
+
+**Responsive Design**:
+- Mobile-first approach (default styles for mobile)
+- Touch-friendly sizes: `py-3`, `py-4` for buttons (minimum 44px height)
+- Spacing: Tailwind's spacing scale (4px increments)
+- Rounded corners: `rounded-lg` (8px), `rounded-xl` (12px), `rounded-2xl` (16px), `rounded-full`
+
+**Interactive States**:
+- Active states: `active:scale-95` for button press feedback
+- Focus states: `focus:ring-2 focus:ring-primary focus:border-transparent`
+- Hover states: Generally avoided for mobile-first design
+- Transitions: `transition-transform`, `transition-colors`, `transition-all`
 
 **Apple HIG Compliance**:
-- Use system fonts (San Francisco on iOS, -apple-system in CSS)
+- System font fallbacks in Tailwind config
 - Josefin Sans for branding and hierarchy
-- Follow iOS color schemes with purple as primary
-- Implement standard iOS gestures (swipe-to-delete)
-- Use appropriate spacing and padding (8px, 16px, 24px grid)
-- Rounded corners on cards and buttons (8px-12px radius)
+- Purple as primary color throughout
+- Standard iOS gestures (swipe-to-delete)
+- Appropriate spacing using Tailwind's spacing scale
+- Rounded corners on cards and buttons
 
 ### State Persistence
 
