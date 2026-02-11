@@ -2,6 +2,8 @@ import { useState, useContext, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { sendMessageToN8nWithFallback } from '../utils/api';
+import { Mic, Check } from 'lucide-react';
+import MascotPreview from '../components/MascotPreview';
 
 /**
  * EditList Component - Chat interface for editing shopping lists
@@ -9,7 +11,7 @@ import { sendMessageToN8nWithFallback } from '../utils/api';
  */
 const EditList = () => {
   const navigate = useNavigate();
-  const { shoppingList, setShoppingList } = useContext(AppContext);
+  const { shoppingList, setShoppingList, mascotItems, equippedItems } = useContext(AppContext);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -21,13 +23,77 @@ const EditList = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const recognitionRef = useRef(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Initialize Web Speech API
+  useEffect(() => {
+    // Check if browser supports Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        // Update input text with transcription
+        if (finalTranscript) {
+          setInputText(prev => prev + finalTranscript);
+        } else if (interimTranscript) {
+          // Show interim results in real-time
+          setInputText(prev => {
+            // Remove previous interim results and add new ones
+            const lastFinalIndex = prev.lastIndexOf(' ');
+            const basePrev = lastFinalIndex > 0 ? prev.substring(0, lastFinalIndex + 1) : prev;
+            return basePrev + interimTranscript;
+          });
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsRecording(false);
+        
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please enable microphone permissions.');
+        } else if (event.error === 'no-speech') {
+          // Silently handle no speech detected
+        } else {
+          alert('Speech recognition error: ' + event.error);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   /**
    * Handle sending text message
@@ -83,30 +149,21 @@ const EditList = () => {
   };
 
   /**
-   * Start voice recording
+   * Start voice recording using Web Speech API
    */
-  const startRecording = async () => {
+  const startRecording = () => {
+    if (!recognitionRef.current) {
+      alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await handleVoiceMessage(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
+      recognitionRef.current.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Unable to access microphone. Please check your permissions.');
+      console.error('Error starting speech recognition:', error);
+      // If already started, just set recording state
+      setIsRecording(true);
     }
   };
 
@@ -114,57 +171,9 @@ const EditList = () => {
    * Stop voice recording
    */
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop();
       setIsRecording(false);
-    }
-  };
-
-  /**
-   * Handle voice message transcription and processing
-   */
-  const handleVoiceMessage = async (audioBlob) => {
-    setIsLoading(true);
-
-    try {
-      // Convert audio to base64 for sending to n8n
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64Audio = reader.result;
-
-        const userMessage = {
-          id: Date.now().toString(),
-          text: '🎤 Voice message',
-          isUser: true
-        };
-        setMessages(prev => [...prev, userMessage]);
-
-        const response = await sendMessageToN8nWithFallback(shoppingList, '', base64Audio);
-        
-        // Add bot response
-        const botMessage = {
-          id: (Date.now() + 1).toString(),
-          text: response.reply,
-          isUser: false
-        };
-        setMessages(prev => [...prev, botMessage]);
-
-        // Update shopping list with parsed items
-        if (response.updatedList) {
-          setShoppingList(response.updatedList);
-        }
-
-        setIsLoading(false);
-      };
-    } catch {
-      const errorMessage = {
-        id: (Date.now() + 1).toString(),
-        text: 'Sorry, I couldn\'t process your voice message. Please try again.',
-        isUser: false
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      setIsLoading(false);
     }
   };
 
@@ -191,8 +200,19 @@ const EditList = () => {
         {messages.map(msg => (
           <div 
             key={msg.id} 
-            className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} gap-2`}
           >
+            {/* AI Mascot Avatar */}
+            {!msg.isUser && (
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-mascot flex items-center justify-center overflow-hidden">
+                <MascotPreview 
+                  equippedItems={equippedItems}
+                  mascotItems={mascotItems}
+                  size="small"
+                />
+              </div>
+            )}
+            
             <div 
               className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                 msg.isUser 
@@ -205,7 +225,16 @@ const EditList = () => {
           </div>
         ))}
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex justify-start gap-2">
+            {/* AI Mascot Avatar for loading state */}
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-mascot flex items-center justify-center overflow-hidden">
+              <MascotPreview 
+                equippedItems={equippedItems}
+                mascotItems={mascotItems}
+                size="small"
+              />
+            </div>
+            
             <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-2xl px-4 py-3 shadow-sm">
               <div className="flex gap-1">
                 <span className="animate-bounce">●</span>
@@ -240,7 +269,7 @@ const EditList = () => {
             }`}
             aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
           >
-            🎤
+            <Mic size={20} />
           </button>
           <button 
             onClick={handleComplete}
@@ -248,7 +277,7 @@ const EditList = () => {
             className="p-3 bg-primary text-white rounded-full active:scale-95 transition-transform"
             aria-label="Complete list"
           >
-            ✓
+            <Check size={20} />
           </button>
         </div>
       </div>

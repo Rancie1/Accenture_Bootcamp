@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
+import { Settings, User, Flame } from 'lucide-react';
 
 /**
  * Dashboard Component
@@ -119,15 +120,15 @@ const Dashboard = () => {
       {/* Header with profile and settings */}
       <div className="bg-white dark:bg-gray-800 p-6">
         <div className="flex justify-between items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
             {/* Profile picture placeholder */}
-            👤
+            <User size={24} />
           </div>
           <button 
             onClick={() => navigate('/settings')}
-            className="text-gray-600 dark:text-gray-400 text-2xl transition-colors hover:text-primary"
+            className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary"
           >
-            ⚙️
+            <Settings size={28} />
           </button>
         </div>
         
@@ -160,8 +161,9 @@ const Dashboard = () => {
           
           {/* Streak display */}
           <div className="flex gap-4 mb-4">
-            <div className="bg-primary/10 dark:bg-primary/20 px-6 py-3 rounded-full">
-              <span className="text-primary font-bold">🔥 {streak} day streak</span>
+            <div className="bg-primary/10 dark:bg-primary/20 px-6 py-3 rounded-full flex items-center gap-2">
+              <Flame className="text-primary" size={20} />
+              <span className="text-primary font-bold">{streak} day streak</span>
             </div>
           </div>
           

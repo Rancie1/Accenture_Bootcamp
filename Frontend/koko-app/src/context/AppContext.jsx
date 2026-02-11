@@ -9,14 +9,14 @@ export const AppContext = createContext();
  * Initial default items for the shop
  */
 const initialDefaultItems = [
-  { id: "milk", name: "Milk", icon: "🥛" },
-  { id: "eggs", name: "Eggs", icon: "🥚" },
-  { id: "bread", name: "Bread", icon: "🍞" },
-  { id: "butter", name: "Butter", icon: "🧈" },
-  { id: "cheese", name: "Cheese", icon: "🧀" },
-  { id: "chicken", name: "Chicken", icon: "🍗" },
-  { id: "rice", name: "Rice", icon: "🍚" },
-  { id: "pasta", name: "Pasta", icon: "🍝" }
+  { id: "milk", name: "Milk", icon: "Milk" },
+  { id: "eggs", name: "Eggs", icon: "Egg" },
+  { id: "bread", name: "Bread", icon: "Croissant" },
+  { id: "butter", name: "Butter", icon: "Cookie" },
+  { id: "cheese", name: "Cheese", icon: "Pizza" },
+  { id: "chicken", name: "Chicken", icon: "Drumstick" },
+  { id: "rice", name: "Rice", icon: "UtensilsCrossed" },
+  { id: "pasta", name: "Pasta", icon: "Soup" }
 ];
 
 /**

@@ -3,12 +3,21 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import LootboxAnimation from '../components/LootboxAnimation';
 import MascotPreview from '../components/MascotPreview';
+import { Shield } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
 /**
  * Mascot Component
  * Displays mascot customization page with three tabs: Customize, Shop, and Lootbox
  * Requirements: 9.1, 9.2, 9.3, 9.4, 9.14
  */
+
+// Helper function to render Lucide icon from string name
+const renderIcon = (iconName, size = 32) => {
+  const IconComponent = LucideIcons[iconName] || LucideIcons.Palette;
+  return <IconComponent size={size} />;
+};
+
 const Mascot = () => {
   const { 
     xp, 
@@ -27,21 +36,21 @@ const Mascot = () => {
   // Premium items available from lootbox
   const premiumItems = [
     // Rare items (60% chance)
-    { id: "premium_hat1", name: "Wizard Hat", type: "hat", rarity: "rare", icon: "🧙", isPremium: true },
-    { id: "premium_hat2", name: "Pirate Hat", type: "hat", rarity: "rare", icon: "🏴‍☠️", isPremium: true },
-    { id: "premium_acc1", name: "Monocle", type: "accessory", rarity: "rare", icon: "🧐", isPremium: true },
-    { id: "premium_bg1", name: "Space", type: "background", rarity: "rare", icon: "🌌", isPremium: true },
-    { id: "premium_bg2", name: "Castle", type: "background", rarity: "rare", icon: "🏰", isPremium: true },
-    { id: "premium_outfit1", name: "Superhero", type: "outfit", rarity: "rare", icon: "🦸", isPremium: true },
+    { id: "premium_hat1", name: "Wizard Hat", type: "hat", rarity: "rare", icon: "Wand2", isPremium: true },
+    { id: "premium_hat2", name: "Pirate Hat", type: "hat", rarity: "rare", icon: "Anchor", isPremium: true },
+    { id: "premium_acc1", name: "Monocle", type: "accessory", rarity: "rare", icon: "Glasses", isPremium: true },
+    { id: "premium_bg1", name: "Space", type: "background", rarity: "rare", icon: "Rocket", isPremium: true },
+    { id: "premium_bg2", name: "Castle", type: "background", rarity: "rare", icon: "Castle", isPremium: true },
+    { id: "premium_outfit1", name: "Superhero", type: "outfit", rarity: "rare", icon: "Zap", isPremium: true },
     
     // Epic items (30% chance)
-    { id: "premium_hat3", name: "Dragon Helm", type: "hat", rarity: "epic", icon: "🐉", isPremium: true },
-    { id: "premium_acc2", name: "Magic Wand", type: "accessory", rarity: "epic", icon: "🪄", isPremium: true },
-    { id: "premium_bg3", name: "Aurora", type: "background", rarity: "epic", icon: "🌠", isPremium: true },
+    { id: "premium_hat3", name: "Dragon Helm", type: "hat", rarity: "epic", icon: "Flame", isPremium: true },
+    { id: "premium_acc2", name: "Magic Wand", type: "accessory", rarity: "epic", icon: "Sparkles", isPremium: true },
+    { id: "premium_bg3", name: "Aurora", type: "background", rarity: "epic", icon: "Stars", isPremium: true },
     
     // Legendary items (10% chance)
-    { id: "premium_hat4", name: "Cosmic Crown", type: "hat", rarity: "legendary", icon: "✨", isPremium: true },
-    { id: "premium_outfit2", name: "Galaxy Suit", type: "outfit", rarity: "legendary", icon: "🌟", isPremium: true }
+    { id: "premium_hat4", name: "Cosmic Crown", type: "hat", rarity: "legendary", icon: "Crown", isPremium: true },
+    { id: "premium_outfit2", name: "Galaxy Suit", type: "outfit", rarity: "legendary", icon: "Star", isPremium: true }
   ];
 
   // Shop items available for purchase
@@ -52,7 +61,7 @@ const Mascot = () => {
       type: "utility", 
       rarity: "special", 
       cost: 50, 
-      icon: "🛡️",
+      icon: "Shield",
       description: "Protect your streak once" 
     },
     { 
@@ -61,7 +70,7 @@ const Mascot = () => {
       type: "hat", 
       rarity: "common", 
       cost: 50, 
-      icon: "🎉" 
+      icon: "PartyPopper" 
     },
     { 
       id: "hat2", 
@@ -69,7 +78,7 @@ const Mascot = () => {
       type: "hat", 
       rarity: "rare", 
       cost: 150, 
-      icon: "👑" 
+      icon: "Crown" 
     },
     { 
       id: "acc1", 
@@ -77,7 +86,7 @@ const Mascot = () => {
       type: "accessory", 
       rarity: "common", 
       cost: 75, 
-      icon: "🕶️" 
+      icon: "Glasses" 
     },
     { 
       id: "acc2", 
@@ -85,7 +94,7 @@ const Mascot = () => {
       type: "accessory", 
       rarity: "rare", 
       cost: 100, 
-      icon: "🎀" 
+      icon: "Ribbon" 
     },
     { 
       id: "bg1", 
@@ -93,7 +102,7 @@ const Mascot = () => {
       type: "background", 
       rarity: "rare", 
       cost: 200, 
-      icon: "🏖️" 
+      icon: "Palmtree" 
     },
     { 
       id: "outfit1", 
@@ -101,7 +110,7 @@ const Mascot = () => {
       type: "outfit", 
       rarity: "epic", 
       cost: 300, 
-      icon: "🤵" 
+      icon: "User" 
     }
   ];
 
@@ -234,8 +243,9 @@ const Mascot = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">XP Balance</p>
             <p className="text-xl font-bold text-primary">{xp} XP</p>
           </div>
-          <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full">
-            <span className="text-primary font-medium">🛡️ {streakSavers}</span>
+          <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full flex items-center gap-2">
+            <Shield className="text-primary" size={20} />
+            <span className="text-primary font-medium">{streakSavers}</span>
           </div>
         </div>
 
@@ -306,7 +316,7 @@ const Mascot = () => {
                         : ''
                     }`}
                   >
-                    <div className="text-4xl mb-2">{item.icon || '🎨'}</div>
+                    <div className="text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
                     <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1">
                       {item.name}
                     </p>
@@ -336,7 +346,7 @@ const Mascot = () => {
                   className="bg-white dark:bg-gray-800 rounded-xl p-4"
                 >
                   <div className="text-center mb-3">
-                    <span className="text-4xl">{item.icon}</span>
+                    <div className="text-gray-900 dark:text-white">{renderIcon(item.icon, 32)}</div>
                     <p className="font-medium text-gray-900 dark:text-white mt-2">
                       {item.name}
                     </p>

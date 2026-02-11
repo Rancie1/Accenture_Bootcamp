@@ -1,20 +1,27 @@
 import { useState } from 'react';
+import * as LucideIcons from 'lucide-react';
 
 /**
  * AddItemModal Component
  * Modal for adding custom default items to the shop
  * Requirements: 2.6, 2.7
  */
+
+// Helper function to render Lucide icon from string name
+const renderIcon = (iconName, size = 24) => {
+  const IconComponent = LucideIcons[iconName] || LucideIcons.ShoppingBag;
+  return <IconComponent size={size} />;
+};
+
 const AddItemModal = ({ isOpen, onClose, onAdd }) => {
   const [itemName, setItemName] = useState('');
   const [itemIcon, setItemIcon] = useState('');
 
-  // Common emoji icons for grocery items
+  // Common Lucide icon names for grocery items
   const commonIcons = [
-    '🍎', '🍌', '🥕', '🥦', '🍅', '🥔', '🧅', '🌽',
-    '🥒', '🍇', '🍊', '🍋', '🍓', '🥑', '🍆', '🥬',
-    '🥩', '🍗', '🥓', '🐟', '🦐', '🥚', '🧀', '🥛',
-    '🍞', '🥖', '🥐', '🥯', '🍝', '🍚', '🥫', '🍯'
+    'Apple', 'Banana', 'Carrot', 'Salad', 'Cherry', 'Beef', 'Fish', 'Egg',
+    'Cookie', 'Pizza', 'Croissant', 'Soup', 'Coffee', 'Wine', 'Milk', 'IceCream',
+    'Cake', 'Candy', 'Sandwich', 'Drumstick', 'UtensilsCrossed', 'ChefHat', 'CookingPot', 'Wheat'
   ];
 
   const handleSubmit = (e) => {
@@ -81,32 +88,33 @@ const AddItemModal = ({ isOpen, onClose, onAdd }) => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select Icon
             </label>
-            <div className="grid grid-cols-8 gap-2 mb-3">
-              {commonIcons.map((icon) => (
+            <div className="grid grid-cols-6 gap-2 mb-3">
+              {commonIcons.map((iconName) => (
                 <button
-                  key={icon}
+                  key={iconName}
                   type="button"
-                  onClick={() => setItemIcon(icon)}
-                  className={`text-3xl p-2 rounded-lg transition-all ${
-                    itemIcon === icon
-                      ? 'bg-primary/20 ring-2 ring-primary'
-                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  onClick={() => setItemIcon(iconName)}
+                  className={`p-3 rounded-lg transition-all flex items-center justify-center ${
+                    itemIcon === iconName
+                      ? 'bg-primary/20 ring-2 ring-primary text-primary'
+                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
                   }`}
                 >
-                  {icon}
+                  {renderIcon(iconName, 24)}
                 </button>
               ))}
             </div>
             
-            {/* Custom emoji input */}
-            <input
-              type="text"
-              value={itemIcon}
-              onChange={(e) => setItemIcon(e.target.value)}
-              placeholder="Or type any emoji"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl"
-              maxLength={2}
-            />
+            {/* Selected icon display */}
+            {itemIcon && (
+              <div className="text-center p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Selected:</p>
+                <div className="flex justify-center text-primary">
+                  {renderIcon(itemIcon, 32)}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{itemIcon}</p>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
