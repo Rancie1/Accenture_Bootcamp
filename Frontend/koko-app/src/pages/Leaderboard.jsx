@@ -29,44 +29,42 @@ const Leaderboard = () => {
       const mockPercentage = Math.max(0, Math.min(100, 95 - (i * 0.8) + variation));
       
       users.push({
-        rank: i + 1,
         userName: `User${i + 1}`,
         savingsScore: mockPercentage,
         isCurrentUser: false
       });
     }
 
-    // Sort by savings score (highest first)
-    users.sort((a, b) => b.savingsScore - a.savingsScore);
-
-    // Insert current user into leaderboard based on their savings score
-    let currentUserRank = users.findIndex(user => user.savingsScore < userSavingsScore);
-    if (currentUserRank === -1) {
-      currentUserRank = users.length; // User is below top 100
-    }
-
-    const currentUser = {
-      rank: currentUserRank + 1,
+    // Add current user to the list
+    users.push({
       userName: currentUserName,
       savingsScore: userSavingsScore,
       isCurrentUser: true
-    };
+    });
 
-    // If user is in top 100, replace that position
-    if (currentUserRank < 100) {
-      users.splice(currentUserRank, 0, currentUser);
-      users.pop(); // Remove last user to keep it at 100
-      
-      // Update ranks for users after current user
-      for (let i = currentUserRank + 1; i < users.length; i++) {
-        users[i].rank = i + 1;
+    // Sort by savings score (highest first), then by username (lexicographical) as tiebreaker
+    users.sort((a, b) => {
+      if (b.savingsScore !== a.savingsScore) {
+        return b.savingsScore - a.savingsScore;
       }
-    }
+      // Tiebreaker: lexicographical order of usernames
+      return a.userName.localeCompare(b.userName);
+    });
+
+    // Assign ranks sequentially (1, 2, 3, 4, 5...)
+    users.forEach((user, index) => {
+      user.rank = index + 1;
+    });
+
+    // Find current user's rank
+    const currentUserIndex = users.findIndex(user => user.isCurrentUser);
+    const currentUserRank = currentUserIndex + 1;
+    const isInTop100 = currentUserIndex < 100;
 
     return {
       topUsers: users.slice(0, 100),
-      currentUserRank: currentUserRank + 1,
-      isInTop100: currentUserRank < 100
+      currentUserRank: currentUserRank,
+      isInTop100: isInTop100
     };
   }, [userSavingsScore, userPreferences.name]);
 
@@ -134,8 +132,12 @@ const Leaderboard = () => {
             {/* Rank Badge */}
             <div
               className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
-                user.rank <= 3
-                  ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-gray-900 shadow-lg'
+                user.rank === 1
+                  ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-gray-900 shadow-lg'
+                  : user.rank === 2
+                  ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-900 shadow-lg'
+                  : user.rank === 3
+                  ? 'bg-gradient-to-br from-amber-600 to-amber-700 text-white shadow-lg'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
             >

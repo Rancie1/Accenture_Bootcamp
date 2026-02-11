@@ -349,14 +349,16 @@ const Shop = () => {
               {defaultItems.map(item => {
                 const inList = isItemInList(item.id);
                 return (
-                  <div key={item.id} className="relative">
+                  <div key={item.id} className="relative overflow-hidden">
                     <div
                       onClick={() => handleAddToList(item)}
                       onTouchStart={handleTouchStart}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={() => handleTouchEnd(item.id)}
-                      className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md active:scale-95 transition-all cursor-pointer ${
+                      className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md active:scale-95 transition-all duration-300 ease-out cursor-pointer ${
                         inList ? 'ring-2 ring-primary shadow-primary/50 shadow-lg' : ''
+                      } ${
+                        swipedItemId === item.id ? '-translate-x-20' : 'translate-x-0'
                       }`}
                     >
                       <div className="text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
@@ -371,7 +373,7 @@ const Shop = () => {
                     {swipedItemId === item.id && (
                       <button
                         onClick={() => handleDeleteItem(item.id)}
-                        className="absolute top-0 right-0 bottom-0 bg-red-500 text-white px-4 rounded-r-xl font-medium flex items-center justify-center"
+                        className="absolute top-0 right-0 bottom-0 bg-red-500 text-white px-4 rounded-r-xl font-medium flex items-center justify-center transition-opacity duration-300"
                       >
                         Delete
                       </button>
@@ -423,11 +425,22 @@ const Shop = () => {
             
             {/* Speech bubble - fades out in chat mode */}
             {!isChatMode && (
-              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 rounded-2xl px-5 py-2.5 shadow-lg animate-bounce-slow transition-opacity duration-500">
-                <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                  Ready to build your list?
-                </p>
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white dark:bg-gray-800 rotate-45"></div>
+              <div className="absolute bottom-0 right-0 transform translate-x-30 translate-y-2">
+                <div className="relative bg-white dark:bg-gray-800 rounded-2xl px-5 py-2.5 shadow-lg animate-bounce-slow transition-opacity duration-500">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                    Ready to shop?
+                  </p>
+                  {/* iMessage-style curved tail - thicker and curves upward */}
+                  <svg 
+                    className="absolute -left-3 -top-2 w-8 h-8 text-white dark:text-gray-800" 
+                    viewBox="0 0 32 32"
+                  >
+                    <path 
+                      fill="currentColor" 
+                      d="M 32 12 Q 20 8, 8 0 Q 12 10, 18 16 Q 24 20, 32 20 Z"
+                    />
+                  </svg>
+                </div>
               </div>
             )}
           </div>
