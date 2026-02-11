@@ -1,0 +1,51 @@
+{
+  "name": "Grocery Optimization - Simple Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "grocery",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook - Receive Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "grocery-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from FastAPI request\nconst groceryList = $input.item.json.grocery_list;\nconst homeAddress = $input.item.json.home_address;\n\n// Simple demo logic - generates random prices\n// In production, you'd call real APIs here\nconst stores = [\"Coles\", \"Woolworths\", \"Aldi\"];\n\nconst items = groceryList.map(itemName => {\n  // Generate random price between $1 and $15\n  const price = Math.round((Math.random() * 14 + 1) * 100) / 100;\n  \n  // Pick random store\n  const store = stores[Math.floor(Math.random() * stores.length)];\n  \n  return {\n    item_name: itemName,\n    current_price: price,\n    store_name: store\n  };\n});\n\n// Calculate total cost\nconst optimalCost = items.reduce((sum, item) => sum + item.current_price, 0);\n\n// Return response in required format\nreturn {\n  json: {\n    optimal_cost: Math.round(optimalCost * 100) / 100,\n    store_recommendations: [\"Coles\", \"Woolworths\"],\n    item_breakdown: items\n  }\n};"
+      },
+      "id": "function-node",
+      "name": "Process Groceries",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Receive Request": {
+      "main": [
+        [
+          {
+            "node": "Process Groceries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-02-11T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -21,20 +21,20 @@ const BottomNavigation = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe">
-      <div className="flex justify-around items-center h-16">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 safe-area-inset-bottom">
+      <div className="flex justify-evenly items-center px-2 py-2 pb-safe">
         {tabs.map(tab => {
           const IconComponent = tab.icon;
           return (
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className={`flex flex-col items-center gap-1 py-2 transition-colors ${
+              className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] transition-colors ${
                 isActive(tab.path) ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <IconComponent size={24} />
-              <span className="text-xs font-medium">{tab.label}</span>
+              <IconComponent size={22} />
+              <span className="text-[10px] font-medium leading-tight">{tab.label}</span>
             </button>
           );
         })}

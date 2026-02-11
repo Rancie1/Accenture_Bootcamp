@@ -2,40 +2,43 @@
 
 ## Overview
 
-This implementation plan breaks down the FastAPI backend into incremental, testable steps. The backend uses a three-layer architecture (routers, services, models) with Supabase PostgreSQL for persistence and n8n for external optimization tasks. Each task builds on previous work, with property-based tests integrated throughout to catch errors early.
+This implementation plan breaks down the FastAPI backend into incremental, testable steps. The backend uses a three-layer architecture (routers, services, models) with **SQLite in-memory database** for easy demo/testing (can be upgraded to Supabase PostgreSQL later) and n8n for external optimization tasks. Each task builds on previous work, with property-based tests integrated throughout to catch errors early.
+
+**Database Setup:** Using SQLite in-memory by default - no external database setup required! Data persists during the session and resets on restart. Perfect for demos and development. To upgrade to Supabase later, just set the `DATABASE_URL` environment variable.
 
 ## Tasks
 
-- [ ] 1. Set up project structure and dependencies
+- [x] 1. Set up project structure and dependencies
   - Create FastAPI project with three-layer architecture (routers/, services/, models/)
   - Install dependencies: fastapi, uvicorn, sqlalchemy, pydantic, httpx, python-dotenv, hypothesis (for property testing)
-  - Configure Supabase connection with environment variables
+  - Configure database with SQLite in-memory (no external setup needed)
   - Set up basic FastAPI app with CORS middleware
-  - Create .env.example with required environment variables
+  - Create .env.example with optional environment variables
   - _Requirements: 7.1, 7.7, 10.1_
 
-- [ ] 2. Implement database models and connection
-  - [ ] 2.1 Create SQLAlchemy models for User, WeeklyPlan, and HistoricalPriceData
+- [x] 2. Implement database models and connection
+  - [x] 2.1 Create SQLAlchemy models for User, WeeklyPlan, and HistoricalPriceData
     - Define User model with user_id (PK), name, weekly_budget, home_address, created_at
     - Define WeeklyPlan model with id (PK), user_id (FK), optimal_cost, actual_cost, optimization_score, created_at
     - Define HistoricalPriceData model with id (PK), item_name, price, store_name, recorded_date
     - Add indexes on user_id, item_name, recorded_date
     - _Requirements: 7.2, 7.3, 8.1, 8.7_
-  - [ ] 2.2 Create Pydantic schemas for request/response validation
+  - [x] 2.2 Create Pydantic schemas for request/response validation
     - Define UserOnboardRequest, UserResponse schemas
     - Define GroceryOptimizationRequest, GroceryItem, GroceryOptimizationResponse schemas
     - Define TransportComparisonRequest, PetrolStation, TransportComparisonResponse schemas
     - Define WeeklyPlanRequest, WeeklyPlanResponse schemas
     - Define LeaderboardEntry, LeaderboardResponse schemas
     - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1_
-  - [ ] 2.3 Set up database connection and session management
-    - Create database engine with Supabase connection string
+  - [x] 2.3 Set up database connection and session management
+    - Create database engine with SQLite in-memory (default) or PostgreSQL connection string
     - Implement session factory and dependency injection
     - Add connection retry logic (retry once on failure)
+    - Add database initialization function to create tables on startup
     - _Requirements: 7.1, 7.6_
 
-- [ ] 3. Implement user onboarding
-  - [ ] 3.1 Create user service with create_user and get_user_by_id functions
+- [x] 3. Implement user onboarding
+  - [x] 3.1 Create user service with create_user and get_user_by_id functions
     - Implement input validation (positive budget, non-empty strings)
     - Generate unique user_id
     - Persist user to database
@@ -49,35 +52,35 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - **Property 3: Name Validation**
     - **Property 4: Home Address Validation**
     - **Validates: Requirements 1.2, 1.3, 1.4**
-  - [ ] 3.4 Create user router with POST /onboard endpoint
+  - [x] 3.4 Create user router with POST /onboard endpoint
     - Handle request/response with Pydantic models
     - Call user service
     - Return 201 on success with user details
     - Return 400 on validation errors with field-specific messages
     - _Requirements: 1.1, 1.5, 1.6_
-  - [ ]\* 3.5 Write property test for validation error response format
+  - [x] 3.5 Write property test for validation error response format
     - **Property 5: Validation Error Response Format**
     - **Validates: Requirements 1.6, 11.1**
 
-- [ ] 4. Checkpoint - Ensure all tests pass
+- [x] 4. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Implement n8n integration service
-  - [ ] 5.1 Create n8n service with generic webhook caller
+- [x] 5. Implement n8n integration service
+  - [x] 5.1 Create n8n service with generic webhook caller
     - Implement async HTTP POST with httpx
     - Set 30-second timeout
     - Handle connection errors, timeouts, non-200 responses
     - Return 503 on n8n failures with descriptive messages
     - Log all requests and responses
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
-  - [ ]\* 5.2 Write property tests for n8n integration
+  - [x] 5.2 Write property tests for n8n integration
     - **Property 12: External Service Error Handling**
     - **Property 20: n8n Request Format**
     - **Property 21: n8n Response Validation**
     - **Validates: Requirements 2.9, 3.7, 6.1, 6.3, 6.4, 6.5, 6.6, 11.4**
 
-- [ ] 6. Implement historical price data management
-  - [ ] 6.1 Create historical price service
+- [x] 6. Implement historical price data management
+  - [x] 6.1 Create historical price service
     - Implement get_historical_average function (query past 4 weeks, calculate mean)
     - Implement seed_demo_data function for 5 items with 4 weeks of data
     - Handle cases where no historical data exists
@@ -92,15 +95,15 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - Verify realistic price variations
     - _Requirements: 8.5, 8.6_
 
-- [ ] 7. Implement grocery optimization
-  - [ ] 7.1 Create grocery service with optimize_groceries function
+- [x] 7. Implement grocery optimization
+  - [x] 7.1 Create grocery service with optimize_groceries function
     - Fetch user's home_address
     - Call n8n webhook with grocery_list and home_address
     - Receive optimization results from n8n
     - Enrich each item with price predictions
     - Return enriched results
     - _Requirements: 2.1, 2.2, 2.3_
-  - [ ] 7.2 Implement price prediction enrichment logic
+  - [x] 7.2 Implement price prediction enrichment logic
     - Query historical prices for each item (past 4 weeks)
     - Calculate 4-week average
     - Tag items: "likely to drop next week" if current < average
@@ -112,7 +115,7 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - **Property 9: Price Below Average Prediction**
     - **Property 10: Price At or Above Average Prediction**
     - **Validates: Requirements 2.3, 2.5, 2.6, 2.7**
-  - [ ] 7.4 Create grocery router with POST /optimise/groceries endpoint
+  - [x] 7.4 Create grocery router with POST /optimise/groceries endpoint
     - Validate grocery_list is non-empty array
     - Call grocery service
     - Return 200 with optimization results including predictions

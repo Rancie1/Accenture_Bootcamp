@@ -12,9 +12,14 @@ import * as LucideIcons from 'lucide-react';
  * Requirements: 9.1, 9.2, 9.3, 9.4, 9.14
  */
 
-// Helper function to render Lucide icon from string name
-const renderIcon = (iconName, size = 32) => {
-  const IconComponent = LucideIcons[iconName] || LucideIcons.Palette;
+// Helper function to render emoji or Lucide icon
+const renderIcon = (icon, size = 32) => {
+  // If it's already an emoji (single character or emoji), render it directly
+  if (typeof icon === 'string' && icon.length <= 4) {
+    return <span style={{ fontSize: `${size}px` }}>{icon}</span>;
+  }
+  // Otherwise, try to render as Lucide icon
+  const IconComponent = LucideIcons[icon] || LucideIcons.Palette;
   return <IconComponent size={size} />;
 };
 
@@ -37,21 +42,19 @@ const Mascot = () => {
   // Premium items available from lootbox
   const premiumItems = [
     // Rare items (60% chance)
-    { id: "premium_hat1", name: "Wizard Hat", type: "hat", rarity: "rare", icon: "Wand2", isPremium: true },
-    { id: "premium_hat2", name: "Pirate Hat", type: "hat", rarity: "rare", icon: "Anchor", isPremium: true },
-    { id: "premium_acc1", name: "Monocle", type: "accessory", rarity: "rare", icon: "Glasses", isPremium: true },
-    { id: "premium_bg1", name: "Space", type: "background", rarity: "rare", icon: "Rocket", isPremium: true },
-    { id: "premium_bg2", name: "Castle", type: "background", rarity: "rare", icon: "Castle", isPremium: true },
-    { id: "premium_outfit1", name: "Superhero", type: "outfit", rarity: "rare", icon: "Zap", isPremium: true },
+    { id: "premium_hat1", name: "Wizard Hat", type: "hat", rarity: "rare", icon: "Wand2", emoji: "🧙", isPremium: true },
+    { id: "premium_hat2", name: "Pirate Hat", type: "hat", rarity: "rare", icon: "Anchor", emoji: "🏴‍☠️", isPremium: true },
+    { id: "premium_acc1", name: "Monocle", type: "accessory", rarity: "rare", icon: "Glasses", emoji: "🧐", isPremium: true },
+    { id: "premium_acc3", name: "Scarf", type: "accessory", rarity: "rare", icon: "Wind", emoji: "🧣", isPremium: true },
     
     // Epic items (30% chance)
-    { id: "premium_hat3", name: "Dragon Helm", type: "hat", rarity: "epic", icon: "Flame", isPremium: true },
-    { id: "premium_acc2", name: "Magic Wand", type: "accessory", rarity: "epic", icon: "Sparkles", isPremium: true },
-    { id: "premium_bg3", name: "Aurora", type: "background", rarity: "epic", icon: "Stars", isPremium: true },
+    { id: "premium_hat3", name: "Dragon Helm", type: "hat", rarity: "epic", icon: "Flame", emoji: "🐉", isPremium: true },
+    { id: "premium_acc2", name: "Magic Wand", type: "accessory", rarity: "epic", icon: "Sparkles", emoji: "✨", isPremium: true },
+    { id: "premium_hat5", name: "Chef Hat", type: "hat", rarity: "epic", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true },
     
     // Legendary items (10% chance)
-    { id: "premium_hat4", name: "Cosmic Crown", type: "hat", rarity: "legendary", icon: "Crown", isPremium: true },
-    { id: "premium_outfit2", name: "Galaxy Suit", type: "outfit", rarity: "legendary", icon: "Star", isPremium: true }
+    { id: "premium_hat4", name: "Cosmic Crown", type: "hat", rarity: "legendary", icon: "Crown", emoji: "👑", isPremium: true },
+    { id: "premium_acc4", name: "Laurel Wreath", type: "accessory", rarity: "legendary", icon: "Award", emoji: "🏆", isPremium: true }
   ];
 
   // Shop items available for purchase
@@ -71,7 +74,8 @@ const Mascot = () => {
       type: "hat", 
       rarity: "common", 
       cost: 50, 
-      icon: "PartyPopper" 
+      icon: "PartyPopper",
+      emoji: "🎉"
     },
     { 
       id: "hat2", 
@@ -79,7 +83,8 @@ const Mascot = () => {
       type: "hat", 
       rarity: "rare", 
       cost: 150, 
-      icon: "Crown" 
+      icon: "Crown",
+      emoji: "👑"
     },
     { 
       id: "acc1", 
@@ -87,7 +92,8 @@ const Mascot = () => {
       type: "accessory", 
       rarity: "common", 
       cost: 75, 
-      icon: "Glasses" 
+      icon: "Glasses",
+      emoji: "😎"
     },
     { 
       id: "acc2", 
@@ -95,23 +101,17 @@ const Mascot = () => {
       type: "accessory", 
       rarity: "rare", 
       cost: 100, 
-      icon: "Ribbon" 
+      icon: "Ribbon",
+      emoji: "🎀"
     },
     { 
-      id: "bg1", 
-      name: "Beach", 
-      type: "background", 
+      id: "hat3", 
+      name: "Top Hat", 
+      type: "hat", 
       rarity: "rare", 
       cost: 200, 
-      icon: "Palmtree" 
-    },
-    { 
-      id: "outfit1", 
-      name: "Tuxedo", 
-      type: "outfit", 
-      rarity: "epic", 
-      cost: 300, 
-      icon: "User" 
+      icon: "Sparkles",
+      emoji: "🎩"
     }
   ];
 
@@ -317,7 +317,7 @@ const Mascot = () => {
                         : ''
                     }`}
                   >
-                    <div className="text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
+                    <div className="flex justify-center items-center text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
                     <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1">
                       {item.name}
                     </p>
@@ -347,7 +347,7 @@ const Mascot = () => {
                   className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md"
                 >
                   <div className="text-center mb-3">
-                    <div className="text-gray-900 dark:text-white">{renderIcon(item.icon, 32)}</div>
+                    <div className="flex justify-center items-center text-gray-900 dark:text-white">{renderIcon(item.icon, 32)}</div>
                     <p className="font-medium text-gray-900 dark:text-white mt-2">
                       {item.name}
                     </p>

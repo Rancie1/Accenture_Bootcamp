@@ -1,6 +1,8 @@
+import kokoImage from '../assets/koko-1024.PNG';
+
 /**
  * MascotPreview Component
- * Renders the Purple Koala mascot with equipped customization items
+ * Renders the Koko mascot with equipped customization items
  * Requirements: 6.2, 9.1
  * 
  * @param {Object} props - Component props
@@ -47,38 +49,40 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
       {/* Background layer */}
       {equippedBackground && (
         <div className={`absolute inset-0 flex items-center justify-center ${config.item} opacity-30`}>
-          {equippedBackground.icon}
+          {equippedBackground.emoji || equippedBackground.icon}
         </div>
       )}
 
       {/* Main mascot container */}
       <div 
         className={`${config.container} rounded-full flex items-center justify-center relative`}
-        style={{ backgroundColor: '#9e8fb2' }}
+        style={{ backgroundColor: '#845EEE' }}
       >
         {/* Outfit layer (behind mascot) */}
         {equippedOutfit && (
           <div className={`absolute inset-0 flex items-center justify-center ${config.item}`}>
-            {equippedOutfit.icon}
+            {equippedOutfit.emoji || equippedOutfit.icon}
           </div>
         )}
 
-        {/* Base mascot - Purple Koala */}
-        <div className={`${config.mascot} relative z-10`}>
-          🐨
-        </div>
+        {/* Base mascot - Koko */}
+        <img 
+          src={kokoImage} 
+          alt="Koko mascot" 
+          className="w-full h-full object-contain relative z-10"
+        />
 
         {/* Hat layer (above mascot) */}
         {equippedHat && (
           <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 ${config.item} z-20`}>
-            {equippedHat.icon}
+            {equippedHat.emoji || equippedHat.icon}
           </div>
         )}
 
         {/* Accessory layer (on mascot) */}
         {equippedAccessory && (
           <div className={`absolute bottom-1/4 right-1/4 ${config.item} z-20`}>
-            {equippedAccessory.icon}
+            {equippedAccessory.emoji || equippedAccessory.icon}
           </div>
         )}
       </div>
