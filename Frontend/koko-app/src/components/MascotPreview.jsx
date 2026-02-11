@@ -56,7 +56,7 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
       {/* Main mascot container */}
       <div 
         className={`${config.container} rounded-full flex items-center justify-center relative`}
-        style={{ backgroundColor: 'rgb(180, 122, 217)' }}
+        style={{ backgroundColor: '#845EEE' }}
       >
         {/* Outfit layer (behind mascot) */}
         {equippedOutfit && (
