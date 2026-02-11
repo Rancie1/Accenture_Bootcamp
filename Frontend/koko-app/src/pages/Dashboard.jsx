@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
-import { Settings, User, Flame } from 'lucide-react';
+import { Settings, Flame } from 'lucide-react';
 
 /**
  * Dashboard Component
@@ -120,9 +120,16 @@ const Dashboard = () => {
       {/* Header with profile and settings */}
       <div className="bg-white dark:bg-gray-800 p-6">
         <div className="flex justify-between items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
-            {/* Profile picture placeholder */}
-            <User size={24} />
+          <div 
+            className="w-12 h-12 cursor-pointer"
+            onClick={handleMascotTap}
+          >
+            {/* Mascot as profile picture */}
+            <MascotPreview 
+              equippedItems={equippedItems}
+              mascotItems={mascotItems}
+              size="small"
+            />
           </div>
           <button 
             onClick={() => navigate('/settings')}
@@ -132,19 +139,10 @@ const Dashboard = () => {
           </button>
         </div>
         
-        {/* Mascot and level display */}
+        {/* Level and stats display */}
         <div className="flex flex-col items-center">
-          <div 
-            className="relative mb-4 cursor-pointer"
-            onClick={handleMascotTap}
-          >
-            {/* Purple Koala mascot with equipped items */}
-            <MascotPreview 
-              equippedItems={equippedItems}
-              mascotItems={mascotItems}
-              size="medium"
-            />
-            <span className="absolute -top-2 -right-2 bg-primary text-white px-3 py-1 rounded-full font-bold text-sm">
+          <div className="relative mb-4">
+            <span className="bg-primary text-white px-4 py-2 rounded-full font-bold text-lg">
               Level {level}
             </span>
           </div>

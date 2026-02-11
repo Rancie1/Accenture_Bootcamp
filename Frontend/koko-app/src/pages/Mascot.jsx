@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import LootboxAnimation from '../components/LootboxAnimation';
 import MascotPreview from '../components/MascotPreview';
-import { Shield } from 'lucide-react';
+import { Flame } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -22,6 +22,7 @@ const Mascot = () => {
   const { 
     xp, 
     setXp, 
+    streak,
     streakSavers, 
     setStreakSavers, 
     mascotItems, 
@@ -234,18 +235,18 @@ const Mascot = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24">
       {/* Header Section */}
-      <div className="bg-white dark:bg-gray-800 p-6">
-        {/* XP Balance and Streak Savers */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm">
+        {/* XP Balance and Streak */}
         <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-sm text-gray-600 dark:text-gray-400">XP Balance</p>
             <p className="text-xl font-bold text-primary">{xp} XP</p>
           </div>
           <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full flex items-center gap-2">
-            <Shield className="text-primary" size={20} />
-            <span className="text-primary font-medium">{streakSavers}</span>
+            <Flame className="text-primary" size={20} />
+            <span className="text-primary font-medium">{streak} day streak</span>
           </div>
         </div>
 
@@ -262,30 +263,30 @@ const Mascot = () => {
         <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('customize')}
-            className={`flex-1 py-3 font-medium ${
+            className={`flex-1 py-3 font-medium transition-colors ${
               activeTab === 'customize'
                 ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             Customize
           </button>
           <button
             onClick={() => setActiveTab('shop')}
-            className={`flex-1 py-3 font-medium ${
+            className={`flex-1 py-3 font-medium transition-colors ${
               activeTab === 'shop'
                 ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             Shop
           </button>
           <button
             onClick={() => setActiveTab('lootbox')}
-            className={`flex-1 py-3 font-medium ${
+            className={`flex-1 py-3 font-medium transition-colors ${
               activeTab === 'lootbox'
                 ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             Lootbox
@@ -310,9 +311,9 @@ const Mascot = () => {
                   <button
                     key={item.id}
                     onClick={() => handleEquipItem(item)}
-                    className={`bg-white dark:bg-gray-800 rounded-xl p-3 text-center transition-all ${
+                    className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-3 text-center transition-all hover:scale-102 ${
                       equippedItems[item.type] === item.id
-                        ? 'ring-2 ring-primary'
+                        ? 'ring-2 ring-primary shadow-lg'
                         : ''
                     }`}
                   >
@@ -343,7 +344,7 @@ const Mascot = () => {
               return (
                 <div
                   key={item.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl p-4"
+                  className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md"
                 >
                   <div className="text-center mb-3">
                     <div className="text-gray-900 dark:text-white">{renderIcon(item.icon, 32)}</div>
@@ -384,7 +385,7 @@ const Mascot = () => {
         {activeTab === 'lootbox' && (
           <div className="flex flex-col items-center py-8">
             <div className="relative mb-6">
-              <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse flex items-center justify-center">
+              <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse flex items-center justify-center shadow-2xl">
                 <span className="text-9xl">📦</span>
               </div>
             </div>
@@ -399,7 +400,7 @@ const Mascot = () => {
             </p>
             <button
               onClick={handlePurchaseLootbox}
-              className="px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform"
+              className="px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform hover:bg-primary/90"
             >
               Purchase for $0.99
             </button>

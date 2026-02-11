@@ -72,3 +72,29 @@ export const calculateWeeklyXp = (history) => {
     .filter(item => item.timestamp >= weekStart)
     .reduce((sum, item) => sum + item.xpEarned, 0);
 };
+
+/**
+ * Calculate weekly spending from history entries
+ * Only counts entries from current week (Monday onwards)
+ * @param {Array} history - Array of history entries with timestamp and totalSpent
+ * @returns {number} Total spending this week
+ */
+export const calculateWeeklySpending = (history) => {
+  const weekStart = getWeekStart();
+  return history
+    .filter(item => item.timestamp >= weekStart)
+    .reduce((sum, item) => sum + (item.totalSpent || 0), 0);
+};
+
+/**
+ * Calculate budget savings score for leaderboard as percentage
+ * Score = ((budget - totalSpending) / budget) * 100 (percentage of budget remaining)
+ * @param {number} budget - Weekly budget
+ * @param {number} totalSpending - Total spending for the week
+ * @returns {number} Budget remaining percentage (0-100)
+ */
+export const calculateSavingsScore = (budget, totalSpending) => {
+  if (budget <= 0) return 0;
+  const remaining = Math.max(0, budget - totalSpending);
+  return (remaining / budget) * 100;
+};
