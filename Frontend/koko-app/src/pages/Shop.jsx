@@ -391,7 +391,10 @@ const Shop = () => {
             </div>
 
             <button
-              onClick={handleStartAIMode}
+              onClick={() => {
+                setShowManualMode(false);
+                handleStartAIMode();
+              }}
               className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-6"
             >
               {shoppingList.length > 0 ? 'Continue with AI Assistant' : 'Start with AI Assistant'}
@@ -535,9 +538,13 @@ const Shop = () => {
         {isChatMode && (
           <div className="flex-1 flex flex-col transition-all duration-500 animate-fade-in px-4 overflow-hidden min-h-0">
             {/* Exit button */}
-            <div className="flex justify-end py-1.5 shrink-0">
+            <div className="flex justify-start py-1.5 shrink-0">
               <button
-                onClick={handleExitChatMode}
+                onClick={() => {
+                  setIsChatMode(false);
+                  setMessages([]);
+                  setInputText('');
+                }}
                 className="text-gray-600 dark:text-gray-400 hover:text-primary transition-colors p-1.5"
               >
                 <ArrowLeft size={20} />
@@ -574,6 +581,16 @@ const Shop = () => {
                 </div>
               )}
               <div ref={messagesEndRef} />
+            </div>
+
+            {/* Calculate Savings Button */}
+            <div className="pb-2 shrink-0">
+              <button
+                onClick={() => navigate('/results')}
+                className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
+              >
+                Calculate my savings
+              </button>
             </div>
 
             {/* Input Area - Fixed at bottom */}

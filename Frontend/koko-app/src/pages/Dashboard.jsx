@@ -22,7 +22,8 @@ const Dashboard = () => {
     history,
     setHistory,
     mascotItems,
-    equippedItems
+    equippedItems,
+    userPreferences
   } = useContext(AppContext);
 
   // State for swipe-to-delete functionality
@@ -116,9 +117,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24">
       {/* Header with profile and settings */}
-      <div className="bg-white dark:bg-gray-800 p-6">
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <div 
             className="w-12 h-12 cursor-pointer"
@@ -141,6 +142,11 @@ const Dashboard = () => {
         
         {/* Level and stats display */}
         <div className="flex flex-col items-center">
+          {userPreferences.name && (
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+              {userPreferences.name}
+            </h2>
+          )}
           <div className="relative mb-4">
             <span className="bg-primary text-white px-4 py-2 rounded-full font-bold text-lg">
               Level {level}
@@ -188,7 +194,7 @@ const Dashboard = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={() => handleTouchEnd(item.id)}
               >
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md hover:scale-102 transition-transform">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
