@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
-import { Settings, Flame } from 'lucide-react';
+import { Settings, Flame, Share2 } from 'lucide-react';
 
 /**
  * Dashboard Component
@@ -116,6 +116,44 @@ const Dashboard = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  /**
+   * Handle share profile
+   */
+  const handleShare = async () => {
+    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: $${savings.toFixed(2)}\n🔥 ${streak} day streak\n\nJoin me in saving smarter!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My Koko Profile',
+          text: shareText
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          fallbackShare(shareText);
+        }
+      }
+    } else {
+      fallbackShare(shareText);
+    }
+  };
+
+  /**
+   * Fallback share method (copy to clipboard)
+   */
+  const fallbackShare = (text) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Profile info copied to clipboard!');
+      }).catch(() => {
+        alert('Unable to share. Please try again.');
+      });
+    } else {
+      alert('Sharing is not supported on this device.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24">
       {/* Header with profile and settings */}
@@ -132,12 +170,22 @@ const Dashboard = () => {
               size="small"
             />
           </div>
-          <button 
-            onClick={() => navigate('/settings')}
-            className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary"
-          >
-            <Settings size={28} />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleShare}
+              className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary p-2"
+              aria-label="Share profile"
+            >
+              <Share2 size={24} />
+            </button>
+            <button 
+              onClick={() => navigate('/settings')}
+              className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary p-2"
+              aria-label="Settings"
+            >
+              <Settings size={24} />
+            </button>
+          </div>
         </div>
         
         {/* Level and stats display */}

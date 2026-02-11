@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Save, ShoppingCart, Sparkles, Trophy } from 'lucide-react';
+import { User, Bookmark, ShoppingCart, Sparkles, Trophy } from 'lucide-react';
 
 /**
  * BottomNavigation Component
@@ -11,8 +11,8 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
 
   const tabs = [
-    { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
-    { path: '/saved', icon: Save, label: 'Saved' },
+    { path: '/dashboard', icon: User, label: 'Profile' },
+    { path: '/saved', icon: Bookmark, label: 'Saved' },
     { path: '/shop', icon: ShoppingCart, label: 'Shop' },
     { path: '/mascot', icon: Sparkles, label: 'Mascot' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' }

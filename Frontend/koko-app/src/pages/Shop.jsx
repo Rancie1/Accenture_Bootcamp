@@ -5,7 +5,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import useSwipeGesture from '../hooks/useSwipeGesture';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, Grid3x3, MessageSquare, Mic, Send, X, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Mic, Send, X, ArrowLeft, PenLine, ChevronDown } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -25,7 +25,6 @@ const Shop = () => {
   const navigate = useNavigate();
   const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history } = useContext(AppContext);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [showManualMode, setShowManualMode] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -224,7 +223,6 @@ const Shop = () => {
    */
   const handleToggleManualMode = () => {
     setShowManualMode(!showManualMode);
-    setShowModeDropdown(false);
   };
 
   /**
@@ -498,34 +496,20 @@ const Shop = () => {
           )}
 
           <div className="px-6 pb-2 shrink-0">
-            <div className="relative">
-              <div className="flex gap-2">
-                <button
-                  onClick={handleStartAIMode}
-                  className="flex-1 py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
-                >
-                  <MessageSquare size={22} />
-                  Start your list
-                </button>
-                <button
-                  onClick={() => setShowModeDropdown(!showModeDropdown)}
-                  className="py-3.5 px-3.5 bg-primary text-white rounded-xl shadow-lg active:scale-95 transition-transform"
-                >
-                  <ChevronDown size={22} className={`transition-transform ${showModeDropdown ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-
-              {showModeDropdown && (
-                <div className="absolute bottom-full mb-2 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden z-10 min-w-[200px]">
-                  <button
-                    onClick={handleToggleManualMode}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-900 dark:text-white"
-                  >
-                    <Grid3x3 size={20} />
-                    <span>Manual Mode</span>
-                  </button>
-                </div>
-              )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleStartAIMode}
+                className="flex-1 py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={22} />
+                Start your list
+              </button>
+              <button
+                onClick={handleToggleManualMode}
+                className="py-3.5 px-4 bg-primary text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center"
+              >
+                <PenLine size={22} />
+              </button>
             </div>
 
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1.5">
