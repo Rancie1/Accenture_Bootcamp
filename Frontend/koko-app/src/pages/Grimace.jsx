@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { ArrowLeft, Circle, PartyPopper } from 'lucide-react';
 
 /**
  * Grimace Easter Egg Component
@@ -51,16 +52,16 @@ const Grimace = () => {
       {/* Back button */}
       <button 
         onClick={handleBack}
-        className="absolute top-6 left-6 text-white text-3xl hover:scale-110 transition-transform active:scale-95"
+        className="absolute top-6 left-6 text-white hover:scale-110 transition-transform active:scale-95"
         aria-label="Back to Dashboard"
       >
-        ←
+        <ArrowLeft size={32} />
       </button>
       
       {/* Grimace character with bounce animation */}
       <div className="animate-bounce mb-8">
-        <div className="text-9xl" role="img" aria-label="Grimace character">
-          🟣
+        <div className="text-purple-400" role="img" aria-label="Grimace character">
+          <Circle size={120} fill="currentColor" />
         </div>
       </div>
       
@@ -77,9 +78,12 @@ const Grimace = () => {
       {/* Award notification card with backdrop blur */}
       {itemAwarded && (
         <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 text-center shadow-2xl animate-fade-in">
-          <p className="text-white font-medium text-lg mb-2">
-            🎉 Grimace Hat added to your collection!
-          </p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <PartyPopper className="text-white" size={24} />
+            <p className="text-white font-medium text-lg">
+              Grimace Hat added to your collection!
+            </p>
+          </div>
           <p className="text-white/80 text-sm">
             Check your Mascot customization page
           </p>

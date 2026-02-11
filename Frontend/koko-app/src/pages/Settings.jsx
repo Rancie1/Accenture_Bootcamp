@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { ArrowLeft } from 'lucide-react';
 
 /**
  * Settings Component
@@ -46,9 +47,9 @@ const Settings = () => {
       <div className="flex items-center mb-6">
         <button 
           onClick={handleBack}
-          className="text-gray-600 dark:text-gray-400 mr-4 text-2xl"
+          className="text-gray-600 dark:text-gray-400 mr-4"
         >
-          ←
+          <ArrowLeft size={28} />
         </button>
         <h1 className="text-2xl font-bold text-primary">Settings</h1>
       </div>

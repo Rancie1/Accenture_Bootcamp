@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
+import { Settings, Flame, Share2 } from 'lucide-react';
 
 /**
  * Dashboard Component
@@ -21,7 +22,8 @@ const Dashboard = () => {
     history,
     setHistory,
     mascotItems,
-    equippedItems
+    equippedItems,
+    userPreferences
   } = useContext(AppContext);
 
   // State for swipe-to-delete functionality
@@ -114,66 +116,132 @@ const Dashboard = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  /**
+   * Handle share profile
+   */
+  const handleShare = async () => {
+    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: $${savings.toFixed(2)}\n🔥 ${streak} day streak\n\nJoin me in saving smarter!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My Koko Profile',
+          text: shareText
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          fallbackShare(shareText);
+        }
+      }
+    } else {
+      fallbackShare(shareText);
+    }
+  };
+
+  /**
+   * Fallback share method (copy to clipboard)
+   */
+  const fallbackShare = (text) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Profile info copied to clipboard!');
+      }).catch(() => {
+        alert('Unable to share. Please try again.');
+      });
+    } else {
+      alert('Sharing is not supported on this device.');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24">
-      {/* Header with profile and settings */}
-      <div className="bg-white dark:bg-gray-800 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold">
-            {/* Profile picture placeholder */}
-            👤
-          </div>
-          <button 
-            onClick={() => navigate('/settings')}
-            className="text-gray-600 dark:text-gray-400 text-2xl transition-colors hover:text-primary"
-          >
-            ⚙️
-          </button>
-        </div>
-        
-        {/* Mascot and level display */}
-        <div className="flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24">
+      {/* Header with grid layout */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm">
+        {/* Top row: Profile pic, name/level, and action buttons */}
+        <div className="flex items-center gap-8 mb-6">
+          {/* Left: Profile Picture */}
           <div 
-            className="relative mb-4 cursor-pointer"
+            className="w-20 h-20 cursor-pointer shrink-0"
             onClick={handleMascotTap}
           >
-            {/* Purple Koala mascot with equipped items */}
             <MascotPreview 
               equippedItems={equippedItems}
               mascotItems={mascotItems}
-              size="medium"
+              size="small"
             />
-            <span className="absolute -top-2 -right-2 bg-primary text-white px-3 py-1 rounded-full font-bold text-sm">
-              Level {level}
-            </span>
           </div>
           
-          <p className="text-gray-600 dark:text-gray-400 mb-2">{xp} XP</p>
+          {/* Right: Name and Level */}
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            {userPreferences.name && (
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                {userPreferences.name}
+              </h2>
+            )}
+            <div className="inline-block bg-primary text-white px-4 py-1.5 rounded-full font-bold text-sm self-start">
+              Level {level}
+            </div>
+          </div>
           
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-6">
+          {/* Action buttons */}
+          <div className="flex gap-1 shrink-0 self-start">
+            <button 
+              onClick={handleShare}
+              className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary p-2"
+              aria-label="Share profile"
+            >
+              <Share2 size={24} />
+            </button>
+            <button 
+              onClick={() => navigate('/settings')}
+              className="text-gray-600 dark:text-gray-400 transition-colors hover:text-primary p-2"
+              aria-label="Settings"
+            >
+              <Settings size={24} />
+            </button>
+          </div>
+        </div>
+        
+        {/* XP Progress Bar */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{xp} XP</p>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
             <div 
               className="bg-primary h-3 rounded-full transition-all duration-300" 
               style={{width: `${progress}%`}}
             />
           </div>
-          
-          {/* Streak display */}
-          <div className="flex gap-4 mb-4">
-            <div className="bg-primary/10 dark:bg-primary/20 px-6 py-3 rounded-full">
-              <span className="text-primary font-bold">🔥 {streak} day streak</span>
-            </div>
+        </div>
+        
+        {/* Stats Cards Grid */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Streak Card */}
+          <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 flex flex-col items-center justify-end min-h-[100px]">
+            <Flame className="text-primary mb-2" size={28} />
+            <p className="text-xl font-bold text-primary">{streak}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">day streak</p>
           </div>
           
-          {/* Weekly XP and total savings */}
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">This week: {weeklyXp} XP</p>
-          <p className="text-primary font-semibold text-lg">You've saved ${savings.toFixed(2)}</p>
+          {/* Weekly XP Card */}
+          <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 flex flex-col items-center justify-end min-h-[100px]">
+            <p className="text-2xl font-bold text-primary mb-2">XP</p>
+            <p className="text-xl font-bold text-primary">{weeklyXp}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">this week</p>
+          </div>
+          
+          {/* Lifetime Savings Card */}
+          <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 flex flex-col items-center justify-end min-h-[100px]">
+            <p className="text-2xl font-bold text-primary mb-2">$</p>
+            <p className="text-xl font-bold text-primary">{savings.toFixed(0)}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">saved</p>
+          </div>
         </div>
       </div>
       
-      {/* History section */}
+      {/* Past Shops section */}
       <div className="p-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">History</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Past Shops</h3>
         {history.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400 text-center py-8">
             No shopping trips yet. Start saving!
@@ -188,7 +256,11 @@ const Dashboard = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={() => handleTouchEnd(item.id)}
               >
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+                <div 
+                  className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md transition-transform duration-300 ease-out ${
+                    swipedItemId === item.id ? '-translate-x-20' : 'translate-x-0'
+                  }`}
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
@@ -211,7 +283,7 @@ const Dashboard = () => {
                 {swipedItemId === item.id && (
                   <button
                     onClick={() => handleDeleteHistory(item.id)}
-                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl"
+                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl transition-opacity duration-300"
                   >
                     Delete
                   </button>

@@ -49,7 +49,7 @@ function Registration() {
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Name
+            Name <span className="text-red-500">*</span>
           </label>
           <input 
             type="text"
@@ -57,6 +57,7 @@ function Registration() {
             onChange={(e) => setName(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="Enter your name"
+            required
           />
           {errors.name && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
@@ -65,7 +66,7 @@ function Registration() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Budget
+            Budget <span className="text-red-500">*</span>
           </label>
           <input 
             type="number"
@@ -75,6 +76,7 @@ function Registration() {
             placeholder="Enter your budget"
             min="0"
             step="0.01"
+            required
           />
           {errors.budget && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.budget}</p>
@@ -83,7 +85,7 @@ function Registration() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Transport Preference
+            Transport Preference <span className="text-red-500">*</span>
           </label>
           <div className="grid grid-cols-2 gap-4">
             <button

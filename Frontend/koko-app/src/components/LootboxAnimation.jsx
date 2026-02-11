@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
+import { Package } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
 /**
  * LootboxAnimation Component
  * Displays an animation when opening a lootbox and reveals the won item
  * Requirements: 9.11, 9.12, 9.13
  */
+
+// Helper function to render Lucide icon from string name
+const renderIcon = (iconName, size = 64) => {
+  const IconComponent = LucideIcons[iconName] || LucideIcons.Palette;
+  return <IconComponent size={size} />;
+};
+
 const LootboxAnimation = ({ wonItem, onClose }) => {
   const [stage, setStage] = useState('opening'); // 'opening' | 'revealing'
 
@@ -38,8 +47,8 @@ const LootboxAnimation = ({ wonItem, onClose }) => {
       <div className="text-center">
         {stage === 'opening' && (
           <div className="animate-bounce">
-            <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse flex items-center justify-center mx-auto">
-              <span className="text-9xl">📦</span>
+            <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse flex items-center justify-center mx-auto text-white">
+              <Package size={96} />
             </div>
             <p className="text-white text-xl font-bold mt-6 animate-pulse">
               Opening...
@@ -50,7 +59,7 @@ const LootboxAnimation = ({ wonItem, onClose }) => {
         {stage === 'revealing' && (
           <div className="animate-fade-in">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm">
-              <div className="text-6xl mb-4">{wonItem.icon || '🎨'}</div>
+              <div className="text-gray-900 dark:text-white mb-4 flex justify-center">{renderIcon(wonItem.icon, 64)}</div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 {wonItem.name}
               </h2>
