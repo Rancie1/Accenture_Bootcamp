@@ -5,7 +5,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import useSwipeGesture from '../hooks/useSwipeGesture';
 import MascotPreview from '../components/MascotPreview';
-import { MessageSquare, Mic, Send, X, ArrowLeft, PenLine, ChevronDown } from 'lucide-react';
+import { ChevronDown, Grid3x3, MessageSquare, Mic, Send, X, ArrowLeft, Share2 } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -21,14 +21,28 @@ const renderIcon = (iconName, size = 32) => {
   return <IconComponent size={size} />;
 };
 
+// Sample product catalog data
+const sampleProducts = [
+  { id: 'p1', name: 'Milk 2L', price: 3.50, stock: 15, isOnSale: true, originalPrice: 4.20 },
+  { id: 'p2', name: 'Bread Loaf', price: 2.80, stock: 8, isOnSale: false },
+  { id: 'p3', name: 'Eggs (12 pack)', price: 5.99, stock: 0, isOnSale: false },
+  { id: 'p4', name: 'Cheese 500g', price: 6.50, stock: 12, isOnSale: true, originalPrice: 8.00 },
+  { id: 'p5', name: 'Chicken Breast 1kg', price: 12.99, stock: 5, isOnSale: false },
+  { id: 'p6', name: 'Rice 5kg', price: 15.00, stock: 20, isOnSale: true, originalPrice: 18.50 },
+];
+
 const Shop = () => {
   const navigate = useNavigate();
   const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history } = useContext(AppContext);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [showManualMode, setShowManualMode] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState(null);
+  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showProductCatalog, setShowProductCatalog] = useState(true);
   const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
   
   // Chat state
@@ -206,6 +220,14 @@ const Shop = () => {
   };
 
   /**
+   * Handle share button click
+   */
+  const handleShareClick = (product) => {
+    setSelectedProduct(product);
+    setShowSharePopup(true);
+  };
+
+  /**
    * Exit chat mode
    */
   const handleExitChatMode = () => {
@@ -223,6 +245,7 @@ const Shop = () => {
    */
   const handleToggleManualMode = () => {
     setShowManualMode(!showManualMode);
+    setShowModeDropdown(false);
   };
 
   /**
@@ -496,20 +519,34 @@ const Shop = () => {
           )}
 
           <div className="px-6 pb-2 shrink-0">
-            <div className="flex gap-2">
-              <button
-                onClick={handleStartAIMode}
-                className="flex-1 py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
-              >
-                <MessageSquare size={22} />
-                Start your list
-              </button>
-              <button
-                onClick={handleToggleManualMode}
-                className="py-3.5 px-4 bg-primary text-white rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center"
-              >
-                <PenLine size={22} />
-              </button>
+            <div className="relative">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleStartAIMode}
+                  className="flex-1 py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <MessageSquare size={22} />
+                  Start your list
+                </button>
+                <button
+                  onClick={() => setShowModeDropdown(!showModeDropdown)}
+                  className="py-3.5 px-3.5 bg-primary text-white rounded-xl shadow-lg active:scale-95 transition-transform"
+                >
+                  <ChevronDown size={22} className={`transition-transform ${showModeDropdown ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              {showModeDropdown && (
+                <div className="absolute bottom-full mb-2 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden z-10 min-w-[200px]">
+                  <button
+                    onClick={handleToggleManualMode}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-900 dark:text-white"
+                  >
+                    <Grid3x3 size={20} />
+                    <span>Manual Mode</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1.5">
@@ -699,6 +736,163 @@ const Shop = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Share Popup Modal */}
+      {showSharePopup && selectedProduct && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl transform animate-scale-in">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <Share2 size={24} className="text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Your Savings!</h3>
+              </div>
+              <button
+                onClick={() => setShowSharePopup(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-2xl p-4 mb-4 border border-primary/20">
+                <p className="text-gray-700 dark:text-gray-300 mb-2">
+                  You found a great deal on <span className="font-bold text-primary">{selectedProduct.name}</span>!
+                </p>
+                {selectedProduct.isOnSale && selectedProduct.originalPrice && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-semibold text-green-600 dark:text-green-400">
+                      💰 ${(selectedProduct.originalPrice - selectedProduct.price).toFixed(2)} savings
+                    </span>
+                    <span className="text-gray-500 dark:text-gray-400">
+                      ({Math.round((1 - selectedProduct.price / selectedProduct.originalPrice) * 100)}% off)
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                Share your money-saving tips with friends and help them save too! Every tip shared helps build a community of smart shoppers.
+              </p>
+              
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-2xl">💡</span> <span className="font-semibold">Pro Tip:</span> Share how you found this deal, when to buy, or alternative products to consider!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSharePopup(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => {
+                  alert('Share functionality would open here!');
+                  setShowSharePopup(false);
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Share2 size={18} />
+                Share Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product Catalog Section */}
+      {!isChatMode && !showManualMode && showProductCatalog && (
+        <div className="fixed inset-x-0 bottom-16 top-0 overflow-y-auto bg-white dark:bg-gray-900 px-6 pt-4 pb-4">
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Available Products</h2>
+              <button
+                onClick={() => setShowProductCatalog(false)}
+                className="text-gray-600 dark:text-gray-400 hover:text-primary"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Discover today's best deals!</p>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4">
+            {sampleProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                      {product.name}
+                    </h3>
+                    
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <span className="text-3xl font-extrabold text-primary">
+                        ${product.price.toFixed(2)}
+                      </span>
+                      {product.isOnSale && product.originalPrice && (
+                        <span className="text-base text-gray-500 dark:text-gray-400 line-through">
+                          ${product.originalPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      {product.isOnSale && (
+                        <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1.5 rounded-full shadow-md">
+                          🔥 On Sale!
+                        </span>
+                      )}
+                      <span className={`inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-full ${
+                        product.stock > 0 
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      }`}>
+                        {product.stock > 0 ? `✓ In Stock (${product.stock})` : '✗ Out of Stock'}
+                      </span>
+                    </div>
+                    
+                    {product.isOnSale && product.originalPrice && (
+                      <div className="inline-flex items-center text-sm font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg">
+                        💰 Save ${(product.originalPrice - product.price).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={() => handleShareClick(product)}
+                    className="ml-4 p-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl hover:bg-primary hover:text-white hover:scale-110 transition-all duration-300 shadow-md hover:shadow-lg"
+                    aria-label={`Share ${product.name}`}
+                  >
+                    <Share2 size={20} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Footer Message */}
+          <div className="mt-6 mb-4 text-center bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 rounded-2xl p-5 border border-primary/20 shadow-md">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className="text-2xl">📈</span>
+              <p className="text-base font-bold text-gray-800 dark:text-gray-200">
+                Predicted price trends coming soon... <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-red-600">unlock for $1.99</span>
+              </p>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Get AI-powered insights on the best time to buy
+            </p>
           </div>
         </div>
       )}
