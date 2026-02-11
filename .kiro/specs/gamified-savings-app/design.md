@@ -11,16 +11,21 @@ Koko is a React-based mobile web application built with Vite that helps users sa
 - **Routing**: React Router v6
 - **State Management**: React Context API + useState hooks
 - **Styling**: CSS with vibrant purple primary color (#8B5CF6 or similar Apple HIG-compliant purple)
+- **Typography**: Josefin Sans (various weights for hierarchy)
+- **Mascot Color**: #9e8fb2 (muted purple for koala)
 - **External Integration**: n8n for chat interface processing
 
 ### Key Design Decisions
 
 1. **React Router Navigation**: Using React Router v6 for more powerful routing capabilities, browser history support, and better URL management
-2. **Context-based State**: App-level state management using React Context for XP, savings, and user preferences
+2. **Context-based State**: App-level state management using React Context for XP, savings, streaks, and user preferences
 3. **XP Points System**: Direct 1:1 mapping where savings percentage equals XP points (10% savings = 10 XP)
-4. **Customizable Shop Items**: Users can swipe left to remove prefilled items and add custom default items
-5. **Mobile-First with Purple Theme**: Vibrant purple primary color following Apple HIG color guidelines
-6. **Level Calculation**: Levels derived from total XP (every 100 XP = 1 level)
+4. **Streaks System**: Daily streak counter that increments on savings, breaks on budget overspend, with streak saver purchase option
+5. **Customizable Shop Items**: Users can swipe left to remove prefilled items and add custom default items
+6. **Mobile-First with Purple Theme**: Vibrant purple primary color following Apple HIG color guidelines
+7. **Dark Mode Support**: Theme toggle for light/dark modes
+8. **Typography Hierarchy**: Josefin Sans with varying weights (headers: 600-700, body: 400-500)
+9. **Level Calculation**: Levels derived from total XP (every 100 XP = 1 level)
 
 ## Architecture
 
@@ -89,6 +94,12 @@ The App uses React Context to provide global state:
 - `setSavings`: Function to update savings
 - `level`: Calculated from XP (Math.floor(xp / 100) + 1)
 - `progress`: Progress toward next level (xp % 100)
+- `streak`: Current streak count (number)
+- `setStreak`: Function to update streak
+- `streakSavers`: Number of streak savers owned (number)
+- `setStreakSavers`: Function to update streak savers
+- `darkMode`: Boolean for dark mode state
+- `setDarkMode`: Function to toggle dark mode
 - `userPreferences`: Object containing name, budget, transportPreference
 - `setUserPreferences`: Function to update preferences
 - `defaultItems`: Array of customizable grocery items for Shop page
@@ -113,6 +124,9 @@ The App uses React Context to provide global state:
 {
   xp: number,                    // Total experience points (lifetime)
   savings: number,               // Total money saved in dollars
+  streak: number,                // Current streak count
+  streakSavers: number,          // Number of streak savers owned
+  darkMode: boolean,             // Dark mode enabled
   userPreferences: {
     name: string,
     budget: number,
@@ -139,6 +153,7 @@ The App uses React Context to provide global state:
     items: Array,
     results: Object,
     xpEarned: number,
+    totalSpent: number,
     timestamp: number
   }>,
   mascotItems: Array<{          // Owned mascot items
@@ -301,6 +316,10 @@ const initialDefaultItems = [
 - Travel time display (based on transport preference)
 - Savings percentage display (large, prominent)
 - XP earned display (equals savings percentage)
+- Custom cost override section:
+  - "Adjust Cost" button
+  - Modal with editable total cost field
+  - Recalculates savings percentage based on custom cost
 - Animated refresh icon (top right, placeholder, vibrant purple)
 - Three buttons (bottom):
   - "Try Again" (outline)
@@ -310,13 +329,20 @@ const initialDefaultItems = [
 **Behavior**:
 - On mount: Calculate optimal store, price, travel time, and savings percentage
 - Display XP earned (equals savings percentage)
+- On "Adjust Cost" click: Show modal to override total cost
+- On custom cost submit: Recalculate savings percentage with new cost
 - On "Try Again": Navigate to `/shop`
 - On "Save for Later": Add shopping list and results to savedLists in context, navigate to `/shop`
 - On "Submit": 
   - Add XP earned to user's total XP
   - Add money saved to total savings
+  - Check if totalSpent (or custom cost) <= budget
+  - If within budget: Increment streak
+  - If over budget and no streak savers: Reset streak to 0
+  - If over budget and has streak savers: Show streak saver prompt
   - Add shopping list and results to history (stored in context)
   - Navigate to `/shop`
+- Apply dark mode styles when darkMode is true
 
 **Calculation Logic**:
 ```javascript
@@ -331,10 +357,41 @@ xpEarned = savingsPercentage  // Direct 1:1 mapping (10% = 10 XP)
 // On submit
 newXp = currentXp + xpEarned
 newSavings = currentSavings + (baselinePrice - optimalPrice)
-// Add to history with timestamp
-history.push({ shoppingList, results, timestamp: Date.now() })
+totalSpent = optimalPrice
+
+// Streak logic
+if (totalSpent <= userPreferences.budget) {
+  // User stayed within budget, increment streak
+  newStreak = currentStreak + 1;
+} else {
+  // User exceeded budget
+  if (streakSavers > 0) {
+    // Offer to use streak saver
+    showStreakSaverPrompt();
+  } else {
+    // Break streak
+    newStreak = 0;
+  }
+}
+
+// Add to history with timestamp and totalSpent
+history.push({ 
+  shoppingList, 
+  results, 
+  xpEarned, 
+  totalSpent,
+  timestamp: Date.now() 
+});
+
 // Level automatically recalculates: Math.floor(newXp / 100) + 1
 ```
+
+**Streak Saver Prompt**:
+- Modal appears when user exceeds budget
+- Message: "You spent ${totalSpent}, which is over your budget of ${budget}. Use a Streak Saver to protect your streak?"
+- Buttons: "Use Streak Saver" | "Break Streak"
+- On "Use Streak Saver": Decrement streakSavers, maintain streak
+- On "Break Streak": Set streak to 0
 
 ### 7. Leaderboard Component
 
@@ -377,26 +434,33 @@ history.push({ shoppingList, results, timestamp: Date.now() })
 
 **UI Elements**:
 - Profile picture (circular, top)
-- Purple Koala mascot image with equipped items (large, centered)
+- Purple Koala mascot image with equipped items (large, centered, color: #9e8fb2)
 - Level display next to mascot (vibrant purple)
 - XP display: "{xp} XP"
 - Progress bar (progress toward next level, vibrant purple fill)
+- Streak display: "🔥 {streak} day streak" (prominent, vibrant purple)
 - Weekly score display: "This week: {weeklyXp} XP" (resets Monday)
 - Settings button (top right, gear icon)
+- Dark mode toggle (in settings or header)
 - Total savings display: "You've saved ${savings}" (vibrant purple accent)
 - History section: Scrollable list of submitted shopping trips
-  - Each entry: Date, items, savings, XP earned
+  - Each entry: Date, items, savings, XP earned, total spent
   - Swipe left to delete (subtracts XP from weekly score)
 - Bottom navigation bar: Dashboard | Saved | Shop | Mascot | Leaderboard
 
 **Behavior**:
-- Display mascot with equipped customization items
-- Show level, XP, and progress bar
+- Display mascot with equipped customization items (koala color: #9e8fb2)
+- Show level, XP, progress bar, and streak
 - Display weekly XP score (resets every Monday at midnight)
 - On settings button click: Navigate to `/settings`
 - Display history of submitted shopping trips
 - On history item swipe left and delete: Subtract XP from weekly score (not total XP)
 - On bottom nav click: Navigate to respective route
+- Apply dark mode styles when darkMode is true
+
+**Typography**:
+- Headers (Level, Streak, Weekly Score): Josefin Sans 600-700
+- Body text (XP, savings, history items): Josefin Sans 400-500
 
 **Weekly Score Logic**:
 ```javascript
@@ -452,19 +516,22 @@ const deleteHistoryItem = (itemId) => {
 **Props**: None (uses AppContext and `useNavigate`)
 
 **UI Elements**:
-- Title: "Settings" (vibrant purple accent)
+- Title: "Settings" (vibrant purple accent, Josefin Sans 600-700)
 - Back button (top left, returns to Dashboard)
 - Editable fields:
-  - Name (text input)
-  - Budget (number input)
+  - Name (text input, Josefin Sans 400)
+  - Budget (number input, Josefin Sans 400)
   - Transport preference (two-button selector, vibrant purple when selected)
+- Dark mode toggle switch
 - Save button (bottom, full-width, vibrant purple)
 
 **Behavior**:
 - Display current user preferences
 - Allow editing of name, budget, transport preference
-- On save button click: Update context state and navigate back to `/dashboard`
+- Allow toggling dark mode
+- On save button click: Update context state (including darkMode) and navigate back to `/dashboard`
 - On back button click: Navigate to `/dashboard` without saving
+- Apply dark mode styles when darkMode is true
 
 ### 11. Mascot Component
 
@@ -473,8 +540,9 @@ const deleteHistoryItem = (itemId) => {
 **Props**: None (uses AppContext and `useNavigate`)
 
 **UI Elements**:
-- Large mascot preview (center, showing equipped items)
+- Large mascot preview (center, showing equipped items, koala color: #9e8fb2)
 - XP balance display (top right): "{xp} XP"
+- Streak savers display: "🛡️ {streakSavers} Streak Savers"
 - Tabs: "Customize" | "Shop" | "Lootbox"
 - **Customize Tab**:
   - Grid of owned items organized by type (hats, accessories, backgrounds, outfits)
@@ -485,7 +553,8 @@ const deleteHistoryItem = (itemId) => {
   - Grid of purchasable items
   - Each item: Thumbnail, name, XP cost, rarity
   - Purchase button (disabled if insufficient XP)
-  - On purchase: Deduct XP, add to mascotItems
+  - Special item: "Streak Saver" (50 XP, allows one budget overspend without breaking streak)
+  - On purchase: Deduct XP, add to mascotItems or increment streakSavers
 - **Lootbox Tab**:
   - Lootbox image (animated, vibrant purple glow)
   - Price display: "$0.99" (IAP)
@@ -494,18 +563,21 @@ const deleteHistoryItem = (itemId) => {
 - Bottom navigation bar: Dashboard | Saved | Shop | Mascot | Leaderboard
 
 **Behavior**:
-- Display mascot with currently equipped items
+- Display mascot with currently equipped items (koala color: #9e8fb2)
 - **Customize Tab**: Allow equipping/unequipping owned items
-- **Shop Tab**: Allow purchasing items with XP
+- **Shop Tab**: Allow purchasing items with XP, including streak savers
 - **Lootbox Tab**: Allow purchasing lootbox with real money (IAP)
 - On item equip: Update equippedItems in context
 - On item purchase: Deduct XP, add item to mascotItems
+- On streak saver purchase: Deduct 50 XP, increment streakSavers
 - On lootbox purchase: Trigger IAP, show animation, add random premium item
 - On bottom nav click: Navigate to respective route
+- Apply dark mode styles when darkMode is true
 
 **Shop Item Pricing**:
 ```javascript
 const shopItems = [
+  { id: "streaksaver", name: "Streak Saver", type: "utility", rarity: "special", cost: 50, description: "Protect your streak once" },
   { id: "hat1", name: "Party Hat", type: "hat", rarity: "common", cost: 50, imageUrl: "..." },
   { id: "hat2", name: "Crown", type: "hat", rarity: "rare", cost: 150, imageUrl: "..." },
   { id: "acc1", name: "Sunglasses", type: "accessory", rarity: "common", cost: 75, imageUrl: "..." },
@@ -574,6 +646,58 @@ const purchaseLootbox = async () => {
 **Behavior**:
 - On tab click: Navigate to corresponding route
 - Highlight current active tab based on current route
+
+### 13. Grimace Easter Egg Component
+
+**Route**: `/grimace`
+
+**Trigger**: Tap mascot on Dashboard 3 times, enter passcode "grimace"
+
+**Props**: None (uses AppContext and `useNavigate`)
+
+**UI Elements**:
+- Full-screen Grimace character from McDonald's
+- Purple theme matching Grimace's color
+- Fun animations or effects
+- Back button to return to Dashboard
+- Optional: Special Grimace-themed mascot item unlock
+
+**Behavior**:
+- Display Grimace character with animations
+- On back button: Navigate to `/dashboard`
+- Optional: Award special Grimace mascot item on first visit
+- Apply dark mode styles when darkMode is true
+
+**Easter Egg Trigger Logic**:
+```javascript
+// In Dashboard component
+let mascotTapCount = 0;
+let lastTapTime = 0;
+
+const handleMascotTap = () => {
+  const now = Date.now();
+  
+  // Reset if more than 2 seconds between taps
+  if (now - lastTapTime > 2000) {
+    mascotTapCount = 0;
+  }
+  
+  mascotTapCount++;
+  lastTapTime = now;
+  
+  if (mascotTapCount === 3) {
+    showPasscodePrompt();
+  }
+};
+
+const showPasscodePrompt = () => {
+  const passcode = prompt("Enter passcode:");
+  if (passcode === "grimace") {
+    navigate("/grimace");
+  }
+  mascotTapCount = 0;
+};
+```
 
 ## Data Models
 
@@ -812,6 +936,30 @@ const purchaseLootbox = async () => {
 
 **Validates: Requirements (new feature)**
 
+### Property 20: Streak Increment on Budget Compliance
+
+*For any* shopping trip where the total spent is less than or equal to the user's budget, when the user submits the trip, the streak should increment by 1.
+
+**Validates: Requirements (new feature)**
+
+### Property 21: Streak Break on Budget Overspend
+
+*For any* shopping trip where the total spent exceeds the user's budget and the user has no streak savers, when the user submits the trip, the streak should reset to 0.
+
+**Validates: Requirements (new feature)**
+
+### Property 22: Streak Saver Protection
+
+*For any* shopping trip where the total spent exceeds the user's budget and the user has at least one streak saver, when the user chooses to use a streak saver, the streak should remain unchanged and streak savers should decrement by 1.
+
+**Validates: Requirements (new feature)**
+
+### Property 23: Dark Mode Persistence
+
+*For any* dark mode toggle state, when the user changes the setting, the preference should persist across sessions and apply to all pages.
+
+**Validates: Requirements (new feature)**
+
 ## Error Handling
 
 ### Input Validation
@@ -999,14 +1147,28 @@ src/
 
 **Mobile-First CSS with Vibrant Purple Theme**:
 - Primary color: Vibrant purple (#8B5CF6 or similar Apple HIG-compliant)
+- Mascot color: #9e8fb2 (muted purple for koala)
+- Typography: Josefin Sans
+  - Headers: 600-700 weight
+  - Body: 400-500 weight
 - Use flexbox for layouts
 - Touch-friendly button sizes (minimum 44x44px)
 - Clear visual feedback for interactions (purple highlights)
 - Smooth transitions between states
 - Purple accents on active states, buttons, progress bars
 
+**Dark Mode**:
+- Background: #1a1a1a (dark gray)
+- Text: #f5f5f5 (light gray)
+- Cards/surfaces: #2d2d2d (slightly lighter gray)
+- Primary purple remains #8B5CF6 (vibrant in both modes)
+- Mascot color remains #9e8fb2
+- Borders: #404040 (subtle gray)
+- Shadows: Reduced opacity in dark mode
+
 **Apple HIG Compliance**:
 - Use system fonts (San Francisco on iOS, -apple-system in CSS)
+- Josefin Sans for branding and hierarchy
 - Follow iOS color schemes with purple as primary
 - Implement standard iOS gestures (swipe-to-delete)
 - Use appropriate spacing and padding (8px, 16px, 24px grid)
@@ -1026,6 +1188,9 @@ src/
     },
     "xp": number,
     "savings": number,
+    "streak": number,
+    "streakSavers": number,
+    "darkMode": boolean,
     "defaultItems": Array<{
       "id": string,
       "name": string,
@@ -1043,6 +1208,7 @@ src/
       "items": Array,
       "results": Object,
       "xpEarned": number,
+      "totalSpent": number,
       "timestamp": number
     }>,
     "mascotItems": Array<{       // Owned mascot items
