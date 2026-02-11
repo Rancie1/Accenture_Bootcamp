@@ -955,7 +955,7 @@ const deleteHistoryItem = (itemId) => {
     
     <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
       <button className="flex-1 py-3 text-primary border-b-2 border-primary font-medium">
-        Customize
+        Customise
       </button>
       <button className="flex-1 py-3 text-gray-500 dark:text-gray-400 font-medium">
         Shop
@@ -967,7 +967,7 @@ const deleteHistoryItem = (itemId) => {
   </div>
   
   <div className="p-4">
-    {/* Customize Tab */}
+    {/* Customise Tab */}
     <div className="grid grid-cols-3 gap-4">
       {mascotItems.map(item => (
         <div 
