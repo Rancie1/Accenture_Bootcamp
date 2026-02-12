@@ -3,7 +3,6 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import LootboxAnimation from '../components/LootboxAnimation';
 import MascotPreview from '../components/MascotPreview';
-import { Flame } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -249,7 +248,7 @@ const Mascot = () => {
             <p className="text-xl font-bold text-primary">{xp} XP</p>
           </div>
           <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full flex items-center gap-2">
-            <Flame className="text-primary" size={20} />
+            <LucideIcons.Flame className="text-primary" size={20} />
             <span className="text-primary font-medium">{streak} day streak</span>
           </div>
         </div>
@@ -267,33 +266,36 @@ const Mascot = () => {
         <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('customize')}
-            className={`flex-1 py-3 font-medium transition-colors ${
+            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
               activeTab === 'customize'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
-            Customize
+            <LucideIcons.Palette size={16} />
+            <span>Customize</span>
           </button>
           <button
             onClick={() => setActiveTab('shop')}
-            className={`flex-1 py-3 font-medium transition-colors ${
+            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
               activeTab === 'shop'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
-            Shop
+            <LucideIcons.ShoppingCart size={16} />
+            <span>Shop</span>
           </button>
           <button
             onClick={() => setActiveTab('lootbox')}
-            className={`flex-1 py-3 font-medium transition-colors ${
+            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
               activeTab === 'lootbox'
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
-            Lootbox
+            <LucideIcons.Gift size={16} />
+            <span>Lootbox</span>
           </button>
         </div>
       </div>
