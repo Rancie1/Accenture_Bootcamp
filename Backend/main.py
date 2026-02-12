@@ -126,10 +126,26 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on application startup"""
+    """Initialize database and external connections on application startup."""
     init_db(seed_demo_data=True)
     print("✓ Database initialized (in-memory SQLite)")
     print("✓ Demo historical price data seeded")
+
+    # Create the Coles MCP client (Agent will connect on first use)
+    from services.agent import get_mcp_client
+    try:
+        get_mcp_client()
+        print("✓ Coles MCP client ready")
+    except Exception as e:
+        print(f"⚠ Coles MCP client failed to initialise: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanly shut down long-lived connections."""
+    from services.agent import shutdown_mcp_client
+    shutdown_mcp_client()
+    print("✓ MCP client shut down")
 
 
 @app.get("/", tags=["system"])
