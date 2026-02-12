@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from database import init_db
-from routers import user, grocery
+from routers import user, grocery, chat
 
 # Load environment variables
 load_dotenv()
@@ -23,6 +23,7 @@ app = FastAPI(
 # Include routers
 app.include_router(user.router)
 app.include_router(grocery.router)
+app.include_router(chat.router)
 
 # Configure CORS middleware
 app.add_middleware(

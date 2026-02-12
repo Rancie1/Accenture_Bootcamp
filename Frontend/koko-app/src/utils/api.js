@@ -1,13 +1,14 @@
 /**
- * API utility for n8n integration
+ * API utility for Strands Agent chat integration
  * Requirements: 3.2, 3.5, 3.6
  */
 
-// n8n webhook URL - should be configured via environment variable in production
-const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL || 'https://n8n.example.com/webhook/shopping-list';
+// FastAPI backend URL - should be configured via environment variable in production
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const CHAT_ENDPOINT = `${API_URL}/chat`;
 
 /**
- * Send message to n8n for processing
+ * Send message to Strands Agent via FastAPI backend for processing
  * @param {Array} shoppingList - Current shopping list
  * @param {string} message - Text message from user
  * @param {string} audioData - Base64 encoded audio data (optional)
@@ -19,10 +20,9 @@ export const sendMessageToN8n = async (shoppingList, message = '', audioData = n
       shoppingList: shoppingList || [],
       message: message.trim(),
       audioData: audioData,
-      timestamp: Date.now()
     };
 
-    const response = await fetch(N8N_WEBHOOK_URL, {
+    const response = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ export const sendMessageToN8n = async (shoppingList, message = '', audioData = n
 
     // Validate response structure
     if (!data.reply) {
-      throw new Error('Invalid response from n8n: missing reply field');
+      throw new Error('Invalid response from server: missing reply field');
     }
 
     return {
@@ -46,7 +46,7 @@ export const sendMessageToN8n = async (shoppingList, message = '', audioData = n
       updatedList: data.updatedList || shoppingList
     };
   } catch (error) {
-    console.error('Error communicating with n8n:', error);
+    console.error('Error communicating with backend:', error);
     
     // Return error response
     throw new Error(
@@ -58,14 +58,14 @@ export const sendMessageToN8n = async (shoppingList, message = '', audioData = n
 };
 
 /**
- * Transcribe audio using n8n integration
+ * Transcribe audio using backend integration
  * This is a helper function that can be used separately if needed
  * @param {string} audioData - Base64 encoded audio data
  * @returns {Promise<string>} - Transcribed text
  */
 export const transcribeAudio = async (audioData) => {
   try {
-    const response = await fetch(`${N8N_WEBHOOK_URL}/transcribe`, {
+    const response = await fetch(`${API_URL}/transcribe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export const transcribeAudio = async (audioData) => {
 /**
  * Parse natural language items from text
  * This is a mock implementation for development/testing
- * In production, this would be handled by n8n
+ * In production, this would be handled by the Strands agent
  * @param {string} text - Natural language description of items
  * @returns {Array} - Parsed shopping list items
  */
@@ -123,8 +123,8 @@ export const parseItemsFromText = (text) => {
 };
 
 /**
- * Mock n8n response for development/testing
- * This simulates the n8n webhook response
+ * Mock response for development/testing
+ * This simulates the backend response when no backend is running
  * @param {Array} shoppingList - Current shopping list
  * @param {string} message - User message
  * @returns {Promise<{reply: string, updatedList: Array}>}
@@ -169,12 +169,13 @@ export const mockN8nResponse = async (shoppingList, message) => {
   };
 };
 
-// For development, use mock responses if n8n URL is not configured
+// For development, use mock responses if backend URL is not configured or unreachable
 export const sendMessageToN8nWithFallback = async (shoppingList, message, audioData) => {
-  if (N8N_WEBHOOK_URL.includes('example.com')) {
-    // Use mock response for development
+  // Always try the real backend first; fall back to mock if it fails
+  try {
+    return await sendMessageToN8n(shoppingList, message, audioData);
+  } catch (error) {
+    console.warn('Backend unavailable, using mock response:', error.message);
     return mockN8nResponse(shoppingList, message);
   }
-  
-  return sendMessageToN8n(shoppingList, message, audioData);
 };
