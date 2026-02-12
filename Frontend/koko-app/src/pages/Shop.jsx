@@ -25,7 +25,7 @@ import {
   Trash2,
   Receipt
 } from "lucide-react";
-import { sendMessageToN8nWithFallback, optimizeGroceries } from "../utils/api";
+import { sendMessageToN8nWithFallback } from "../utils/api";
 import * as LucideIcons from "lucide-react";
 
 /**
@@ -629,33 +629,10 @@ const Shop = () => {
       const finalMessages = [...updatedMessages, botMsg];
       setMessages(finalMessages);
 
-      // 2. Enrich shopping list with price predictions from backend
-      let enrichedList = response.updatedList || shoppingList;
-      try {
-        if (enrichedList.length > 0) {
-          // Use a demo user_id for now (could be made dynamic later)
-          const userId = userPreferences.userId || "demo_user_001";
-          const itemNames = enrichedList.map((item) => item.name);
-
-          const optimizationResult = await optimizeGroceries(userId, itemNames);
-
-          // Merge price predictions into shopping list
-          enrichedList = enrichedList.map((item) => {
-            const matchedItem = optimizationResult.item_breakdown.find(
-              (apiItem) => apiItem.item_name === item.name
-            );
-
-            return {
-              ...item,
-              price_prediction: matchedItem?.price_prediction || null
-            };
-          });
-
-          setShoppingList(enrichedList);
-        }
-      } catch (optimizeError) {
-        console.error("Error enriching with price predictions:", optimizeError);
-        // Continue anyway - price predictions are a nice-to-have
+      // 2. Use the shopping list returned by the Strands agent (already has prices + isGoodBuy)
+      const enrichedList = response.updatedList || shoppingList;
+      if (enrichedList.length > 0) {
+        setShoppingList(enrichedList);
       }
 
       // 3. Navigate to results with enriched data

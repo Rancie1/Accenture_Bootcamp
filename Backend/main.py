@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from database import init_db
-from routers import user, grocery, transport, weekly_plan, leaderboard, chat
+from routers import user, transport, weekly_plan, leaderboard, chat
 from error_handlers import register_exception_handlers
 
 # Load environment variables
@@ -77,10 +77,6 @@ Common status codes:
             "description": "User onboarding and management operations"
         },
         {
-            "name": "grocery",
-            "description": "Grocery optimization with price predictions"
-        },
-        {
             "name": "transport",
             "description": "Transport cost comparison for fuel purchases"
         },
@@ -108,7 +104,6 @@ register_exception_handlers(app)
 
 # Include routers
 app.include_router(user.router)
-app.include_router(grocery.router)
 app.include_router(transport.router)
 app.include_router(weekly_plan.router)
 app.include_router(leaderboard.router)

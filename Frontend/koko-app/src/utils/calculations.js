@@ -4,23 +4,80 @@
  */
 
 /**
+ * XP requirements for each level (cumulative)
+ * Level 1: 0 XP
+ * Level 2: 100 XP
+ * Level 3: 250 XP
+ * Level 4: 450 XP
+ * Level 5: 700 XP
+ * Level 6: 1000 XP
+ * Level 7: 1350 XP
+ * Level 8: 1750 XP
+ * Level 9: 2200 XP
+ * Level 10: 2700 XP
+ */
+const LEVEL_THRESHOLDS = [
+  0,    // Level 1
+  100,  // Level 2
+  250,  // Level 3
+  450,  // Level 4
+  700,  // Level 5
+  1000, // Level 6
+  1350, // Level 7
+  1750, // Level 8
+  2200, // Level 9
+  2700  // Level 10
+];
+
+/**
  * Calculate user level from total XP
- * Level = Math.floor(xp / 100) + 1
  * @param {number} xp - Total experience points
- * @returns {number} User level
+ * @returns {number} User level (1-10)
  */
 export const calculateLevel = (xp) => {
-  return Math.floor(xp / 100) + 1;
+  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (xp >= LEVEL_THRESHOLDS[i]) {
+      return i + 1;
+    }
+  }
+  return 1;
 };
 
 /**
  * Calculate progress toward next level
- * Progress = xp % 100
  * @param {number} xp - Total experience points
- * @returns {number} Progress (0-99)
+ * @returns {number} Progress (0-99 for levels 1-9, 0-100 for level 10)
  */
 export const calculateProgress = (xp) => {
-  return xp % 100;
+  const currentLevel = calculateLevel(xp);
+  
+  // Max level reached
+  if (currentLevel >= 10) {
+    return 100;
+  }
+  
+  const currentLevelXp = LEVEL_THRESHOLDS[currentLevel - 1];
+  const nextLevelXp = LEVEL_THRESHOLDS[currentLevel];
+  const xpIntoLevel = xp - currentLevelXp;
+  const xpNeededForLevel = nextLevelXp - currentLevelXp;
+  
+  return Math.floor((xpIntoLevel / xpNeededForLevel) * 100);
+};
+
+/**
+ * Get XP required for next level
+ * @param {number} xp - Total experience points
+ * @returns {number} XP needed to reach next level
+ */
+export const getXpForNextLevel = (xp) => {
+  const currentLevel = calculateLevel(xp);
+  
+  if (currentLevel >= 10) {
+    return 0; // Max level
+  }
+  
+  const nextLevelXp = LEVEL_THRESHOLDS[currentLevel];
+  return nextLevelXp - xp;
 };
 
 /**
