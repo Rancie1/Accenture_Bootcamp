@@ -28,7 +28,11 @@ def lookup_coles_prices(items: list[str], location: str = "") -> dict:
         location: Optional address or suburb to find nearby Coles stores (e.g. "30 Campbell St, Parramatta NSW 2150").
 
     Returns:
-        dict with current Coles prices for the requested items and optionally nearby store locations.
+        dict with current Coles prices for the requested items and optionally nearby
+        store locations including latitude/longitude coordinates. When a location is
+        provided, the response may include store name, address, lat, and lon for each
+        nearby Coles store — these coordinates can be passed to get_directions for
+        precise navigation.
     """
     webhook_url = os.getenv(
         "N8N_COLES_WEBHOOK_URL",
