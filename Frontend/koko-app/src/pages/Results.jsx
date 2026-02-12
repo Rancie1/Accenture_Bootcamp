@@ -1,19 +1,8 @@
-import { useContext, useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
-import { calculateXpEarned } from "../utils/calculations";
-import {
-  ArrowLeft,
-  ShoppingCart,
-  MessageSquare,
-  DollarSign,
-  ChevronDown,
-  ChevronUp,
-  Footprints,
-  Bus,
-  Car,
-  MapPin
-} from "lucide-react";
+import { useContext, useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { AppContext } from '../context/AppContext';
+import { calculateXpEarned } from '../utils/calculations';
+import { ArrowLeft, ShoppingCart, MessageSquare, DollarSign, ChevronDown, ChevronUp, Footprints, Bus, Car, MapPin, Fuel, Sparkles, TrendingDown } from 'lucide-react';
 
 /**
  * Results Component
@@ -99,6 +88,10 @@ const Results = () => {
     (item) => !item.price || item.price <= 0
   );
 
+  // Items flagged as a good buy by the backend price-trend check
+  const goodBuyItems = useMemo(() => shoppingList.filter(item => item.isGoodBuy), [shoppingList]);
+  const GOOD_CHOICE_XP_BONUS = 10;
+
   // ── Extract transport cost from agent's last message ────────────────
   // The last bot message before navigation is the transport response.
   // Try to parse the actual cost the agent calculated.
@@ -107,43 +100,60 @@ const Results = () => {
     const botMessages = [...chatMessages].reverse().filter((m) => !m.isUser);
     for (const msg of botMessages) {
       // Strip markdown bold markers so **transport cost**: parses cleanly
-      const text = (msg.text || "").replace(/\*{1,2}/g, "");
+      const text = (msg.text || '').replace(/\*{1,2}/g, '');
+      const lines = text.split('\n');
 
-      // 1. "approximately $2.09" — the agent's preferred phrasing for calculated costs
-      const approxMatch = text.match(/approximately\s*\$(\d+\.?\d*)/i);
-      if (approxMatch) return parseFloat(approxMatch[1]);
+      // 1. "(round trip: $1.88)" or "round trip): $1.88" on any line
+      for (const line of lines) {
+        const rtMatch = line.match(/round\s*trip\)?[:\s]*\$(\d+\.?\d*)/i);
+        if (rtMatch) return parseFloat(rtMatch[1]);
+      }
 
-      // 2. "transport cost is $X.XX" / "transport cost: $X.XX"
-      const transportIsMatch = text.match(
-        /transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i
-      );
+      // 2. "Transport cost (round trip): $0.02" — header line
+      const roundTripMatch = text.match(/transport cost\s*\(round[^)]*\)[^$]*\$(\d+\.?\d*)/i);
+      if (roundTripMatch) return parseFloat(roundTripMatch[1]);
+
+      // 3. "transport cost is $X.XX" / "transport cost: $X.XX"
+      //    Avoid matching "total trip cost"
+      const transportIsMatch = text.match(/(?<!total\s+(?:trip\s+)?)transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
       if (transportIsMatch) return parseFloat(transportIsMatch[1]);
 
-      // 3. "fuel cost is $X.XX" / "fuel cost will be … $X.XX"
-      const fuelCostMatch = text.match(
-        /fuel cost\s*(?:is|will be|:|=)[^$]*\$(\d+\.?\d*)/i
-      );
-      if (fuelCostMatch) return parseFloat(fuelCostMatch[1]);
+      // 4. "estimated transport cost is $X.XX" or just "transport cost is $9.23"
+      const estimatedMatch = text.match(/(?:estimated\s+)?transport cost[^$]*\$(\d+\.?\d*)/i);
+      if (estimatedMatch && !/total\s+trip/i.test(estimatedMatch[0])) {
+        return parseFloat(estimatedMatch[1]);
+      }
 
-      // 4. Grab the LAST "$X.XX" in any message that mentions "transport cost"
-      if (/transport cost/i.test(text)) {
-        const allDollars = [...text.matchAll(/\$(\d+\.?\d*)/g)];
-        if (allDollars.length > 0) {
-          return parseFloat(allDollars[allDollars.length - 1][1]);
+      // 5. "approximately $2.09" on a line that also says "transport" (not "total trip")
+      for (const line of lines) {
+        if (/transport/i.test(line) && !/total\s+trip/i.test(line)) {
+          const approxMatch = line.match(/approximately\s*\$(\d+\.?\d*)/i);
+          if (approxMatch) return parseFloat(approxMatch[1]);
         }
       }
 
-      // 5. Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
-      const fareMatch =
-        text.match(/fare[^$]*\$(\d+\.?\d*)/i) ||
-        text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
+      // 6. "fuel cost is $X.XX" / "fuel cost will be … $X.XX"
+      const fuelCostMatch = text.match(/fuel cost\s*(?:is|will be|:|=)[^$]*\$(\d+\.?\d*)/i);
+      if (fuelCostMatch) return parseFloat(fuelCostMatch[1]);
+
+      // 7. Lines containing "Cost:" with a dollar amount (from agent breakdowns)
+      //    e.g. "- Cost: 0.64 × 1.473 = $0.94 (round trip: $1.88)"
+      //    Prefer the last dollar on that line (usually the round trip)
+      for (const line of lines) {
+        if (/^\s*-?\s*cost\s*:/i.test(line) && !/total/i.test(line)) {
+          const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
+          if (allDollars.length > 0) {
+            return parseFloat(allDollars[allDollars.length - 1][1]);
+          }
+        }
+      }
+
+      // 8. Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
+      const fareMatch = text.match(/fare[^$]*\$(\d+\.?\d*)/i) || text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
       if (fareMatch) return parseFloat(fareMatch[1]);
 
-      // 6. For walking, look for "$0" or "free" mentions
-      if (
-        transportMode === "walking" &&
-        /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)
-      ) {
+      // 9. For walking, look for "$0" or "free" mentions
+      if (transportMode === 'walking' && /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)) {
         return 0;
       }
     }
@@ -153,6 +163,27 @@ const Results = () => {
   const initialTransportCost =
     parsedTransportCost !== null ? parsedTransportCost : transport.defaultCost;
 
+  // ── Parse fuel price per litre from agent messages ──────────────────
+  const parsedFuelPricePerLitre = useMemo(() => {
+    const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
+    for (const msg of botMessages) {
+      const text = (msg.text || '').replace(/\*{1,2}/g, '');
+
+      // "Fuel price: 1.519 $/L" or "fuel price: $1.47/L" or "1.47 dollars per litre"
+      const fuelPriceMatch = text.match(/fuel price[^$\d]*\$?(\d+\.?\d*)\s*(?:\/L|\$\/L|dollars?\s*per\s*litre|AUD\/L)/i);
+      if (fuelPriceMatch) return parseFloat(fuelPriceMatch[1]);
+
+      // "at 147.3 cents/L"
+      const centsMatch = text.match(/(\d+\.?\d*)\s*cents?\s*\/?\s*L/i);
+      if (centsMatch) return parseFloat(centsMatch[1]) / 100;
+
+      // "$1.47/L" or "1.47 $/L" standalone
+      const perLitreMatch = text.match(/\$(\d+\.?\d*)\s*\/\s*L/i);
+      if (perLitreMatch) return parseFloat(perLitreMatch[1]);
+    }
+    return null;
+  }, [chatMessages]);
+
   // ── Transport cost state ───────────────────────────────────────────
   const [transportCost, setTransportCost] = useState(initialTransportCost);
   const [transportCostInput, setTransportCostInput] = useState(
@@ -160,7 +191,7 @@ const Results = () => {
   );
   const [showTransportEdit, setShowTransportEdit] = useState(false);
 
-  // Total = groceries + transport
+  // Total = groceries + transport (fuel fill-up shown separately)
   const estimatedTotal = groceryTotal + transportCost;
 
   // ── Adjust cost state ──────────────────────────────────────────────
@@ -199,6 +230,7 @@ const Results = () => {
       setTransportCost(0);
     }
   };
+
 
   const handleCostInputChange = (value) => {
     setCustomCostInput(value);
@@ -335,24 +367,16 @@ const Results = () => {
                 className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {item.name}
-                  </p>
-                  {item.price_prediction && (
-                    <div className="mt-1 mb-1">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          item.price_prediction === "likely to drop next week"
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400"
-                        }`}
-                      >
-                        {item.price_prediction === "likely to drop next week"
-                          ? "Good time to buy"
-                          : "Price above average"}
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {item.name}
+                    </p>
+                    {item.isGoodBuy && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <TrendingDown size={10} /> Good buy
                       </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Qty: {item.quantity || 1}
                   </p>
@@ -396,6 +420,21 @@ const Results = () => {
             {itemsWithoutPrice.length === 1 ? "item has" : "items have"} no
             price — total may be higher.
           </p>
+        )}
+
+        {/* Good Buy Summary */}
+        {goodBuyItems.length > 0 && (
+          <div className="mt-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-3.5 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles size={16} className="text-emerald-500" />
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                Great timing! +{goodBuyItems.length * GOOD_CHOICE_XP_BONUS} XP
+              </p>
+            </div>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400/80 ml-6">
+              {goodBuyItems.map(i => i.name).join(', ')} {goodBuyItems.length === 1 ? 'is' : 'are'} at a great price right now based on recent trends!
+            </p>
+          </div>
         )}
       </div>
 
@@ -481,6 +520,16 @@ const Results = () => {
             </p>
           </div>
         </div>
+
+        {/* Fuel price per litre note — only for driving mode */}
+        {transportMode === 'driving' && parsedFuelPricePerLitre !== null && (
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            <Fuel size={14} className="text-orange-500" />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Plus fuel at <span className="font-semibold text-orange-500 dark:text-orange-400">${parsedFuelPricePerLitre.toFixed(2)}/L</span> if you fill up
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Budget Comparison Card ───────────────────────────────────── */}
@@ -603,7 +652,7 @@ const Results = () => {
                   key={msg.id}
                   className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
                 >
-                  {msg.text}
+                  {(msg.text || '').replace(/\*\*/g, '')}
                 </div>
               ))}
             </div>
