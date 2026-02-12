@@ -5,7 +5,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import useSwipeGesture from '../hooks/useSwipeGesture';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp } from 'lucide-react';
+import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -140,7 +140,6 @@ const Shop = () => {
   const navigate = useNavigate();
   const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history } = useContext(AppContext);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [showManualMode, setShowManualMode] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -149,6 +148,7 @@ const Shop = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [priceHistoryProduct, setPriceHistoryProduct] = useState(null);
+  const [productQuantities, setProductQuantities] = useState({});
   const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
   
   // Chat state
@@ -359,7 +359,6 @@ const Shop = () => {
    */
   const handleToggleManualMode = () => {
     setShowManualMode(!showManualMode);
-    setShowModeDropdown(false);
   };
 
   /**
@@ -463,7 +462,7 @@ const Shop = () => {
       
       {/* Watch List Overlay */}
       {showManualMode && (
-        <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-40 overflow-y-auto">
+        <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-40 overflow-y-auto animate-slide-in-right">
           <div className="bg-white dark:bg-gray-800 p-6 shadow-sm sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -488,6 +487,7 @@ const Shop = () => {
             <div className="grid grid-cols-1 gap-4">
               {sampleProducts.map(product => {
                 const inList = shoppingList.some(i => i.name === product.name);
+                const quantity = productQuantities[product.id] || 1;
                 return (
                   <div key={product.id} className="relative">
                     <div
@@ -531,6 +531,27 @@ const Shop = () => {
                             </div>
                           )}
 
+                          {/* Quantity Input */}
+                          {!inList && product.stock > 0 && (
+                            <div className="mb-3">
+                              <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Quantity</label>
+                              <input
+                                type="number"
+                                min="1"
+                                max={product.stock}
+                                value={quantity}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 1;
+                                  setProductQuantities({
+                                    ...productQuantities,
+                                    [product.id]: Math.min(Math.max(1, val), product.stock)
+                                  });
+                                }}
+                                className="w-24 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                            </div>
+                          )}
+
                           <div className="flex gap-2 mt-3">
                             <button
                               onClick={() => {
@@ -539,15 +560,23 @@ const Shop = () => {
                                     id: product.id, 
                                     name: product.name, 
                                     icon: 'ShoppingBag', 
-                                    quantity: 1,
+                                    quantity: quantity,
                                     price: product.price 
                                   }]);
+                                  // Reset quantity after adding
+                                  setProductQuantities({
+                                    ...productQuantities,
+                                    [product.id]: 1
+                                  });
+                                } else {
+                                  // Remove from list if already added
+                                  setShoppingList(shoppingList.filter(i => i.id !== product.id));
                                 }
                               }}
                               disabled={product.stock === 0}
                               className={`flex-1 py-2.5 rounded-xl font-semibold transition-all ${
                                 inList 
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-400'
                                   : product.stock === 0
                                   ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
                                   : 'bg-primary text-white hover:bg-primary/90 active:scale-95'
@@ -596,9 +625,10 @@ const Shop = () => {
                 setShowManualMode(false);
                 handleStartAIMode();
               }}
-              className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-6"
+              className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-6 flex items-center justify-center gap-2"
             >
-              {shoppingList.length > 0 ? 'Continue with AI Assistant' : 'Start with AI Assistant'}
+              <MessageSquare size={22} />
+              {shoppingList.length > 0 ? 'Continue editing your list' : 'Start your list'}
             </button>
           </div>
         </div>
@@ -653,9 +683,9 @@ const Shop = () => {
         }`}>
           <div className="text-center px-6 mb-2 shrink-0">
             <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-              Hi, {userPreferences.name || 'there'}! 👋
+              Hi, {userPreferences.name || 'there'}!
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-gray-600 dark:text-white text-sm">
               I'm here to help you shop smarter
             </p>
           </div>
@@ -710,38 +740,25 @@ const Shop = () => {
           )}
 
           <div className="px-6 pb-2 shrink-0">
-            <div className="relative">
-              <div className="flex gap-2">
-                <button
-                  onClick={handleStartAIMode}
-                  className="flex-1 py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
-                >
-                  <MessageSquare size={22} />
-                  Start your list
-                </button>
-                <button
-                  onClick={() => setShowModeDropdown(!showModeDropdown)}
-                  className="py-3.5 px-3.5 bg-primary text-white rounded-xl shadow-lg active:scale-95 transition-transform"
-                >
-                  <ChevronDown size={22} className={`transition-transform ${showModeDropdown ? 'rotate-180' : ''}`} />
-                </button>
-              </div>
-
-              {showModeDropdown && (
-                <div className="absolute bottom-full mb-2 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden z-10 min-w-[200px]">
-                  <button
-                    onClick={handleToggleManualMode}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-900 dark:text-white"
-                  >
-                    <Eye size={20} />
-                    <span>Watch List</span>
-                  </button>
-                </div>
-              )}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleStartAIMode}
+                className="w-full py-3.5 bg-primary text-white rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+              >
+                <MessageSquare size={22} />
+                {shoppingList.length > 0 ? 'Continue editing your list' : 'Start your list'}
+              </button>
+              <button
+                onClick={handleToggleManualMode}
+                className="w-full py-3.5 bg-white dark:bg-gray-800 text-primary dark:text-primary border-2 border-primary rounded-xl font-semibold text-base shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2"
+              >
+                <Eye size={22} />
+                Watch List
+              </button>
             </div>
 
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-              Chat with me to build your list, or use watch list
+              Chat with me to build your list, or browse products
             </p>
           </div>
         </div>
@@ -897,7 +914,7 @@ const Shop = () => {
               )}
             </div>
 
-            <div className="space-y-2">
+              <div className="space-y-2">
               <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Items ({selectedHistoryEntry.items.length})</h4>
               {selectedHistoryEntry.items.map((item) => (
                 <div
@@ -908,15 +925,34 @@ const Shop = () => {
                     <div className="text-gray-700 dark:text-gray-300">
                       {renderIcon(item.icon, 24)}
                     </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {item.name}
-                    </span>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {item.name}
+                      </span>
+                      {item.quantity > 1 && (
+                        <span className="text-sm text-gray-600 dark:text-gray-400 ml-2">
+                          ×{item.quantity}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {item.quantity > 1 && (
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      ×{item.quantity}
-                    </span>
-                  )}
+                  <button
+                    onClick={() => {
+                      // Add this specific item to shopping list if not already there
+                      if (!shoppingList.some(listItem => listItem.name === item.name)) {
+                        setShoppingList([...shoppingList, item]);
+                      }
+                    }}
+                    disabled={shoppingList.some(listItem => listItem.name === item.name)}
+                    className={`p-2 rounded-lg transition-all ${
+                      shoppingList.some(listItem => listItem.name === item.name)
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                        : 'bg-primary/10 dark:bg-primary/20 text-primary hover:bg-primary hover:text-white'
+                    }`}
+                    aria-label={`Add ${item.name} to cart`}
+                  >
+                    <ShoppingCart size={16} />
+                  </button>
                 </div>
               ))}
             </div>

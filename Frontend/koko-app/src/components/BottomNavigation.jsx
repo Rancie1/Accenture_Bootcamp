@@ -14,7 +14,7 @@ const BottomNavigation = () => {
     { path: '/dashboard', icon: User, label: 'Profile' },
     { path: '/saved', icon: Bookmark, label: 'Saved' },
     { path: '/shop', icon: ShoppingCart, label: 'Shop' },
-    { path: '/mascot', icon: Sparkles, label: 'Mascot' },
+    { path: '/mascot', icon: Sparkles, label: 'Koko' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' }
   ];
 
