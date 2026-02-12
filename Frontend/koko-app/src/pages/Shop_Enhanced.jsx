@@ -167,6 +167,8 @@ const Shop = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+  const isRecordingRef = useRef(false);
+  const lastTranscriptRef = useRef('');
 
   // Sample history for demo
   const sampleHistory = [
@@ -201,40 +203,42 @@ const Shop = () => {
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.interimResults = false;
       recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        lastTranscriptRef.current = '';
+      };
 
       recognition.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
+        // Collect all final results during this session (don't update UI yet)
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-          } else {
-            interimTranscript += transcript;
+            lastTranscriptRef.current += event.results[i][0].transcript + ' ';
           }
-        }
-
-        if (finalTranscript) {
-          setInputText(prev => prev + finalTranscript);
-        } else if (interimTranscript) {
-          setInputText(prev => {
-            const lastFinalIndex = prev.lastIndexOf(' ');
-            const basePrev = lastFinalIndex > 0 ? prev.substring(0, lastFinalIndex + 1) : prev;
-            return basePrev + interimTranscript;
-          });
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
+        
+        if (event.error === 'not-allowed') {
+          isRecordingRef.current = false;
+          setIsRecording(false);
+          alert('Microphone access denied. Please enable microphone permissions.');
+        } else if (event.error === 'no-speech') {
+          // Ignore no-speech errors
+        } else {
+          isRecordingRef.current = false;
+          setIsRecording(false);
+        }
       };
 
       recognition.onend = () => {
+        isRecordingRef.current = false;
         setIsRecording(false);
+        // Don't update inputText here - let toggleRecording handle it
       };
 
       recognitionRef.current = recognition;
@@ -242,7 +246,11 @@ const Shop = () => {
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // Ignore errors on cleanup
+        }
       }
     };
   }, []);
@@ -344,15 +352,24 @@ const Shop = () => {
     }
 
     if (isRecording) {
+      isRecordingRef.current = false;
       recognitionRef.current.stop();
       setIsRecording(false);
+      
+      // Update input text with the final transcript when stopping
+      if (lastTranscriptRef.current.trim()) {
+        setInputText(prev => prev + lastTranscriptRef.current);
+      }
+      lastTranscriptRef.current = '';
     } else {
       try {
+        isRecordingRef.current = true;
         recognitionRef.current.start();
         setIsRecording(true);
       } catch (error) {
         console.error('Error starting speech recognition:', error);
-        setIsRecording(true);
+        isRecordingRef.current = false;
+        setIsRecording(false);
       }
     }
   };
@@ -627,21 +644,36 @@ const Shop = () => {
 
             <div className="pb-3 shrink-0">
               <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full shadow-2xl p-1.5 flex items-center gap-2">
-                <input 
-                  type="text" 
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Tell me what you need..."
-                  disabled={isLoading}
-                  className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 outline-none text-sm"
-                />
+                {isRecording ? (
+                  /* Waveform animation while recording */
+                  <div className="flex-1 px-4 py-2.5 flex items-center justify-center gap-1">
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '12px', animationDuration: '0.6s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '20px', animationDuration: '0.5s', animationDelay: '0.1s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '16px', animationDuration: '0.7s', animationDelay: '0.2s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '24px', animationDuration: '0.6s', animationDelay: '0.3s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '18px', animationDuration: '0.5s', animationDelay: '0.4s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '22px', animationDuration: '0.7s', animationDelay: '0.5s' }}></div>
+                    <div className="w-1 bg-red-500 rounded-full animate-pulse" style={{ height: '14px', animationDuration: '0.6s', animationDelay: '0.6s' }}></div>
+                    <span className="ml-2 text-red-500 text-sm font-medium">Recording...</span>
+                  </div>
+                ) : (
+                  /* Normal input field */
+                  <input 
+                    type="text" 
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Tell me what you need..."
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-2.5 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 outline-none text-sm"
+                  />
+                )}
                 <button 
                   onClick={toggleRecording}
                   disabled={isLoading}
                   className={`p-2.5 rounded-full transition-all ${
                     isRecording 
-                      ? 'bg-red-500 text-white animate-pulse' 
+                      ? 'bg-red-500 text-white' 
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >

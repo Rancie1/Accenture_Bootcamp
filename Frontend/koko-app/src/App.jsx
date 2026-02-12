@@ -6,7 +6,6 @@ import { AppProvider, AppContext } from './context/AppContext'
 const SplashScreen = lazy(() => import('./pages/SplashScreen'))
 const Registration = lazy(() => import('./pages/Registration'))
 const Shop = lazy(() => import('./pages/Shop'))
-const EditList = lazy(() => import('./pages/EditList'))
 const Results = lazy(() => import('./pages/Results'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
@@ -44,7 +43,6 @@ function AppContent() {
           <Route path="/" element={<SplashScreen />} />
           <Route path="/register" element={<Registration />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/edit-list" element={<EditList />} />
           <Route path="/results" element={<Results />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
