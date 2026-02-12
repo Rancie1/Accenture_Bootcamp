@@ -743,7 +743,7 @@ const Results = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               You spent ${finalCost.toFixed(2)}, which is over your budget of $
               {budget.toFixed(2)}. Use a Streak Saver to protect your {streak}{" "}
-              day streak?
+              saving streak?
             </p>
             <div className="flex gap-3">
               <button

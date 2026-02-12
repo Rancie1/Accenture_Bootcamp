@@ -173,7 +173,7 @@ const Dashboard = () => {
    * Handle share profile
    */
   const handleShare = async () => {
-    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: ${savings.toFixed(2)}\n🔥 ${streak} day streak\n\nJoin me in saving smarter!`;
+    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: ${savings.toFixed(2)}\n🔥 ${streak} saving streak\n\nJoin me in saving smarter!`;
     
     if (navigator.share) {
       try {
@@ -273,7 +273,7 @@ const Dashboard = () => {
           <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 flex flex-col items-center justify-end min-h-[100px]">
             <Flame className="text-primary mb-2" size={28} />
             <p className="text-xl font-bold text-primary">{streak}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">day streak</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">saving streak</p>
           </div>
           
           {/* Weekly XP Card */}
