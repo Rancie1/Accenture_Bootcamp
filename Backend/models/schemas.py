@@ -46,6 +46,8 @@ class GroceryOptimizationResponse(BaseModel):
     optimal_cost: float
     store_recommendations: list[str]
     item_breakdown: list[GroceryItem]
+    conversational_response: str | None = Field(None, description="Natural language response from n8n agent")
+    needs_clarification: bool | None = Field(False, description="Whether the agent needs more information from user")
 
 
 # Transport comparison schemas
@@ -70,6 +72,9 @@ class PetrolStation(BaseModel):
 class TransportComparisonResponse(BaseModel):
     """Response schema for transport comparison results."""
     stations: list[PetrolStation]
+    conversational_response: str | None = Field(None, description="Natural language response from n8n fuel agent")
+    location_details: str | None = Field(None, description="Location information from n8n location agent")
+    has_error: bool | None = Field(False, description="Whether the fuel price service encountered an error")
 
 
 # Weekly plan schemas

@@ -74,7 +74,8 @@ def test_record_weekly_plan_user_not_found(client):
     
     assert response.status_code == 404
     data = response.json()
-    assert data["detail"]["error_code"] == "NOT_FOUND"
+    assert data["error_code"] == "NOT_FOUND"
+    assert "message" in data
 
 
 def test_record_weekly_plan_invalid_actual_cost(client, db_session):
@@ -96,7 +97,9 @@ def test_record_weekly_plan_invalid_actual_cost(client, db_session):
         "actual_cost": 0.0
     })
     
-    assert response.status_code == 422
+    assert response.status_code == 400
+    data = response.json()
+    assert data["error_code"] == "VALIDATION_ERROR"
     
     # Try with negative actual_cost
     response = client.post("/weekly-plan/record", json={
@@ -105,7 +108,9 @@ def test_record_weekly_plan_invalid_actual_cost(client, db_session):
         "actual_cost": -10.0
     })
     
-    assert response.status_code == 422
+    assert response.status_code == 400
+    data = response.json()
+    assert data["error_code"] == "VALIDATION_ERROR"
 
 
 def test_record_weekly_plan_persistence(client, db_session):

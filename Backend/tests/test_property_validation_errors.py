@@ -69,11 +69,9 @@ def test_property_5_validation_error_response_format(invalid_data):
     # Send invalid data to onboard endpoint
     response = client.post("/onboard", json=invalid_data)
     
-    # Should return 400 or 422 status code for validation errors
-    # 422 = Pydantic validation errors (FastAPI default)
-    # 400 = Custom validation errors from service layer
-    assert response.status_code in [400, 422], \
-        f"Expected 400 or 422 status code for invalid input, got {response.status_code}"
+    # Should return 400 status code for validation errors
+    assert response.status_code == 400, \
+        f"Expected 400 status code for invalid input, got {response.status_code}"
     
     # Response should be valid JSON
     response_json = response.json()

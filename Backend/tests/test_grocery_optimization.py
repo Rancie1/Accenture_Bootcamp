@@ -9,7 +9,7 @@ import uuid
 
 
 def test_grocery_optimization_endpoint_validation_empty_list(client):
-    """Test that empty grocery list is rejected with 422 validation error"""
+    """Test that empty grocery list is rejected with 400 validation error"""
     response = client.post(
         "/optimise/groceries",
         json={
@@ -17,7 +17,9 @@ def test_grocery_optimization_endpoint_validation_empty_list(client):
             "grocery_list": []
         }
     )
-    assert response.status_code == 422  # Pydantic validation error
+    assert response.status_code == 400  # Validation error
+    data = response.json()
+    assert data["error_code"] == "VALIDATION_ERROR"
 
 
 def test_grocery_optimization_endpoint_user_not_found(client):

@@ -5,10 +5,14 @@ Handles transport cost comparison with n8n integration for petrol station data.
 """
 
 import os
+import logging
 from sqlalchemy.orm import Session
 from models.schemas import PetrolStation
 from services.user_service import get_user_by_id, NotFoundError
 from services.n8n_service import call_n8n_webhook, ServiceUnavailableError
+from services.n8n_response_parser import parse_n8n_response, format_for_transport_api
+
+logger = logging.getLogger(__name__)
 
 
 async def compare_transport_costs(
@@ -47,66 +51,65 @@ async def compare_transport_costs(
     user = await get_user_by_id(db, user_id)
     home_address = user.home_address
     
-    # 2. Call n8n main webhook (handles routing to Fuel + Maps agents)
+    # 2. Call n8n main webhook with correct payload format
     n8n_webhook_url = os.getenv(
-        "N8N_MAIN_WEBHOOK_URL",  # Your one webhook that handles everything
-        "http://localhost:5678/webhook/chat"  # Or whatever your webhook path is
+        "N8N_MAIN_WEBHOOK_URL",
+        "https://louisjean.app.n8n.cloud/webhook-test/26b8906b-6df5-4228-9d8b-859118b52338"
     )
     
-    # Format as a message for your n8n webhook
-    message = f"Compare fuel costs for {fuel_amount_needed}L from {home_address} to {destination}"
+    # Use user_id as sessionId for conversation continuity
+    session_id = user_id
     
+    # Format message for n8n to understand the transport comparison request
+    user_message = f"I need {fuel_amount_needed} liters of fuel. I'm traveling from {home_address} to {destination}. Please compare fuel costs at nearby petrol stations and show me the cheapest options."
+    
+    # n8n expects: {"sessionId": "...", "userMessage": "..."}
     payload = {
-        "message": message,
-        "home_address": home_address,
-        "destination": destination,
-        "fuel_amount_needed": fuel_amount_needed,
-        "type": "transport_comparison"  # Help n8n identify the request type
+        "sessionId": session_id,
+        "userMessage": user_message
     }
     
     # Get response from n8n
     n8n_response = await call_n8n_webhook(n8n_webhook_url, payload)
     
-    # 3. Parse petrol station data from n8n
-    # Expected n8n response format:
-    # {
-    #   "stations": [
-    #     {
-    #       "station_name": str,
-    #       "address": str,
-    #       "distance_from_home": float (km),
-    #       "price_per_liter": float,
-    #       "cost_to_reach_station": float,
-    #       "fuel_cost_at_station": float,
-    #       "total_cost": float
-    #     }
-    #   ]
-    # }
+    logger.info(f"Received n8n response: {n8n_response}")
     
-    stations_data = n8n_response.get("stations", [])
+    # 3. Parse n8n multi-agent response format
+    parsed_response = parse_n8n_response(n8n_response)
+    formatted_data = format_for_transport_api(parsed_response)
     
-    # 4. Calculate total costs and sort (if n8n didn't already do this)
+    # 4. Process station data
     stations = []
-    for station_data in stations_data:
-        # If n8n didn't calculate these, calculate them here
-        if "fuel_cost_at_station" not in station_data:
-            station_data["fuel_cost_at_station"] = (
-                fuel_amount_needed * station_data["price_per_liter"]
-            )
+    for station_data in formatted_data["stations"]:
+        # Calculate costs if not already calculated
+        if "fuel_cost_at_station" not in station_data or station_data["fuel_cost_at_station"] == 0.0:
+            # Use placeholder or estimate if price_per_liter is available
+            if station_data.get("price_per_liter", 0.0) > 0:
+                station_data["fuel_cost_at_station"] = (
+                    fuel_amount_needed * station_data["price_per_liter"]
+                )
         
-        if "total_cost" not in station_data:
+        if "total_cost" not in station_data or station_data["total_cost"] == 0.0:
             station_data["total_cost"] = (
-                station_data["cost_to_reach_station"] + 
-                station_data["fuel_cost_at_station"]
+                station_data.get("cost_to_reach_station", 0.0) + 
+                station_data.get("fuel_cost_at_station", 0.0)
             )
         
-        station = PetrolStation(**station_data)
-        stations.append(station)
+        # Create PetrolStation object
+        try:
+            station = PetrolStation(**station_data)
+            stations.append(station)
+        except Exception as e:
+            logger.warning(f"Failed to create PetrolStation from data: {station_data}, error: {e}")
+            continue
     
-    # Sort by total_cost ascending (cheapest first)
+    # 5. Sort by total_cost ascending (cheapest first)
     stations.sort(key=lambda s: s.total_cost)
     
-    # 5. Return sorted results
+    # 6. Return sorted results with conversational context
     return {
-        "stations": [station.model_dump() for station in stations]
+        "stations": [station.model_dump() for station in stations],
+        "conversational_response": formatted_data.get("conversational_response", ""),
+        "location_details": formatted_data.get("location_details", ""),
+        "has_error": formatted_data.get("has_error", False)
     }

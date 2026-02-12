@@ -5,11 +5,15 @@ Handles grocery optimization with n8n integration and price prediction enrichmen
 """
 
 import os
+import logging
 from sqlalchemy.orm import Session
 from models.schemas import GroceryItem
 from services.user_service import get_user_by_id, NotFoundError
 from services.n8n_service import call_n8n_webhook, ServiceUnavailableError
 from services.historical_price_service import get_historical_average
+from services.n8n_response_parser import parse_n8n_response, format_for_grocery_api
+
+logger = logging.getLogger(__name__)
 
 
 async def optimize_groceries(
@@ -43,55 +47,68 @@ async def optimize_groceries(
     user = await get_user_by_id(db, user_id)
     home_address = user.home_address
     
-    # 2. Call n8n main webhook (handles routing to all agents)
+    # 2. Call n8n main webhook with correct payload format
     n8n_webhook_url = os.getenv(
-        "N8N_MAIN_WEBHOOK_URL",  # Your one webhook that handles everything
-        "http://localhost:5678/webhook/chat"  # Or whatever your webhook path is
+        "N8N_MAIN_WEBHOOK_URL",
+        "https://louisjean.app.n8n.cloud/webhook-test/26b8906b-6df5-4228-9d8b-859118b52338"
     )
     
-    # Format as a chat message for your n8n webhook
-    # Your n8n will parse this message and route to Coles + Maps agents
-    message = f"Find grocery prices for {', '.join(grocery_list)} near {home_address}"
+    # Use user_id as sessionId for conversation continuity
+    session_id = user_id
     
+    # Format message for n8n to understand the grocery optimization request
+    user_message = f"I need to buy {', '.join(grocery_list)}. My address is {home_address}. Please find the best prices and stores for these items."
+    
+    # n8n expects: {"sessionId": "...", "userMessage": "..."}
     payload = {
-        "message": message,
-        "grocery_list": grocery_list,  # Include structured data too
-        "home_address": home_address,
-        "type": "grocery_optimization"  # Help n8n identify the request type
+        "sessionId": session_id,
+        "userMessage": user_message
     }
     
     # Get response from n8n
     n8n_response = await call_n8n_webhook(n8n_webhook_url, payload)
     
-    # 3. Parse optimization results from n8n
-    # Expected n8n response format:
-    # {
-    #   "optimal_cost": float,
-    #   "store_recommendations": [str],
-    #   "item_breakdown": [
-    #     {"item_name": str, "current_price": float, "store_name": str}
-    #   ]
-    # }
+    logger.info(f"Received n8n response: {n8n_response}")
     
-    # 4. Enrich each item with price prediction
+    # 3. Parse n8n multi-agent response format
+    parsed_response = parse_n8n_response(n8n_response)
+    formatted_data = format_for_grocery_api(parsed_response)
+    
+    # Check if n8n needs clarification
+    if formatted_data.get("needs_clarification"):
+        logger.info("n8n needs clarification from user")
+        # Return the conversational response for the user to provide more details
+        return {
+            "optimal_cost": 0.0,
+            "store_recommendations": formatted_data["store_recommendations"],
+            "item_breakdown": [],
+            "message": formatted_data["conversational_response"],
+            "needs_clarification": True
+        }
+    
+    # 4. Build item breakdown from grocery list
+    # Since n8n returns conversational responses, we create items from the original list
     items = []
-    for item_data in n8n_response.get("item_breakdown", []):
+    for item_name in grocery_list:
+        # Use placeholder prices - in production, parse from n8n response
         grocery_item = GroceryItem(
-            item_name=item_data["item_name"],
-            current_price=item_data["current_price"],
-            store_name=item_data["store_name"],
+            item_name=item_name,
+            current_price=0.0,  # Will be enriched with historical data
+            store_name=formatted_data["store_recommendations"][0] if formatted_data["store_recommendations"] else "Coles",
             price_prediction=None
         )
         items.append(grocery_item)
     
-    # Enrich with price predictions
+    # 5. Enrich with price predictions from historical data
     enriched_items = await enrich_with_price_predictions(db, items)
     
-    # 5. Return enriched results
+    # 6. Return enriched results with conversational context
     return {
-        "optimal_cost": n8n_response.get("optimal_cost", 0.0),
-        "store_recommendations": n8n_response.get("store_recommendations", []),
-        "item_breakdown": [item.model_dump() for item in enriched_items]
+        "optimal_cost": formatted_data["optimal_cost"],
+        "store_recommendations": formatted_data["store_recommendations"],
+        "item_breakdown": [item.model_dump() for item in enriched_items],
+        "conversational_response": formatted_data.get("conversational_response", ""),
+        "needs_clarification": False
     }
 
 
