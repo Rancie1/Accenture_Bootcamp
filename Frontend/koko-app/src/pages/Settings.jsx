@@ -19,8 +19,9 @@ const Settings = () => {
   const [localDarkMode, setLocalDarkMode] = useState(darkMode);
 
   const handleSave = () => {
-    // Update user preferences in context
+    // Update user preferences in context — spread existing to preserve address etc.
     setUserPreferences({
+      ...userPreferences,
       name,
       budget: parseFloat(budget),
       transportPreference

@@ -12,14 +12,17 @@ const CHAT_ENDPOINT = `${API_URL}/chat`;
  * @param {Array} shoppingList - Current shopping list
  * @param {string} message - Text message from user
  * @param {string} audioData - Base64 encoded audio data (optional)
- * @returns {Promise<{reply: string, updatedList: Array}>}
+ * @param {string} sessionId - Session ID for conversation continuity (optional)
+ * @returns {Promise<{reply: string, updatedList: Array, sessionId: string}>}
  */
-export const sendMessageToN8n = async (shoppingList, message = '', audioData = null) => {
+export const sendMessageToN8n = async (shoppingList, message = '', audioData = null, sessionId = null, homeAddress = null) => {
   try {
     const payload = {
       shoppingList: shoppingList || [],
       message: message.trim(),
       audioData: audioData,
+      sessionId: sessionId,
+      homeAddress: homeAddress || null,
     };
 
     const response = await fetch(CHAT_ENDPOINT, {
@@ -43,7 +46,8 @@ export const sendMessageToN8n = async (shoppingList, message = '', audioData = n
 
     return {
       reply: data.reply,
-      updatedList: data.updatedList || shoppingList
+      updatedList: data.updatedList || shoppingList,
+      sessionId: data.sessionId || null,
     };
   } catch (error) {
     console.error('Error communicating with backend:', error);
@@ -170,10 +174,10 @@ export const mockN8nResponse = async (shoppingList, message) => {
 };
 
 // For development, use mock responses if backend URL is not configured or unreachable
-export const sendMessageToN8nWithFallback = async (shoppingList, message, audioData) => {
+export const sendMessageToN8nWithFallback = async (shoppingList, message, audioData, sessionId = null, homeAddress = null) => {
   // Always try the real backend first; fall back to mock if it fails
   try {
-    return await sendMessageToN8n(shoppingList, message, audioData);
+    return await sendMessageToN8n(shoppingList, message, audioData, sessionId, homeAddress);
   } catch (error) {
     console.warn('Backend unavailable, using mock response:', error.message);
     return mockN8nResponse(shoppingList, message);

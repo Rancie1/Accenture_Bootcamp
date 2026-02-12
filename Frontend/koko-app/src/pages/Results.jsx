@@ -1,16 +1,21 @@
-import { useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useContext, useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { calculateSavingsPercentage, calculateXpEarned } from '../utils/calculations';
-import { RefreshCw, DollarSign, Clock, Car } from 'lucide-react';
+import { calculateXpEarned } from '../utils/calculations';
+import { ArrowLeft, ShoppingCart, MessageSquare, DollarSign, ChevronDown, ChevronUp, Footprints, Bus, Car, MapPin } from 'lucide-react';
 
 /**
  * Results Component
- * Displays shopping trip results with store info, savings, XP earned, and action buttons
+ * Displays real shopping trip data from the Strands agent chat:
+ *   - Shopping list with prices
+ *   - Total cost
+ *   - Chat conversation summary
+ *   - Gamification: adjust cost, XP, streaks, submit
  * Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.8, 4.9, 4.10, 4.11, 4.17, 4.18
  */
 const Results = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     shoppingList,
     userPreferences,
@@ -28,85 +33,132 @@ const Results = () => {
     setHistory
   } = useContext(AppContext);
 
-  // Mock results data - multiple options based on different criteria
-  const [allResults] = useState([
-    {
-      id: 'cheapest',
-      type: 'cheapest',
-      icon: DollarSign,
-      label: 'Cheapest',
-      storeName: 'Budget Mart',
-      location: '456 Savings Ave, City',
-      totalPrice: 42.50,
-      baselinePrice: 52.00,
-      travelTime: 25
-    },
-    {
-      id: 'fastest',
-      type: 'fastest',
-      icon: Clock,
-      label: 'Fastest',
-      storeName: 'QuickStop',
-      location: '789 Speed Blvd, City',
-      totalPrice: 48.00,
-      baselinePrice: 52.00,
-      travelTime: 8
-    },
-    // Only show if user preference is driving
-    ...(userPreferences.transportation === 'driving' ? [{
-      id: 'no-petrol',
-      type: 'no-petrol',
-      icon: Car,
-      label: 'No Petrol Stop',
-      storeName: 'SuperMart',
-      location: '123 Main St, City',
-      totalPrice: 45.50,
-      baselinePrice: 52.00,
-      travelTime: 15
-    }] : [])
-  ]);
+  // Chat messages passed from Shop.jsx via navigation state
+  const chatMessages = location.state?.chatMessages || [];
+  const transportMode = location.state?.transportMode || 'walking';
 
-  const [selectedResult, setSelectedResult] = useState(null);
+  // ── Transport config ────────────────────────────────────────────────
+  // Static class names so Tailwind can detect them at build time
+  const transportConfig = {
+    walking: {
+      label: 'Walking',
+      icon: Footprints,
+      defaultCost: 0,
+      borderClass: 'border-green-500',
+      bgClass: 'bg-green-100 dark:bg-green-900/30',
+      iconClass: 'text-green-600 dark:text-green-400',
+      costClass: 'text-green-600 dark:text-green-400',
+    },
+    public_transport: {
+      label: 'Public Transport',
+      icon: Bus,
+      defaultCost: 4.80,
+      borderClass: 'border-blue-500',
+      bgClass: 'bg-blue-100 dark:bg-blue-900/30',
+      iconClass: 'text-blue-600 dark:text-blue-400',
+      costClass: 'text-blue-600 dark:text-blue-400',
+    },
+    driving: {
+      label: 'Driving',
+      icon: Car,
+      defaultCost: 5.00,
+      borderClass: 'border-purple-500',
+      bgClass: 'bg-purple-100 dark:bg-purple-900/30',
+      iconClass: 'text-purple-600 dark:text-purple-400',
+      costClass: 'text-purple-600 dark:text-purple-400',
+    },
+  };
+  const transport = transportConfig[transportMode] || transportConfig.walking;
+  const TransportIcon = transport.icon;
+
+  // ── Derived values from real shopping list ──────────────────────────
+  const groceryTotal = useMemo(() => {
+    return shoppingList.reduce((sum, item) => {
+      const price = item.price || 0;
+      const qty = item.quantity || 1;
+      return sum + price * qty;
+    }, 0);
+  }, [shoppingList]);
+
+  const itemsWithPrice = shoppingList.filter(item => item.price && item.price > 0);
+  const itemsWithoutPrice = shoppingList.filter(item => !item.price || item.price <= 0);
+
+  // ── Extract transport cost from agent's last message ────────────────
+  // The last bot message before navigation is the transport response.
+  // Try to parse the actual cost the agent calculated.
+  const parsedTransportCost = useMemo(() => {
+    // Look at bot messages from newest to oldest
+    const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
+    for (const msg of botMessages) {
+      const text = msg.text || '';
+
+      // Match "transport cost is $0.10" — require "is" or ":" right before $
+      const transportIsMatch = text.match(/transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
+      if (transportIsMatch) return parseFloat(transportIsMatch[1]);
+
+      // Fallback: grab the LAST "$X.XX" after any "transport cost" mention
+      const allTransportMatches = [...text.matchAll(/transport cost[\s\S]*?\$(\d+\.?\d*)/gi)];
+      if (allTransportMatches.length > 0) {
+        return parseFloat(allTransportMatches[allTransportMatches.length - 1][1]);
+      }
+
+      // Match "fuel cost is $X.XX"
+      const fuelMatch = text.match(/fuel cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
+      if (fuelMatch) return parseFloat(fuelMatch[1]);
+
+      // Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
+      const fareMatch = text.match(/fare[^$]*\$(\d+\.?\d*)/i) || text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
+      if (fareMatch) return parseFloat(fareMatch[1]);
+
+      // For walking, look for "$0" or "free" mentions
+      if (transportMode === 'walking' && /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)) {
+        return 0;
+      }
+    }
+    return null; // Not found — will fall back to default
+  }, [chatMessages, transportMode]);
+
+  const initialTransportCost = parsedTransportCost !== null ? parsedTransportCost : transport.defaultCost;
+
+  // ── Transport cost state ───────────────────────────────────────────
+  const [transportCost, setTransportCost] = useState(initialTransportCost);
+  const [transportCostInput, setTransportCostInput] = useState(
+    initialTransportCost.toFixed(2)
+  );
+  const [showTransportEdit, setShowTransportEdit] = useState(false);
+
+  // Total = groceries + transport
+  const estimatedTotal = groceryTotal + transportCost;
+
+  // ── Adjust cost state ──────────────────────────────────────────────
   const [showAdjustModal, setShowAdjustModal] = useState(false);
-  const [customCost, setCustomCost] = useState(0);
-  const [customCostInput, setCustomCostInput] = useState('');
-  const [customStoreName, setCustomStoreName] = useState('');
+  const [customCost, setCustomCost] = useState(estimatedTotal);
+  const [customCostInput, setCustomCostInput] = useState(estimatedTotal > 0 ? estimatedTotal.toFixed(2) : '');
+  const [hasAdjusted, setHasAdjusted] = useState(false);
+  const [showChatSummary, setShowChatSummary] = useState(false);
+
+  // ── Modals ─────────────────────────────────────────────────────────
   const [showStreakSaverModal, setShowStreakSaverModal] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
   const [showSubmittedModal, setShowSubmittedModal] = useState(false);
-  const [hasAdjusted, setHasAdjusted] = useState(false);
 
-  // Calculate savings and XP for selected result
-  // Find the cheapest and most expensive options
-  const cheapestPrice = Math.min(...allResults.map(r => r.totalPrice));
-  const mostExpensivePrice = Math.max(...allResults.map(r => r.totalPrice));
-  
-  // Calculate savings relative to most expensive option
-  const savingsPercentage = selectedResult ? calculateSavingsPercentage(mostExpensivePrice, customCost) : 0;
-  const savingsAmount = selectedResult ? mostExpensivePrice - customCost : 0;
-  
-  // Determine if over cheapest option (spending more than the best deal)
-  const isOverCheapest = customCost > cheapestPrice;
-  const excessAmount = customCost - cheapestPrice;
-  
-  // XP is earned based on savings percentage, but 0 if over the cheapest option
-  const xpEarned = selectedResult && !isOverCheapest ? Math.round(calculateXpEarned(savingsPercentage)) : 0;
+  // ── Budget-based gamification ──────────────────────────────────────
+  const budget = userPreferences.budget || 0;
+  const finalCost = hasAdjusted ? customCost : estimatedTotal;
+  const isUnderBudget = budget > 0 && finalCost <= budget;
+  const budgetDiff = budget > 0 ? budget - finalCost : 0;
+  const savingsPercentage = budget > 0 ? Math.max(0, (budgetDiff / budget) * 100) : 0;
+  const xpEarned = isUnderBudget ? Math.round(calculateXpEarned(savingsPercentage)) : 0;
 
-  const handleSelectResult = (result) => {
-    setSelectedResult(result);
-    setCustomCost(result.totalPrice);
-    setCustomCostInput(result.totalPrice.toFixed(2));
-    setCustomStoreName(result.storeName);
-    setHasAdjusted(false);
-  };
-
-  const handleAdjustCost = () => {
-    setShowAdjustModal(true);
-  };
-
-  const handleSaveAdjustedCost = () => {
-    setShowAdjustModal(false);
-    setHasAdjusted(true);
+  // ── Handlers ───────────────────────────────────────────────────────
+  const handleTransportCostChange = (value) => {
+    setTransportCostInput(value);
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue >= 0) {
+      setTransportCost(numValue);
+    } else if (value === '' || value === '.') {
+      setTransportCost(0);
+    }
   };
 
   const handleCostInputChange = (value) => {
@@ -119,25 +171,23 @@ const Results = () => {
     }
   };
 
-  const handleTryAgain = () => {
-    navigate('/shop');
+  const handleSaveAdjustedCost = () => {
+    setShowAdjustModal(false);
+    setHasAdjusted(true);
   };
 
   const handleSaveForLater = () => {
-    if (!selectedResult) return;
-    
-    // Add to saved lists
     // eslint-disable-next-line react-hooks/purity
     const timestamp = Date.now();
     const savedList = {
       id: timestamp.toString(),
       items: shoppingList,
       results: {
-        ...selectedResult,
-        totalPrice: customCost,
+        totalPrice: finalCost,
         savingsPercentage,
         xpEarned,
-        savingsAmount
+        savingsAmount: budgetDiff,
+        transportMode
       },
       timestamp
     };
@@ -146,24 +196,15 @@ const Results = () => {
   };
 
   const handleSubmit = () => {
-    if (!selectedResult) return;
-    
-    // Check if within budget
-    const totalSpent = customCost;
-    const budget = userPreferences.budget;
-
-    if (totalSpent <= budget) {
-      // Within budget - increment streak
-      completeSubmission();
-    } else {
-      // Over budget - check for streak savers
+    if (budget > 0 && finalCost > budget) {
       if (streakSavers > 0) {
         setShowStreakSaverModal(true);
       } else {
-        // No streak savers - break streak
         setStreak(0);
         completeSubmission();
       }
+    } else {
+      completeSubmission();
     }
   };
 
@@ -180,237 +221,317 @@ const Results = () => {
   };
 
   const completeSubmission = () => {
-    if (!selectedResult) return;
-    
-    // Update XP and savings
     setXp(xp + xpEarned);
-    setSavings(savings + savingsAmount);
+    setSavings(savings + Math.max(0, budgetDiff));
 
-    // Increment streak if within budget
-    if (customCost <= userPreferences.budget) {
+    if (isUnderBudget) {
       setStreak(streak + 1);
     }
 
-    // Add to history
     // eslint-disable-next-line react-hooks/purity
     const timestamp = Date.now();
     const historyEntry = {
       id: timestamp.toString(),
       items: shoppingList,
       results: {
-        ...selectedResult,
-        totalPrice: customCost,
+        totalPrice: finalCost,
         savingsPercentage,
         xpEarned,
-        savingsAmount
+        savingsAmount: budgetDiff,
+        transportMode
       },
       xpEarned,
-      totalSpent: customCost,
+      totalSpent: finalCost,
       timestamp
     };
     setHistory([...history, historyEntry]);
-
-    // Show success modal
     setShowSubmittedModal(true);
   };
 
+  // Filter chat messages to only show bot responses (the agent summaries)
+  const agentMessages = chatMessages.filter(m => !m.isUser && m.id !== 'welcome');
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 pb-24">
-      {/* Header with Title and Refresh Button */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Select your shopping list</h1>
-        <button 
-          onClick={handleTryAgain}
-          className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-          aria-label="Refresh results"
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate('/shop')}
+          className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
         >
-          <RefreshCw size={24} />
+          <ArrowLeft size={24} />
         </button>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Your Shopping Trip</h1>
       </div>
 
-      {/* Results Options */}
-      <div className="space-y-4 mb-6">
-        {allResults.map((result) => {
-          const isSelected = selectedResult?.id === result.id;
-          const resultSavings = calculateSavingsPercentage(mostExpensivePrice, result.totalPrice);
-          const resultXp = Math.round(calculateXpEarned(resultSavings));
-          const IconComponent = result.icon;
+      {/* ── Shopping List Card ────────────────────────────────────────── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <ShoppingCart size={20} className="text-primary" />
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            Shopping List ({shoppingList.length} {shoppingList.length === 1 ? 'item' : 'items'})
+          </h2>
+        </div>
 
-          return (
-            <button
-              key={result.id}
-              onClick={() => handleSelectResult(result)}
-              className={`w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-left transition-all ${
-                isSelected 
-                  ? 'ring-2 ring-primary shadow-xl' 
-                  : 'hover:shadow-xl'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${
-                    isSelected 
-                      ? 'bg-primary text-white' 
-                      : 'bg-primary/10 text-primary'
-                  }`}>
-                    <IconComponent size={24} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{result.storeName}</h2>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        isSelected 
-                          ? 'bg-primary text-white' 
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                      }`}>
-                        {result.label}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{result.location}</p>
-                  </div>
+        {shoppingList.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+            No items yet. Go back and chat with Koko to build your list!
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {shoppingList.map((item, idx) => (
+              <div
+                key={item.id || idx}
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Qty: {item.quantity || 1}
+                  </p>
                 </div>
-                {isSelected && (
-                  <div className="text-primary text-2xl">✓</div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Price</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">${result.totalPrice.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Travel Time</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{result.travelTime} min</p>
+                <div className="text-right ml-3">
+                  {item.price && item.price > 0 ? (
+                    <>
+                      <p className="text-sm font-bold text-primary">
+                        ${(item.price * (item.quantity || 1)).toFixed(2)}
+                      </p>
+                      {(item.quantity || 1) > 1 && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          ${item.price.toFixed(2)} ea
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">No price</p>
+                  )}
                 </div>
               </div>
+            ))}
+          </div>
+        )}
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Savings</p>
-                  <p className="text-2xl font-bold text-primary">{resultSavings.toFixed(1)}%</p>
-                </div>
-                <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full">
-                  <span className="text-primary font-bold">+{resultXp} XP</span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
+        {/* Grocery subtotal row */}
+        {shoppingList.length > 0 && (
+          <div className="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-600 flex items-center justify-between">
+            <p className="text-base font-bold text-gray-900 dark:text-white">Grocery Subtotal</p>
+            <p className="text-xl font-extrabold text-primary">
+              {groceryTotal > 0 ? `$${groceryTotal.toFixed(2)}` : 'N/A'}
+            </p>
+          </div>
+        )}
+
+        {itemsWithoutPrice.length > 0 && itemsWithPrice.length > 0 && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+            * {itemsWithoutPrice.length} {itemsWithoutPrice.length === 1 ? 'item has' : 'items have'} no price — total may be higher.
+          </p>
+        )}
       </div>
 
-      {/* Action Buttons - Only show when a result is selected */}
-      {selectedResult && (
-        <div className="space-y-3">
-          {/* Adjusted Cost Preview Card */}
-          {hasAdjusted && (
-            <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-purple-500/20 rounded-2xl p-6 border-2 border-primary/30 shadow-lg animate-scale-in">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Adjusted Cost</h3>
-                </div>
-                {customStoreName && customStoreName !== selectedResult.storeName && (
-                  <span className="text-sm font-medium text-primary">{customStoreName}</span>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Your Cost</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">${customCost.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Most Expensive</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">${mostExpensivePrice.toFixed(2)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-primary/20">
-                {!isOverCheapest ? (
-                  <>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Savings</p>
-                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        {savingsPercentage.toFixed(1)}%
-                      </p>
-                      <p className="text-xs text-green-600 dark:text-green-400">
-                        ${savingsAmount.toFixed(2)} vs most expensive
-                      </p>
-                    </div>
-                    <div className="bg-green-100 dark:bg-green-900/30 px-4 py-2 rounded-full">
-                      <span className="text-green-600 dark:text-green-400 font-bold">+{xpEarned} XP</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Over Cheapest</p>
-                      <p className="text-3xl font-bold text-red-600 dark:text-red-400">
-                        ${excessAmount.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-red-600 dark:text-red-400">
-                        Could have saved more
-                      </p>
-                    </div>
-                    <div className="bg-red-100 dark:bg-red-900/30 px-4 py-2 rounded-full">
-                      <span className="text-red-600 dark:text-red-400 font-bold">0 XP</span>
-                    </div>
-                  </>
-                )}
-              </div>
+      {/* ── Transport Card ──────────────────────────────────────────── */}
+      <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-5 mb-4 border-l-4 ${transport.borderClass}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className={`p-2 ${transport.bgClass} rounded-full`}>
+              <TransportIcon size={20} className={transport.iconClass} />
             </div>
-          )}
-          
-          <button
-            onClick={handleAdjustCost}
-            className="w-full py-3 text-primary border-2 border-primary rounded-lg font-medium hover:bg-primary/5 transition-colors"
-          >
-            {hasAdjusted ? 'Update Cost' : 'Adjust Cost'}
-          </button>
-          
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={handleTryAgain}
-              className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Try Again
-            </button>
-            <button
-              onClick={handleSaveForLater}
-              className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Save for Later
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="py-3 bg-primary text-white rounded-lg font-medium shadow-lg active:scale-95 transition-transform"
-            >
-              Submit
-            </button>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white">{transport.label}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {transportMode === 'walking' ? 'No transport cost' : 'Estimated fare / fuel'}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            {showTransportEdit ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">$</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={transportCostInput}
+                  onChange={(e) => handleTransportCostChange(e.target.value)}
+                  className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-right text-sm font-semibold focus:ring-2 focus:ring-primary focus:border-transparent"
+                  autoFocus
+                  onBlur={() => setShowTransportEdit(false)}
+                  onKeyDown={(e) => e.key === 'Enter' && setShowTransportEdit(false)}
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowTransportEdit(true)}
+                className="text-right group"
+              >
+                <p className={`text-lg font-bold ${transport.costClass}`}>
+                  {transportCost === 0 ? 'Free' : `$${transportCost.toFixed(2)}`}
+                </p>
+                <p className="text-xs text-gray-400 group-hover:text-primary transition-colors">tap to edit</p>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Trip total summary */}
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Groceries</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              ${groceryTotal.toFixed(2)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Transport</p>
+            <p className={`text-sm font-bold ${transport.costClass}`}>
+              {transportCost === 0 ? '$0.00' : `$${transportCost.toFixed(2)}`}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Trip Total</p>
+            <p className="text-sm font-bold text-primary">
+              ${estimatedTotal.toFixed(2)}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Budget Comparison Card ───────────────────────────────────── */}
+      {budget > 0 && (
+        <div className={`rounded-2xl shadow-lg p-5 mb-4 border-2 ${
+          isUnderBudget
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <DollarSign size={20} className={isUnderBudget ? 'text-green-600' : 'text-red-600'} />
+              <h3 className="font-bold text-gray-900 dark:text-white">
+                {isUnderBudget ? 'Under Budget!' : 'Over Budget'}
+              </h3>
+            </div>
+            <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+              isUnderBudget
+                ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300'
+                : 'bg-red-200 dark:bg-red-800 text-red-700 dark:text-red-300'
+            }`}>
+              {isUnderBudget ? `+${xpEarned} XP` : '0 XP'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Budget</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">${budget.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{hasAdjusted ? 'Actual' : 'Estimated'}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">${finalCost.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{isUnderBudget ? 'Saved' : 'Over by'}</p>
+              <p className={`text-lg font-bold ${isUnderBudget ? 'text-green-600' : 'text-red-600'}`}>
+                ${Math.abs(budgetDiff).toFixed(2)}
+              </p>
+            </div>
+          </div>
+
+          {/* Budget progress bar */}
+          <div className="mt-3">
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+              <div
+                className={`h-2.5 rounded-full transition-all ${
+                  isUnderBudget ? 'bg-green-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${Math.min(100, (finalCost / budget) * 100)}%` }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Adjust Cost Modal */}
+      {/* ── Adjusted Cost Card ───────────────────────────────────────── */}
+      {hasAdjusted && (
+        <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-purple-500/20 rounded-2xl p-5 mb-4 border-2 border-primary/30 shadow-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <h3 className="font-bold text-gray-900 dark:text-white">Adjusted Cost</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600 dark:text-gray-400">What you actually spent</p>
+            <p className="text-2xl font-extrabold text-primary">${customCost.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Chat Summary (collapsible) ───────────────────────────────── */}
+      {agentMessages.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg mb-4 overflow-hidden">
+          <button
+            onClick={() => setShowChatSummary(!showChatSummary)}
+            className="w-full flex items-center justify-between p-5"
+          >
+            <div className="flex items-center gap-2">
+              <MessageSquare size={20} className="text-primary" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Koko's Summary</h2>
+            </div>
+            {showChatSummary ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+          </button>
+
+          {showChatSummary && (
+            <div className="px-5 pb-5 space-y-3 max-h-80 overflow-y-auto">
+              {agentMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
+                >
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Action Buttons ───────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <button
+          onClick={() => setShowAdjustModal(true)}
+          className="w-full py-3 text-primary border-2 border-primary rounded-xl font-semibold hover:bg-primary/5 transition-colors"
+        >
+          {hasAdjusted ? 'Update Actual Cost' : 'Enter Actual Cost'}
+        </button>
+
+        <div className="grid grid-cols-3 gap-3">
+          <button
+            onClick={() => navigate('/shop')}
+            className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={handleSaveForLater}
+            className="py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
+            Save Later
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="py-3 bg-primary text-white rounded-xl font-semibold shadow-lg active:scale-95 transition-transform"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+
+      {/* ── Adjust Cost Modal ────────────────────────────────────────── */}
       {showAdjustModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Adjust Cost</h3>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Store/Place Name
-              </label>
-              <input
-                type="text"
-                value={customStoreName}
-                onChange={(e) => setCustomStoreName(e.target.value)}
-                placeholder="Enter store name"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-            </div>
-            
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              What did you actually spend?
+            </h3>
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Actual Cost ($)
@@ -425,44 +546,37 @@ const Results = () => {
                 autoFocus
               />
             </div>
-            
-            {/* Live Preview in Modal */}
-            <div className={`p-4 rounded-lg mb-4 ${
-              !isOverCheapest
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
-            }`}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {!isOverCheapest ? 'Savings' : 'Over Cheapest'}
-                </span>
-                <span className={`text-lg font-bold ${
-                  !isOverCheapest
-                    ? 'text-green-600 dark:text-green-400' 
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {!isOverCheapest
-                    ? `${savingsPercentage.toFixed(1)}%` 
-                    : `$${excessAmount.toFixed(2)}`}
-                </span>
+
+            {/* Live preview */}
+            {budget > 0 && (
+              <div className={`p-4 rounded-lg mb-4 ${
+                customCost <= budget
+                  ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+              }`}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {customCost <= budget ? 'Under budget' : 'Over budget'}
+                  </span>
+                  <span className={`text-lg font-bold ${
+                    customCost <= budget ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    ${Math.abs(budget - customCost).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Budget: ${budget.toFixed(2)}</span>
+                  <span className={`text-sm font-bold ${
+                    customCost <= budget ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {customCost <= budget
+                      ? `+${Math.round(calculateXpEarned(Math.max(0, ((budget - customCost) / budget) * 100)))} XP`
+                      : '0 XP'}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs text-gray-600 dark:text-gray-400">
-                  Most expensive: ${mostExpensivePrice.toFixed(2)} • Cheapest: ${cheapestPrice.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">XP Earned</span>
-                <span className={`font-bold ${
-                  !isOverCheapest
-                    ? 'text-green-600 dark:text-green-400' 
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {xpEarned} XP
-                </span>
-              </div>
-            </div>
-            
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowAdjustModal(false)}
@@ -481,13 +595,13 @@ const Results = () => {
         </div>
       )}
 
-      {/* Streak Saver Modal */}
+      {/* ── Streak Saver Modal ───────────────────────────────────────── */}
       {showStreakSaverModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Over Budget!</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              You spent ${customCost.toFixed(2)}, which is over your budget of ${userPreferences.budget.toFixed(2)}. 
+              You spent ${finalCost.toFixed(2)}, which is over your budget of ${budget.toFixed(2)}.
               Use a Streak Saver to protect your {streak} day streak?
             </p>
             <div className="flex gap-3">
@@ -508,7 +622,7 @@ const Results = () => {
         </div>
       )}
 
-      {/* Saved Confirmation Modal */}
+      {/* ── Saved Confirmation Modal ─────────────────────────────────── */}
       {showSavedModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
@@ -536,7 +650,7 @@ const Results = () => {
         </div>
       )}
 
-      {/* Submitted Confirmation Modal */}
+      {/* ── Submitted Confirmation Modal ─────────────────────────────── */}
       {showSubmittedModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">

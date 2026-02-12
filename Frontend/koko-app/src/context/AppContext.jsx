@@ -36,6 +36,7 @@ export const AppProvider = ({ children }) => {
   const [userPreferences, setUserPreferences] = useState({
     name: '',
     budget: 0,
+    address: '',  // Home address from registration
     transportPreference: '' // "public" | "driving"
   });
 
@@ -73,6 +74,7 @@ export const AppProvider = ({ children }) => {
         setUserPreferences(loadedState.userPreferences || {
           name: '',
           budget: 0,
+          address: '',
           transportPreference: ''
         });
         setDefaultItems(loadedState.defaultItems || initialDefaultItems);

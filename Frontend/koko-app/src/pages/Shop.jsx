@@ -174,6 +174,8 @@ const Shop = () => {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [isTransportLoading, setIsTransportLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const isRecordingRef = useRef(false);
@@ -368,8 +370,10 @@ const Shop = () => {
         setIsLoading(true);
 
         try {
-          const response = await sendMessageToN8nWithFallback(shoppingList, transcript.trim());
+          const response = await sendMessageToN8nWithFallback(shoppingList, transcript.trim(), null, sessionId, userPreferences.address);
           
+          if (response.sessionId) setSessionId(response.sessionId);
+
           const botMessage = {
             id: (Date.now() + 1).toString(),
             text: response.reply,
@@ -409,8 +413,10 @@ const Shop = () => {
     setIsLoading(true);
 
     try {
-      const response = await sendMessageToN8nWithFallback(shoppingList, inputText);
+      const response = await sendMessageToN8nWithFallback(shoppingList, inputText, null, sessionId, userPreferences.address);
       
+      if (response.sessionId) setSessionId(response.sessionId);
+
       const botMessage = {
         id: (Date.now() + 1).toString(),
         text: response.reply,
@@ -510,63 +516,55 @@ const Shop = () => {
   };
 
   /**
-   * Submit shopping data to backend
+   * Handle transport mode selection — asks the agent for directions/cost,
+   * then navigates to Results with all the data.
    */
-  const handleSubmitToBackend = async (transportMode) => {
-    const payload = {
-      userAddress: userPreferences?.address || '',
-      userName: userPreferences?.name || '',
-      userBudget: userPreferences?.budget || 0,
-      shoppingList: shoppingList.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity || 1,
-        price: item.price
-      })),
-      transportMode: transportMode,
-      chatConversation: messages.map(msg => ({
-        role: msg.isUser ? 'user' : 'assistant',
-        content: msg.text,
-        timestamp: msg.id
-      })),
-      timestamp: new Date().toISOString()
-    };
+  const handleTransportSelect = async (mode) => {
+    setIsTransportLoading(true);
 
-    console.log('Submitting to backend:', payload);
+    const modeLabel =
+      mode === 'walking' ? 'walk'
+      : mode === 'public_transport' ? 'take public transport (bus)'
+      : 'drive';
+
+    const address = userPreferences.address || 'my home address';
+    const transportPrompt =
+      `I'll ${modeLabel} to the nearest Coles store from ${address}. Please get directions and tell me the travel time, distance, and estimated transport cost (fuel cost if driving, fare if bus, $0 if walking).`;
+
+    // Add the user message to chat history
+    const userMsg = { id: Date.now().toString(), text: transportPrompt, isUser: true };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
 
     try {
-      // TODO: Replace with your actual backend endpoint
-      const response = await fetch('/api/calculate-savings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await sendMessageToN8nWithFallback(
+        shoppingList, transportPrompt, null, sessionId, userPreferences.address
+      );
 
-      if (!response.ok) {
-        throw new Error('Backend request failed');
-      }
+      if (response.sessionId) setSessionId(response.sessionId);
+      if (response.updatedList) setShoppingList(response.updatedList);
 
-      const result = await response.json();
-      console.log('Backend response:', result);
+      const botMsg = {
+        id: (Date.now() + 1).toString(),
+        text: response.reply,
+        isUser: false
+      };
+      const finalMessages = [...updatedMessages, botMsg];
+      setMessages(finalMessages);
 
-      // Navigate to results with the backend response
-      navigate('/results', { 
-        state: { 
-          transportMode,
-          backendData: result 
-        } 
+      setShowTransportModal(false);
+      navigate('/results', {
+        state: { transportMode: mode, chatMessages: finalMessages }
       });
     } catch (error) {
-      console.error('Error submitting to backend:', error);
-      // Navigate anyway with local data
-      navigate('/results', { 
-        state: { 
-          transportMode,
-          localData: payload 
-        } 
+      console.error('Transport query error:', error);
+      // Navigate anyway with what we have
+      setShowTransportModal(false);
+      navigate('/results', {
+        state: { transportMode: mode, chatMessages: updatedMessages }
       });
+    } finally {
+      setIsTransportLoading(false);
     }
   };
 
@@ -895,6 +893,7 @@ const Shop = () => {
                   setIsChatMode(false);
                   setMessages([]);
                   setInputText('');
+                  setSessionId(null);
                 }}
                 className="text-gray-600 dark:text-gray-400 hover:text-primary transition-colors p-1.5"
               >
@@ -934,15 +933,17 @@ const Shop = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Calculate Savings Button */}
-            <div className="pb-2 shrink-0">
-              <button
-                onClick={() => setShowTransportModal(true)}
-                className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
-              >
-                Calculate my savings
-              </button>
-            </div>
+            {/* Calculate Savings Button — only visible once the list has items */}
+            {shoppingList.length > 0 && (
+              <div className="pb-2 shrink-0">
+                <button
+                  onClick={() => setShowTransportModal(true)}
+                  className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
+                >
+                  Calculate my savings
+                </button>
+              </div>
+            )}
 
             {/* Input Area - Fixed at bottom */}
             <div className="pb-3 shrink-0">
@@ -1307,77 +1308,94 @@ const Shop = () => {
       {showTransportModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Select Transport Mode
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                How will you get to the store?
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {/* Walking Option */}
-              <button
-                onClick={() => {
-                  setShowTransportModal(false);
-                  navigate('/results', { state: { transportMode: 'walking' } });
-                }}
-                className="w-full p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-green-200 dark:bg-green-700 rounded-full">
-                    <Footprints size={28} className="text-green-700 dark:text-green-200" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
-                    Walking
-                  </h3>
+            {isTransportLoading ? (
+              /* Loading state while agent calculates directions */
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
-              </button>
-
-              {/* Public Transport Option */}
-              <button
-                onClick={() => {
-                  setShowTransportModal(false);
-                  navigate('/results', { state: { transportMode: 'public_transport' } });
-                }}
-                className="w-full p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-200 dark:bg-blue-700 rounded-full">
-                    <Bus size={28} className="text-blue-700 dark:text-blue-200" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                    Public Transport
-                  </h3>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Calculating your route...
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Koko is working out directions and transport costs
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    Select Transport Mode
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    How will you get to the store?
+                  </p>
                 </div>
-              </button>
 
-              {/* Driving Option */}
-              <button
-                onClick={() => {
-                  setShowTransportModal(false);
-                  navigate('/results', { state: { transportMode: 'driving' } });
-                }}
-                className="w-full p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-2 border-purple-200 dark:border-purple-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-purple-200 dark:bg-purple-700 rounded-full">
-                    <Car size={28} className="text-purple-700 dark:text-purple-200" />
-                  </div>
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                    Driving
-                  </h3>
+                <div className="space-y-3">
+                  {/* Walking Option */}
+                  <button
+                    onClick={() => handleTransportSelect('walking')}
+                    className="w-full p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-green-200 dark:bg-green-700 rounded-full">
+                        <Footprints size={28} className="text-green-700 dark:text-green-200" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
+                          Walking
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Free — no transport cost</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Public Transport Option */}
+                  <button
+                    onClick={() => handleTransportSelect('public_transport')}
+                    className="w-full p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-blue-200 dark:bg-blue-700 rounded-full">
+                        <Bus size={28} className="text-blue-700 dark:text-blue-200" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                          Public Transport
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Bus / train fare applies</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Driving Option */}
+                  <button
+                    onClick={() => handleTransportSelect('driving')}
+                    className="w-full p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-2 border-purple-200 dark:border-purple-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-purple-200 dark:bg-purple-700 rounded-full">
+                        <Car size={28} className="text-purple-700 dark:text-purple-200" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                          Driving
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Fuel cost will be estimated</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
-              </button>
-            </div>
 
-            <button
-              onClick={() => setShowTransportModal(false)}
-              className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
-            >
-              Cancel
-            </button>
+                <button
+                  onClick={() => setShowTransportModal(false)}
+                  className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
