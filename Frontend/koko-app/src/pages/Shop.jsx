@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car } from 'lucide-react';
+import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car, Trophy } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -584,8 +584,7 @@ const Shop = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  // eslint-disable-next-line no-undef
-                  onClick={() => setShowLeaderboard(true)}
+                  onClick={() => navigate('/leaderboard')}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
                 >
                   <Trophy size={20} />
