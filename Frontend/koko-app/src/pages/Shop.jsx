@@ -136,6 +136,147 @@ const sampleProducts = [
   },
 ];
 
+/**
+ * Leaderboard Calculation Logic
+ * 
+ * Anti-Gaming Measures:
+ * 1. Minimum Budget Threshold: $20/week to prevent gaming with tiny budgets
+ * 2. Savings Rate: (weeklyBudget - weeklySpend) / weeklyBudget
+ * 3. Consistency Factor: Rewards staying under budget consistently (0-1 scale)
+ * 4. Final Score: (Savings Rate × 70%) + (Consistency Factor × 30%)
+ * 
+ * This ensures users can't game the system by:
+ * - Setting unrealistically low budgets
+ * - Having one good week but inconsistent behavior
+ */
+
+const MINIMUM_BUDGET_THRESHOLD = 20; // Minimum weekly budget in dollars
+
+// Sample leaderboard data with realistic user profiles
+const sampleLeaderboardUsers = [
+  { 
+    username: 'Sarah M.', 
+    weeklyBudget: 150, 
+    weeklySpend: 112, 
+    daysUnderBudget: 7, // 7 out of 7 days
+    totalDays: 7 
+  },
+  { 
+    username: 'Mike T.', 
+    weeklyBudget: 200, 
+    weeklySpend: 145, 
+    daysUnderBudget: 6, 
+    totalDays: 7 
+  },
+  { 
+    username: 'Emma L.', 
+    weeklyBudget: 120, 
+    weeklySpend: 85, 
+    daysUnderBudget: 7, 
+    totalDays: 7 
+  },
+  { 
+    username: 'John D.', 
+    weeklyBudget: 180, 
+    weeklySpend: 140, 
+    daysUnderBudget: 5, 
+    totalDays: 7 
+  },
+  { 
+    username: 'Lisa K.', 
+    weeklyBudget: 100, 
+    weeklySpend: 75, 
+    daysUnderBudget: 6, 
+    totalDays: 7 
+  },
+  { 
+    username: 'Tom R.', 
+    weeklyBudget: 250, 
+    weeklySpend: 210, 
+    daysUnderBudget: 4, 
+    totalDays: 7 
+  },
+  { 
+    username: 'Anna P.', 
+    weeklyBudget: 160, 
+    weeklySpend: 115, 
+    daysUnderBudget: 7, 
+    totalDays: 7 
+  },
+  { 
+    username: 'Chris W.', 
+    weeklyBudget: 90, 
+    weeklySpend: 70, 
+    daysUnderBudget: 5, 
+    totalDays: 7 
+  },
+];
+
+/**
+ * Calculate leaderboard score for a user
+ * @param {Object} user - User data with budget and spending info
+ * @returns {Object} User with calculated score and metrics
+ */
+const calculateLeaderboardScore = (user) => {
+  // Disqualify users with budgets below minimum threshold
+  if (user.weeklyBudget < MINIMUM_BUDGET_THRESHOLD) {
+    return {
+      ...user,
+      leaderboardScore: 0,
+      savingsRate: 0,
+      consistencyFactor: 0,
+      savingsPercentage: 0,
+      disqualified: true
+    };
+  }
+
+  // Calculate savings rate: (budget - spend) / budget
+  // This gives us the percentage of budget saved
+  const savingsRate = Math.max(0, (user.weeklyBudget - user.weeklySpend) / user.weeklyBudget);
+  
+  // Calculate consistency factor: days under budget / total days
+  // This rewards consistent behavior throughout the week
+  const consistencyFactor = user.daysUnderBudget / user.totalDays;
+  
+  // Final leaderboard score: weighted combination
+  // 70% weight on savings rate (primary metric)
+  // 30% weight on consistency (prevents gaming with one-time big saves)
+  const leaderboardScore = (savingsRate * 0.7) + (consistencyFactor * 0.3);
+  
+  // Calculate display percentage
+  const savingsPercentage = savingsRate * 100;
+
+  return {
+    ...user,
+    leaderboardScore,
+    savingsRate,
+    consistencyFactor,
+    savingsPercentage: Math.round(savingsPercentage),
+    disqualified: false
+  };
+};
+
+/**
+ * Get sorted leaderboard with calculated scores
+ * @returns {Array} Sorted array of users with ranks
+ */
+const getLeaderboard = () => {
+  // Calculate scores for all users
+  const usersWithScores = sampleLeaderboardUsers.map(calculateLeaderboardScore);
+  
+  // Filter out disqualified users
+  const qualifiedUsers = usersWithScores.filter(u => !u.disqualified);
+  
+  // Sort by leaderboard score (descending)
+  const sortedUsers = qualifiedUsers.sort((a, b) => b.leaderboardScore - a.leaderboardScore);
+  
+  // Add rank to each user
+  return sortedUsers.map((user, index) => ({
+    ...user,
+    rank: index + 1
+  }));
+};
+
 const Shop = () => {
   const navigate = useNavigate();
   const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history } = useContext(AppContext);
@@ -149,6 +290,7 @@ const Shop = () => {
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [priceHistoryProduct, setPriceHistoryProduct] = useState(null);
   const [productQuantities, setProductQuantities] = useState({});
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
   
   // Chat state
@@ -551,12 +693,21 @@ const Shop = () => {
                 <Eye size={24} className="text-primary" />
                 <h1 className="text-2xl font-bold text-primary">Watch List</h1>
               </div>
-              <button
-                onClick={() => setShowManualMode(false)}
-                className="text-gray-600 dark:text-gray-400 hover:text-primary"
-              >
-                <X size={24} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowLeaderboard(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+                >
+                  <Trophy size={20} />
+                  <span className="hidden sm:inline">Leaderboard</span>
+                </button>
+                <button
+                  onClick={() => setShowManualMode(false)}
+                  className="text-gray-600 dark:text-gray-400 hover:text-primary"
+                >
+                  <X size={24} />
+                </button>
+              </div>
             </div>
             {shoppingList.length > 0 && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1256,6 +1407,118 @@ const Shop = () => {
             <button
               onClick={() => setShowPriceHistory(false)}
               className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard Modal */}
+      {showLeaderboard && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl transform animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl">
+                  <Trophy size={24} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Top Savers Leaderboard</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Weekly rankings</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowLeaderboard(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Ranking Info Tooltip */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                <Info size={20} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">How Rankings Work</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Rankings are based on your savings rate and consistency. We reward users who save consistently throughout the week, not just one-time big saves. Minimum budget of ${MINIMUM_BUDGET_THRESHOLD}/week required to prevent gaming.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Leaderboard List */}
+            <div className="space-y-3">
+              {getLeaderboard().map((user, index) => {
+                // Determine medal/badge color based on rank
+                const getRankBadge = (rank) => {
+                  if (rank === 1) return { bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600', text: 'text-white', icon: '🥇' };
+                  if (rank === 2) return { bg: 'bg-gradient-to-r from-gray-300 to-gray-500', text: 'text-white', icon: '🥈' };
+                  if (rank === 3) return { bg: 'bg-gradient-to-r from-orange-400 to-orange-600', text: 'text-white', icon: '🥉' };
+                  return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: `#${rank}` };
+                };
+
+                const badge = getRankBadge(user.rank);
+                const streakText = user.daysUnderBudget === 7 ? '7-day streak! 🔥' : `${user.daysUnderBudget}/7 days`;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                      user.rank <= 3
+                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 border-yellow-200 dark:border-yellow-800 shadow-md'
+                        : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    {/* Rank Badge */}
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${badge.bg} ${badge.text} font-bold text-lg flex-shrink-0 shadow-md`}>
+                      {badge.icon}
+                    </div>
+
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-bold text-gray-900 dark:text-white truncate">{user.username}</p>
+                        {user.daysUnderBudget === 7 && (
+                          <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-0.5 rounded-full">
+                            Perfect Week
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="text-green-600 dark:text-green-400 font-semibold">
+                          {user.savingsPercentage}% saved
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs">
+                          {streakText}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Score Indicator (subtle) */}
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Score</p>
+                      <p className="text-lg font-bold text-primary">
+                        {(user.leaderboardScore * 100).toFixed(0)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer Note */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Rankings update weekly. Keep saving consistently to climb the leaderboard!
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowLeaderboard(false)}
+              className="w-full mt-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
             >
               Close
             </button>
