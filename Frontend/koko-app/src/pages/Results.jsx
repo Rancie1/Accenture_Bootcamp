@@ -184,6 +184,52 @@ const Results = () => {
     return null;
   }, [chatMessages]);
 
+  // ── Parse fuel fill-up cost from chat (only when user specified an amount) ──
+  const parsedFuelFillUp = useMemo(() => {
+    // Check if the user actually asked to fill up (scan user messages)
+    const userMessages = chatMessages.filter(m => m.isUser);
+    const userMentionedFillUp = userMessages.some(m =>
+      /fill\s*up|top\s*up|refuel/i.test(m.text || '')
+    );
+    if (!userMentionedFillUp) return null;
+
+    // Now parse the agent's fill-up cost from bot messages
+    const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
+    for (const msg of botMessages) {
+      const text = (msg.text || '').replace(/\*{1,2}/g, '');
+      const lines = text.split('\n');
+
+      for (const line of lines) {
+        // Match lines containing "fuel fill-up" or "fill up" with a dollar amount
+        // e.g. "Fuel fill-up (20 L × $1.473/L): $29.46"
+        // e.g. "- 20 L × $1.473/L = $29.46"
+        if (/fuel\s*fill[- ]?up|fill[- ]?up\s*\(/i.test(line)) {
+          // Grab the LAST dollar amount on the line (the total, not per-litre)
+          const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
+          if (allDollars.length > 0) {
+            const cost = parseFloat(allDollars[allDollars.length - 1][1]);
+            const litresMatch = line.match(/(\d+)\s*(?:L|litres?|liters?)/i);
+            return {
+              cost,
+              litres: litresMatch ? parseInt(litresMatch[1]) : null,
+            };
+          }
+        }
+      }
+
+      // Also check for standalone "fill up cost: $29.46" or "filling up 20 litres ... $29.46"
+      const fillCostMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+\d+\s*(?:L|litres?|liters?).*?\$(\d+\.?\d*)/i);
+      if (fillCostMatch) {
+        const litresMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+(\d+)\s*(?:L|litres?|liters?)/i);
+        return {
+          cost: parseFloat(fillCostMatch[1]),
+          litres: litresMatch ? parseInt(litresMatch[1]) : null,
+        };
+      }
+    }
+    return null;
+  }, [chatMessages]);
+
   // ── Transport cost state ───────────────────────────────────────────
   const [transportCost, setTransportCost] = useState(initialTransportCost);
   const [transportCostInput, setTransportCostInput] = useState(
@@ -191,8 +237,9 @@ const Results = () => {
   );
   const [showTransportEdit, setShowTransportEdit] = useState(false);
 
-  // Total = groceries + transport (fuel fill-up shown separately)
-  const estimatedTotal = groceryTotal + transportCost;
+  // Total = groceries + transport + fuel fill-up (if user specified)
+  const fuelFillUpCost = parsedFuelFillUp?.cost || 0;
+  const estimatedTotal = groceryTotal + transportCost + fuelFillUpCost;
 
   // ── Adjust cost state ──────────────────────────────────────────────
   const [showAdjustModal, setShowAdjustModal] = useState(false);
@@ -496,35 +543,45 @@ const Results = () => {
         </div>
 
         {/* Trip total summary */}
-        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Groceries
-            </p>
+        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Groceries</p>
             <p className="text-sm font-bold text-gray-900 dark:text-white">
               ${groceryTotal.toFixed(2)}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Transport
-            </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Transport</p>
             <p className={`text-sm font-bold ${transport.costClass}`}>
               {transportCost === 0 ? "$0.00" : `$${transportCost.toFixed(2)}`}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Trip Total
-            </p>
-            <p className="text-sm font-bold text-primary">
+
+          {/* Fuel fill-up row — only when user specified a fill-up amount */}
+          {parsedFuelFillUp && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Fuel size={12} className="text-orange-500" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Fuel fill-up{parsedFuelFillUp.litres ? ` (${parsedFuelFillUp.litres}L)` : ''}
+                </p>
+              </div>
+              <p className="text-sm font-bold text-orange-500 dark:text-orange-400">
+                ${fuelFillUpCost.toFixed(2)}
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Trip Total</p>
+            <p className="text-lg font-extrabold text-primary">
               ${estimatedTotal.toFixed(2)}
             </p>
           </div>
         </div>
 
-        {/* Fuel price per litre note — only for driving mode */}
-        {transportMode === 'driving' && parsedFuelPricePerLitre !== null && (
+        {/* Fuel price per litre note — only for driving mode when no fill-up specified */}
+        {transportMode === 'driving' && parsedFuelPricePerLitre !== null && !parsedFuelFillUp && (
           <div className="mt-2 flex items-center justify-center gap-1.5">
             <Fuel size={14} className="text-orange-500" />
             <p className="text-xs text-gray-500 dark:text-gray-400">
