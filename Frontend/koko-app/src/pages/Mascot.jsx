@@ -41,9 +41,14 @@ const Mascot = () => {
 
   // Premium items available from lootbox
   const premiumItems = [
-    // Epic items (50% chance each)
-    { id: "premium_chef", name: "Chef Hat", type: "costume", rarity: "epic", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" },
-    { id: "premium_sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "epic", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" }
+    // Rare items (60% chance - basic costumes)
+    { id: "premium_chef", name: "Chef Hat", type: "costume", rarity: "rare", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" },
+    { id: "premium_sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "rare", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" },
+    { id: "premium_scuba", name: "Scuba Gear", type: "costume", rarity: "rare", icon: "Waves", emoji: "🤿", isPremium: true, image: "koko-scuba.PNG" },
+    
+    // Legendary items (40% chance - combo costumes)
+    { id: "premium_sunglasses_chef", name: "Chef with Sunglasses", type: "costume", rarity: "legendary", icon: "Sparkles", emoji: "😎👨‍🍳", isPremium: true, image: "koko-sunglasses-chef.PNG" },
+    { id: "premium_scuba_chef", name: "Scuba Chef", type: "costume", rarity: "legendary", icon: "Crown", emoji: "🤿👨‍🍳", isPremium: true, image: "koko-scuba-chef.PNG" }
   ];
 
   // Shop items available for purchase
@@ -61,8 +66,8 @@ const Mascot = () => {
       id: "chef", 
       name: "Chef Hat", 
       type: "costume", 
-      rarity: "epic", 
-      cost: 200, 
+      rarity: "rare", 
+      cost: 150, 
       icon: "ChefHat",
       emoji: "👨‍🍳",
       image: "koko-chef.PNG"
@@ -71,11 +76,41 @@ const Mascot = () => {
       id: "sunglasses", 
       name: "Cool Sunglasses", 
       type: "costume", 
-      rarity: "epic", 
-      cost: 200, 
+      rarity: "rare", 
+      cost: 150, 
       icon: "Glasses",
       emoji: "😎",
       image: "koko-sunglasses.PNG"
+    },
+    { 
+      id: "scuba", 
+      name: "Scuba Gear", 
+      type: "costume", 
+      rarity: "rare", 
+      cost: 150, 
+      icon: "Waves",
+      emoji: "🤿",
+      image: "koko-scuba.PNG"
+    },
+    { 
+      id: "sunglasses_chef", 
+      name: "Chef with Sunglasses", 
+      type: "costume", 
+      rarity: "legendary", 
+      cost: 350, 
+      icon: "Sparkles",
+      emoji: "😎👨‍🍳",
+      image: "koko-sunglasses-chef.PNG"
+    },
+    { 
+      id: "scuba_chef", 
+      name: "Scuba Chef", 
+      type: "costume", 
+      rarity: "legendary", 
+      cost: 350, 
+      icon: "Crown",
+      emoji: "🤿👨‍🍳",
+      image: "koko-scuba-chef.PNG"
     }
   ];
 
@@ -118,8 +153,24 @@ const Mascot = () => {
       return; // No items left to win
     }
     
-    // Select a random item from unowned items
-    const randomItem = unownedItems[Math.floor(Math.random() * unownedItems.length)];
+    // Rarity-based selection: 60% rare, 40% legendary
+    const roll = Math.random();
+    let targetRarity;
+    
+    if (roll < 0.60) {
+      targetRarity = "rare";
+    } else {
+      targetRarity = "legendary";
+    }
+    
+    // Filter unowned items by target rarity
+    const unownedOfRarity = unownedItems.filter(item => item.rarity === targetRarity);
+    
+    // If no items of target rarity available, pick from any unowned
+    const itemPool = unownedOfRarity.length > 0 ? unownedOfRarity : unownedItems;
+    
+    // Select a random item from the pool
+    const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
     
     // Add to mascot items
     setMascotItems([...mascotItems, randomItem]);
@@ -359,6 +410,21 @@ const Mascot = () => {
             <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">
               Win exclusive costumes for Koko!
             </p>
+            <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-xl p-3 mb-4 border border-primary/20">
+              <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
+                <span className="font-semibold">Drop Rates:</span>
+              </p>
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Rare Items</span>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">Legendary Combos</span>
+                  <span className="font-semibold text-yellow-600 dark:text-yellow-400">40%</span>
+                </div>
+              </div>
+            </div>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-6">
               {premiumItems.length - mascotItems.filter(item => item.isPremium).length} / {premiumItems.length} items remaining
             </p>

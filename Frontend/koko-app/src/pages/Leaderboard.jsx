@@ -4,6 +4,9 @@ import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
 import { calculateWeeklySpending, calculateSavingsScore } from '../utils/calculations';
 import { Trophy, TrendingUp, Info, X, Share2 } from 'lucide-react';
+import kokoSunglassesChef from '../assets/dlc/koko-sunglasses-chef.PNG';
+import kokoScubaChef from '../assets/dlc/koko-scuba-chef.PNG';
+import kokoChef from '../assets/dlc/koko-chef.PNG';
 
 /**
  * Leaderboard Component
@@ -240,17 +243,22 @@ const Leaderboard = () => {
                 'from-indigo-500 to-indigo-600'
               ];
               
+              // Assign different mascot images to top 3 (legendary combos for #1 and #2)
+              const mascotImages = [kokoSunglassesChef, kokoScubaChef, kokoChef];
+              
               return (
                 <div key={user.rank} className={`flex flex-col items-center ${index === 0 ? 'order-2' : index === 1 ? 'order-1' : 'order-3'}`}>
                   <div className={`${widths} bg-gradient-to-b ${gradients[index]} rounded-3xl ${heights[displayOrder]} flex flex-col items-center justify-center py-4 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative text-center z-10">
                       <div className="mb-2 flex justify-center">
-                        <MascotPreview 
-                          equippedItems={{}}
-                          mascotItems={[]}
-                          size="small"
-                        />
+                        <div className="w-20 h-20 rounded-full flex items-center justify-center relative" style={{ backgroundColor: '#845EEE' }}>
+                          <img 
+                            src={mascotImages[index]} 
+                            alt={`${user.username} mascot`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
                       </div>
                       <p className="text-white font-bold text-sm truncate px-2 max-w-full drop-shadow-lg">{user.username}</p>
                       <p className="text-white/90 text-xs font-semibold mt-1">{user.savingsPercentage}%</p>
