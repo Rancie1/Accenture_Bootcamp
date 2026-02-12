@@ -255,15 +255,6 @@ const Results = () => {
           litres: litresMatch ? parseInt(litresMatch[1]) : null,
         };
       }
-
-      // Fallback: "X L × $Y/L ... $Z" pattern anywhere in text (common agent format)
-      const multiplyMatch = text.match(/(\d+)\s*L\s*[×x]\s*\$[\d.]+\/L[^$]*\$(\d+\.?\d*)/i);
-      if (multiplyMatch) {
-        return {
-          cost: parseFloat(multiplyMatch[2]),
-          litres: parseInt(multiplyMatch[1]),
-        };
-      }
     }
     return null;
   }, [chatMessages]);
