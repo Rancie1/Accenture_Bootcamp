@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def call_n8n_webhook(
     webhook_url: str,
     payload: Dict[str, Any],
-    timeout: int = 30
+    timeout: int = 120
 ) -> Dict[str, Any]:
     """
     Generic n8n webhook caller with error handling.
@@ -55,7 +55,7 @@ async def call_n8n_webhook(
             
             # Log the response
             logger.info(f"n8n webhook response status: {response.status_code}")
-            logger.debug(f"Response body: {response.text}")
+            logger.info(f"Response body: {response.text[:500]}")
             
             # Handle non-200 responses
             if response.status_code != 200:
@@ -63,14 +63,18 @@ async def call_n8n_webhook(
                 logger.error(error_msg)
                 raise ServiceUnavailableError(error_msg)
             
-            # Parse and return JSON response
+            # Parse response — n8n agents may return JSON or plain text
+            content_type = response.headers.get("content-type", "")
             try:
                 response_data = response.json()
+                # If it's a JSON string (not dict/list), wrap it
+                if isinstance(response_data, str):
+                    return {"output": response_data}
                 return response_data
-            except Exception as e:
-                error_msg = f"Failed to parse n8n response as JSON: {str(e)}"
-                logger.error(error_msg)
-                raise ServiceUnavailableError(error_msg)
+            except Exception:
+                # n8n returned plain text — wrap it in a dict so tools can use it
+                logger.info("n8n returned non-JSON response, wrapping as text")
+                return {"output": response.text}
     
     except httpx.TimeoutException as e:
         error_msg = f"n8n webhook request timed out after {timeout} seconds: {str(e)}"
