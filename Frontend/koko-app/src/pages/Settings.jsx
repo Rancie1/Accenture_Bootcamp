@@ -24,14 +24,14 @@ const Settings = () => {
 
   // Save to context (and localStorage) as user types
   useEffect(() => {
-    setUserPreferences({
-      ...userPreferences,
+    setUserPreferences((prev) => ({
+      ...prev,
       name,
       budget: parseFloat(budget) || 0,
       address: address.trim(),
       transportPreference
-    });
-  }, [name, budget, transportPreference]);
+    }));
+  }, [name, budget, address, transportPreference, setUserPreferences]);
 
   // Save dark mode changes immediately
   useEffect(() => {

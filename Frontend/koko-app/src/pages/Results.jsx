@@ -216,9 +216,11 @@ const Results = () => {
   const budgetDiff = budget > 0 ? budget - finalCost : 0;
   const savingsPercentage =
     budget > 0 ? Math.max(0, (budgetDiff / budget) * 100) : 0;
-  const xpEarned = isUnderBudget
+  const baseXp = isUnderBudget
     ? Math.round(calculateXpEarned(savingsPercentage))
     : 0;
+  const goodBuyBonus = goodBuyItems.length * GOOD_CHOICE_XP_BONUS;
+  const xpEarned = baseXp + goodBuyBonus;
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleTransportCostChange = (value) => {
@@ -757,8 +759,8 @@ const Results = () => {
                     }`}
                   >
                     {customCost <= budget
-                      ? `+${Math.round(calculateXpEarned(Math.max(0, ((budget - customCost) / budget) * 100)))} XP`
-                      : "0 XP"}
+                      ? `+${Math.round(calculateXpEarned(Math.max(0, ((budget - customCost) / budget) * 100))) + goodBuyBonus} XP`
+                      : `+${goodBuyBonus} XP`}
                   </span>
                 </div>
               </div>

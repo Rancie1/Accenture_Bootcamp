@@ -1079,7 +1079,7 @@ const Shop = () => {
 
             {/* Collapsible Shopping List Editor */}
             {shoppingList.length > 0 && (
-              <div className="shrink-0 px-4">
+              <div className="shrink-0 px-4 mb-2">
                 <button
                   onClick={() => setShowListEditor(!showListEditor)}
                   className="w-full flex items-center justify-between px-4 py-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"

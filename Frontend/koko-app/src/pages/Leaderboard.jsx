@@ -1,6 +1,7 @@
 ﻿import { useContext, useMemo, useState, useEffect } from "react";
 import { AppContext } from "../context/AppContext";
 import BottomNavigation from "../components/BottomNavigation";
+import MascotPreview from "../components/MascotPreview";
 import {
   Trophy,
   Info,
@@ -278,7 +279,7 @@ const getLeaderboard = (users = sampleLeaderboardUsers) => {
 };
 
 const Leaderboard = () => {
-  const { userPreferences, history, streak } = useContext(AppContext);
+  const { userPreferences, history, streak, equippedItems, mascotItems } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -287,14 +288,21 @@ const Leaderboard = () => {
 
   // Calculate user's weekly spending and create their leaderboard entry
   const userLeaderboardData = useMemo(() => {
+    console.log('=== User Leaderboard Debug ===');
+    console.log('Budget:', userPreferences.budget);
+    console.log('Minimum threshold:', MINIMUM_BUDGET_THRESHOLD);
+    console.log('History:', history);
+    
     if (
       !userPreferences.budget ||
       userPreferences.budget < MINIMUM_BUDGET_THRESHOLD
     ) {
+      console.log('User disqualified: budget too low or not set');
       return null;
     }
 
     const weeklySpend = calculateWeeklySpending(history);
+    console.log('Weekly spend:', weeklySpend);
 
     // Calculate days under budget (simplified - count shopping trips that were under budget)
     const weekStart = new Date();
@@ -304,12 +312,17 @@ const Leaderboard = () => {
     const thisWeekHistory = history.filter(
       (item) => item.timestamp >= weekStart.getTime()
     );
+    console.log('This week history:', thisWeekHistory);
+    
+    const dailyBudget = userPreferences.budget / 7;
     const daysUnderBudget = thisWeekHistory.filter((item) => {
-      const dailyBudget = userPreferences.budget / 7;
       return (item.totalSpent || 0) <= dailyBudget;
     }).length;
+    
+    console.log('Days under budget:', daysUnderBudget);
+    console.log('Streak:', streak);
 
-    return {
+    const userData = {
       username: userPreferences.name || "You",
       weeklyBudget: userPreferences.budget,
       weeklySpend: weeklySpend,
@@ -319,6 +332,9 @@ const Leaderboard = () => {
       rankChange: 0,
       isCurrentUser: true
     };
+    
+    console.log('User leaderboard data:', userData);
+    return userData;
   }, [userPreferences, history, streak]);
 
   // Fetch leaderboard data from backend
@@ -370,31 +386,59 @@ const Leaderboard = () => {
   }, []);
 
   const leaderboardData = useMemo(() => {
+    console.log('=== Leaderboard Data Calculation ===');
+    console.log('Backend leaderboard length:', backendLeaderboard.length);
+    console.log('User leaderboard data:', userLeaderboardData);
+    
     // Use backend data if available, otherwise fall back to sample data
     const baseUsers =
       backendLeaderboard.length > 0
         ? backendLeaderboard
         : sampleLeaderboardUsers.map(calculateLeaderboardScore);
     const allUsers = [...baseUsers];
+    
+    console.log('Base users count:', baseUsers.length);
 
-    // Add user to leaderboard if they qualify (only when using sample data or user not already in backend data)
-    if (userLeaderboardData && backendLeaderboard.length === 0) {
-      allUsers.push(calculateLeaderboardScore(userLeaderboardData));
+    // Add user to leaderboard if they qualify
+    if (userLeaderboardData) {
+      // Check if user is already in backend data
+      const userAlreadyExists = allUsers.some(u => u.isCurrentUser);
+      console.log('User already exists:', userAlreadyExists);
+      
+      if (!userAlreadyExists) {
+        const userWithScore = calculateLeaderboardScore(userLeaderboardData);
+        console.log('Adding user with score:', userWithScore);
+        allUsers.push(userWithScore);
+      }
     }
+    
+    console.log('All users count after adding user:', allUsers.length);
 
-    // Sort and rank if not already ranked
+    // Sort and rank if not already ranked (when using sample data)
     if (backendLeaderboard.length === 0) {
       const qualifiedUsers = allUsers.filter((u) => !u.disqualified);
       const sortedUsers = qualifiedUsers.sort(
         (a, b) => b.leaderboardScore - a.leaderboardScore
       );
-      return sortedUsers.map((user, index) => ({
+      const rankedUsers = sortedUsers.map((user, index) => ({
         ...user,
         rank: index + 1
       }));
+      console.log('Final leaderboard (sample data):', rankedUsers);
+      return rankedUsers;
     }
 
-    return allUsers;
+    // When using backend data, re-sort to include the user
+    const qualifiedUsers = allUsers.filter((u) => !u.disqualified);
+    const sortedUsers = qualifiedUsers.sort(
+      (a, b) => b.leaderboardScore - a.leaderboardScore
+    );
+    const rankedUsers = sortedUsers.map((user, index) => ({
+      ...user,
+      rank: index + 1
+    }));
+    console.log('Final leaderboard (backend data):', rankedUsers);
+    return rankedUsers;
   }, [userLeaderboardData, backendLeaderboard]);
 
   const handleShare = (user) => {
@@ -659,16 +703,24 @@ const Leaderboard = () => {
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative text-center z-10">
                       <div className="mb-2 flex justify-center">
-                        <div
-                          className="w-16 h-16 rounded-full flex items-center justify-center relative"
-                          style={{ backgroundColor: "#845EEE" }}
-                        >
-                          <img
-                            src={mascotImages[index]}
-                            alt={`${user.username} mascot`}
-                            className="w-full h-full object-contain"
+                        {user.isCurrentUser ? (
+                          <MascotPreview 
+                            equippedItems={equippedItems}
+                            mascotItems={mascotItems}
+                            size="small"
                           />
-                        </div>
+                        ) : (
+                          <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center relative"
+                            style={{ backgroundColor: "#845EEE" }}
+                          >
+                            <img
+                              src={mascotImages[index]}
+                              alt={`${user.username} mascot`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
                       </div>
                       <p className="text-white font-bold text-xs truncate px-2 max-w-full drop-shadow-lg">
                         {user.username}
@@ -748,9 +800,19 @@ const Leaderboard = () => {
                 }`}
               >
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-lg ${isCurrentUser ? "bg-primary" : isTopThree ? "bg-primary/30" : "bg-gray-200 dark:bg-gray-700"} ${isCurrentUser || isTopThree ? "text-white" : "text-gray-700 dark:text-gray-300"} font-bold text-sm shrink-0 shadow-md group-hover:scale-110 transition-transform`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-lg ${isCurrentUser ? "bg-primary" : isTopThree ? "bg-primary/30" : "bg-gray-200 dark:bg-gray-700"} ${isCurrentUser || isTopThree ? "text-white" : "text-gray-700 dark:text-gray-300"} font-bold text-sm shrink-0 shadow-md group-hover:scale-110 transition-transform overflow-hidden`}
                 >
-                  {isCurrentUser ? <User size={20} /> : getMedalIcon(user.rank)}
+                  {isCurrentUser ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <MascotPreview 
+                        equippedItems={equippedItems}
+                        mascotItems={mascotItems}
+                        size="small"
+                      />
+                    </div>
+                  ) : (
+                    getMedalIcon(user.rank)
+                  )}
                 </div>
 
                 <div

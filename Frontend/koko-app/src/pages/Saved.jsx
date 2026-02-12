@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import useSwipeGesture from '../hooks/useSwipeGesture';
-import { X, Trash2, Receipt, Plus } from 'lucide-react';
+import { X, Trash2, Receipt, Plus, Send } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -19,12 +19,29 @@ const renderIcon = (iconName, size = 24) => {
 };
 const Saved = () => {
   const navigate = useNavigate();
-  const { savedLists, setSavedLists } = useContext(AppContext);
+  const { 
+    savedLists, 
+    setSavedLists,
+    xp,
+    setXp,
+    savings,
+    setSavings,
+    streak,
+    setStreak,
+    streakSavers,
+    setStreakSavers,
+    history,
+    setHistory,
+    userPreferences
+  } = useContext(AppContext);
   const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
   const [selectedList, setSelectedList] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [listToDelete, setListToDelete] = useState(null);
   const [longPressTimer, setLongPressTimer] = useState(null);
+  const [showStreakSaverModal, setShowStreakSaverModal] = useState(false);
+  const [showSubmittedModal, setShowSubmittedModal] = useState(false);
+  const [listToSubmit, setListToSubmit] = useState(null);
 
   // Prefill some example saved lists when none exist so the UI isn't empty
   useEffect(() => {
@@ -146,6 +163,92 @@ const Saved = () => {
     resetSwipe();
   };
 
+  /**
+   * Handle submit button click
+   */
+  const handleSubmitClick = (list) => {
+    const budget = userPreferences.budget || 0;
+    const finalCost = list.results.totalPrice;
+    
+    if (budget > 0 && finalCost > budget) {
+      if (streakSavers > 0) {
+        setListToSubmit(list);
+        setShowStreakSaverModal(true);
+      } else {
+        setStreak(0);
+        completeSubmission(list);
+      }
+    } else {
+      completeSubmission(list);
+    }
+  };
+
+  /**
+   * Use streak saver and submit
+   */
+  const handleUseStreakSaver = () => {
+    setStreakSavers(streakSavers - 1);
+    setShowStreakSaverModal(false);
+    if (listToSubmit) {
+      completeSubmission(listToSubmit);
+    }
+  };
+
+  /**
+   * Break streak and submit
+   */
+  const handleBreakStreak = () => {
+    setStreak(0);
+    setShowStreakSaverModal(false);
+    if (listToSubmit) {
+      completeSubmission(listToSubmit);
+    }
+  };
+
+  /**
+   * Complete submission - add to history, update stats, remove from saved
+   */
+  const completeSubmission = (list) => {
+    const xpEarned = list.results.xpEarned || 0;
+    const budget = userPreferences.budget || 0;
+    const budgetDiff = budget > 0 ? budget - list.results.totalPrice : 0;
+
+    // Update XP and savings
+    setXp(xp + xpEarned);
+    setSavings(savings + Math.max(0, budgetDiff));
+    setStreak(streak + 1);
+
+    // Add to history
+    // eslint-disable-next-line react-hooks/purity
+    const timestamp = Date.now();
+    const historyEntry = {
+      id: timestamp.toString(),
+      items: list.items,
+      results: {
+        ...list.results,
+        timestamp
+      },
+      xpEarned,
+      totalSpent: list.results.totalPrice,
+      timestamp
+    };
+    setHistory([...history, historyEntry]);
+
+    // Remove from saved lists
+    setSavedLists(savedLists.filter(l => l.id !== list.id));
+
+    // Close detail modal if open
+    if (selectedList?.id === list.id) {
+      setSelectedList(null);
+    }
+
+    // Reset submit state
+    setListToSubmit(null);
+
+    // Show success modal
+    setShowSubmittedModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe">
       {/* Header */}
@@ -233,8 +336,8 @@ const Saved = () => {
 
       {/* Detail Modal */}
       {selectedList && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transform animate-scale-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 pb-24 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl transform animate-scale-in">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping List</h3>
@@ -337,16 +440,16 @@ const Saved = () => {
                   setListToDelete(selectedList.id);
                   setShowDeleteModal(true);
                 }}
-                className="flex-1 py-3 border-2 border-red-500 text-red-500 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="py-3 px-4 border-2 border-red-500 text-red-500 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <Trash2 size={20} />
-                Delete
               </button>
               <button
-                onClick={() => setSelectedList(null)}
-                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+                onClick={() => handleSubmitClick(selectedList)}
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                Close
+                <Send size={20} />
+                Submit
               </button>
             </div>
           </div>
@@ -379,6 +482,73 @@ const Saved = () => {
                 className="flex-1 py-3 bg-red-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Streak Saver Modal */}
+      {showStreakSaverModal && listToSubmit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Over Budget!
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              You spent ${listToSubmit.results.totalPrice.toFixed(2)}, which is over your budget of $
+              {userPreferences.budget.toFixed(2)}. Use a Streak Saver to protect your {streak}{" "}
+              saving streak?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleBreakStreak}
+                className="flex-1 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+              >
+                Break Streak
+              </button>
+              <button
+                onClick={handleUseStreakSaver}
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Use Streak Saver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submitted Confirmation Modal */}
+      {showSubmittedModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Submitted!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
+                Your shopping trip has been recorded successfully.
+              </p>
+              <button
+                onClick={() => setShowSubmittedModal(false)}
+                className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all mt-4"
+              >
+                Continue
               </button>
             </div>
           </div>
