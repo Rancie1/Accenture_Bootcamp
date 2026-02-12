@@ -18,7 +18,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['vite.svg', 'koko-favicon.png'],
+      includeAssets: ['vite.svg', 'koko-favicon.png', 'koko-1024.png'],
       manifest: {
         name: 'Koko - Your Savings Companion',
         short_name: 'Koko',
@@ -45,6 +45,12 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          },
+          {
+            src: '/koko-1024.png',
+            sizes: '1024x1024',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },

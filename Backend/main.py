@@ -129,7 +129,7 @@ async def startup_event():
     """Initialize database and external connections on application startup."""
     init_db(seed_demo_data=True)
     print("✓ Database initialized (in-memory SQLite)")
-    print("✓ Demo historical price data seeded")
+    print("✓ Demo data seeded: 8 items @ 4 weeks, 6 users, 14 weekly plans")
 
     # Create the Coles MCP client (Agent will connect on first use)
     from services.agent import get_mcp_client

@@ -67,13 +67,13 @@ def init_db(seed_demo_data: bool = True):
     
     # Seed demo data if requested (only for in-memory database)
     if seed_demo_data and is_sqlite:
-        from seed_data import seed_historical_prices
+        from seed_data import seed_all
         db = SessionLocal()
         try:
             # Check if data already exists
             existing_count = db.query(HistoricalPriceData).count()
             if existing_count == 0:
-                seed_historical_prices(db)
+                seed_all(db)
         finally:
             db.close()
 

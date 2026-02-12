@@ -59,7 +59,7 @@ const Saved = () => {
           results: {
             totalPrice: 12.48,
             savingsPercentage: 8.2,
-            storeName: 'Woolworths',
+            storeName: 'Coles',
             location: '456 Greenway Ave',
             label: 'Nearby',
             travelTime: 5,

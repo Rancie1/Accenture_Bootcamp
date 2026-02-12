@@ -32,18 +32,11 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
 
   const config = sizeConfig[size] || sizeConfig.medium;
 
-  // Get equipped costume item
-  const getEquippedCostume = () => {
-    const costumeId = equippedItems.costume;
-    if (!costumeId) return null;
-    return mascotItems.find(item => item.id === costumeId);
-  };
-
-  const equippedCostume = getEquippedCostume();
-
   // Determine which image to display
   const getKokoImage = () => {
-    if (equippedCostume) {
+    const costumeId = equippedItems.costume;
+    
+    if (costumeId) {
       // Map costume IDs to their images
       const costumeImages = {
         'premium_chef': kokoChef,
@@ -57,7 +50,7 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
         'premium_scuba_chef': kokoScubaChef,
         'scuba_chef': kokoScubaChef
       };
-      return costumeImages[equippedCostume.id] || kokoImage;
+      return costumeImages[costumeId] || kokoImage;
     }
     return kokoImage;
   };

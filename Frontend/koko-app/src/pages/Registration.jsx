@@ -1,15 +1,26 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 
 function Registration() {
   const navigate = useNavigate()
-  const { setUserPreferences } = useContext(AppContext)
+  const { userPreferences, setUserPreferences } = useContext(AppContext)
 
-  const [name, setName] = useState('')
-  const [budget, setBudget] = useState('')
-  const [address, setAddress] = useState('')
+  const [name, setName] = useState(userPreferences.name || '')
+  const [budget, setBudget] = useState(userPreferences.budget > 0 ? userPreferences.budget.toString() : '')
+  const [address, setAddress] = useState(userPreferences.address || '')
   const [errors, setErrors] = useState({})
+
+  // Save to context (and localStorage) as user types
+  useEffect(() => {
+    const budgetNum = parseFloat(budget)
+    setUserPreferences({
+      ...userPreferences,
+      name: name.trim(),
+      budget: !isNaN(budgetNum) && budgetNum > 0 ? budgetNum : 0,
+      address: address.trim()
+    })
+  }, [name, budget, address])
 
   const validateInputs = () => {
     const newErrors = {}
@@ -33,11 +44,6 @@ function Registration() {
 
   const handleSubmit = () => {
     if (validateInputs()) {
-      setUserPreferences({
-        name: name.trim(),
-        budget: parseFloat(budget),
-        address: address.trim()
-      })
       navigate('/shop')
     }
   }
@@ -104,7 +110,7 @@ function Registration() {
           onClick={handleSubmit}
           className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-8"
         >
-          Get Started
+          Sign up
         </button>
       </div>
     </div>
