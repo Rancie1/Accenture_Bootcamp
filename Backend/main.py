@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from database import init_db
-from routers import user, grocery, transport, weekly_plan, leaderboard
+from routers import user, grocery, transport, weekly_plan, leaderboard, chat
 from error_handlers import register_exception_handlers
 
 # Load environment variables
@@ -93,6 +93,10 @@ Common status codes:
             "description": "User rankings based on optimization performance"
         },
         {
+            "name": "chat",
+            "description": "Conversational AI interface powered by Strands Agent"
+        },
+        {
             "name": "system",
             "description": "System health and debugging endpoints"
         }
@@ -108,6 +112,7 @@ app.include_router(grocery.router)
 app.include_router(transport.router)
 app.include_router(weekly_plan.router)
 app.include_router(leaderboard.router)
+app.include_router(chat.router)
 
 # Configure CORS middleware
 app.add_middleware(
