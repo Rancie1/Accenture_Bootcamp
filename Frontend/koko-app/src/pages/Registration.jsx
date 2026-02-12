@@ -8,7 +8,7 @@ function Registration() {
 
   const [name, setName] = useState('')
   const [budget, setBudget] = useState('')
-  const [transportPreference, setTransportPreference] = useState('')
+  const [address, setAddress] = useState('')
   const [errors, setErrors] = useState({})
 
   const validateInputs = () => {
@@ -23,8 +23,8 @@ function Registration() {
       newErrors.budget = 'Budget must be greater than 0'
     }
 
-    if (!transportPreference) {
-      newErrors.transport = 'Please select a transport preference'
+    if (!address.trim()) {
+      newErrors.address = 'Address is required'
     }
 
     setErrors(newErrors)
@@ -36,7 +36,7 @@ function Registration() {
       setUserPreferences({
         name: name.trim(),
         budget: parseFloat(budget),
-        transportPreference
+        address: address.trim()
       })
       navigate('/shop')
     }
@@ -85,32 +85,18 @@ function Registration() {
         
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Transport Preference <span className="text-red-500">*</span>
+            Address <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => setTransportPreference('public')}
-              className={`py-3 border-2 rounded-lg font-medium transition-colors ${
-                transportPreference === 'public'
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Public Transport
-            </button>
-            <button
-              onClick={() => setTransportPreference('driving')}
-              className={`py-3 border-2 rounded-lg font-medium transition-colors ${
-                transportPreference === 'driving'
-                  ? 'border-primary bg-primary text-white'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
-              }`}
-            >
-              Driving
-            </button>
-          </div>
-          {errors.transport && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.transport}</p>
+          <input 
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="Enter your address"
+            required
+          />
+          {errors.address && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.address}</p>
           )}
         </div>
         
