@@ -509,6 +509,67 @@ const Shop = () => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  /**
+   * Submit shopping data to backend
+   */
+  const handleSubmitToBackend = async (transportMode) => {
+    const payload = {
+      userAddress: userPreferences?.address || '',
+      userName: userPreferences?.name || '',
+      userBudget: userPreferences?.budget || 0,
+      shoppingList: shoppingList.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity || 1,
+        price: item.price
+      })),
+      transportMode: transportMode,
+      chatConversation: messages.map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.text,
+        timestamp: msg.id
+      })),
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Submitting to backend:', payload);
+
+    try {
+      // TODO: Replace with your actual backend endpoint
+      const response = await fetch('/api/calculate-savings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Backend request failed');
+      }
+
+      const result = await response.json();
+      console.log('Backend response:', result);
+
+      // Navigate to results with the backend response
+      navigate('/results', { 
+        state: { 
+          transportMode,
+          backendData: result 
+        } 
+      });
+    } catch (error) {
+      console.error('Error submitting to backend:', error);
+      // Navigate anyway with local data
+      navigate('/results', { 
+        state: { 
+          transportMode,
+          localData: payload 
+        } 
+      });
+    }
+  };
+
   return (
     <div className="h-screen bg-linear-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 relative overflow-hidden flex flex-col">
       
@@ -702,7 +763,7 @@ const Shop = () => {
         {/* Mascot - Transitions from center to top */}
         <div className={`flex justify-center items-center transition-all duration-700 ease-in-out ${
           isChatMode 
-            ? 'pt-3 pb-1 shrink-0' 
+            ? 'pt-1 pb-0 shrink-0' 
             : 'pt-6 pb-4 shrink-0'
         }`}>
           <div className="relative">
