@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import useSwipeGesture from '../hooks/useSwipeGesture';
-import { X, Trash2, Receipt } from 'lucide-react';
+import { X, Trash2, Receipt, Plus } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -150,7 +150,7 @@ const Saved = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Saved Lists</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Your Saved Lists</h1>
       </div>
 
       {/* Saved Lists */}
@@ -384,6 +384,15 @@ const Saved = () => {
           </div>
         </div>
       )}
+
+      {/* Create New List FAB */}
+      <button
+        onClick={() => navigate('/shop')}
+        className="fixed bottom-30 right-6 bg-primary text-white rounded-full px-6 py-4 font-bold shadow-lg hover:shadow-xl active:scale-90 transition-all flex items-center gap-1 z-40"
+      >
+        <Plus size={20} />
+        List
+      </button>
 
       {/* Bottom Navigation */}
       <BottomNavigation />
