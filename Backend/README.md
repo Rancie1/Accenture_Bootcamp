@@ -19,6 +19,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+> If using python3
+```bash
+pip3 install -r requirements.txt
+```
+
 3. Run the development server:
 
 ```bash
