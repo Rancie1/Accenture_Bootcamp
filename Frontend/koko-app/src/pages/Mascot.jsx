@@ -239,9 +239,9 @@ const Mascot = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">XP Balance</p>
             <p className="text-xl font-bold text-primary">{xp} XP</p>
           </div>
-          <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full flex items-center gap-2">
+          <div className="bg-primary/10 dark:bg-primary/20 px-4 py-2 rounded-full flex items-center gap-1">
             <LucideIcons.Flame className="text-primary" size={20} />
-            <span className="text-primary font-medium">{streak} day streak</span>
+            <span className="text-primary font-medium">{streak}</span>
           </div>
         </div>
 

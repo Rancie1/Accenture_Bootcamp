@@ -117,6 +117,114 @@ const sampleLeaderboardUsers = [
     totalDays: 7,
     currentStreak: 5,
     rankChange: -1
+  },
+  {
+    username: "Maya S.",
+    weeklyBudget: 170,
+    weeklySpend: 125,
+    daysUnderBudget: 6,
+    totalDays: 7,
+    currentStreak: 9,
+    rankChange: 2
+  },
+  {
+    username: "David H.",
+    weeklyBudget: 140,
+    weeklySpend: 105,
+    daysUnderBudget: 7,
+    totalDays: 7,
+    currentStreak: 15,
+    rankChange: 1
+  },
+  {
+    username: "Sophie B.",
+    weeklyBudget: 130,
+    weeklySpend: 98,
+    daysUnderBudget: 6,
+    totalDays: 7,
+    currentStreak: 11,
+    rankChange: 0
+  },
+  {
+    username: "Ryan C.",
+    weeklyBudget: 190,
+    weeklySpend: 155,
+    daysUnderBudget: 5,
+    totalDays: 7,
+    currentStreak: 7,
+    rankChange: -1
+  },
+  {
+    username: "Olivia N.",
+    weeklyBudget: 110,
+    weeklySpend: 82,
+    daysUnderBudget: 7,
+    totalDays: 7,
+    currentStreak: 18,
+    rankChange: 3
+  },
+  {
+    username: "James F.",
+    weeklyBudget: 165,
+    weeklySpend: 130,
+    daysUnderBudget: 6,
+    totalDays: 7,
+    currentStreak: 8,
+    rankChange: 0
+  },
+  {
+    username: "Zoe L.",
+    weeklyBudget: 145,
+    weeklySpend: 110,
+    daysUnderBudget: 7,
+    totalDays: 7,
+    currentStreak: 13,
+    rankChange: 2
+  },
+  {
+    username: "Alex M.",
+    weeklyBudget: 175,
+    weeklySpend: 142,
+    daysUnderBudget: 5,
+    totalDays: 7,
+    currentStreak: 6,
+    rankChange: -1
+  },
+  {
+    username: "Grace K.",
+    weeklyBudget: 125,
+    weeklySpend: 95,
+    daysUnderBudget: 6,
+    totalDays: 7,
+    currentStreak: 10,
+    rankChange: 1
+  },
+  {
+    username: "Ben P.",
+    weeklyBudget: 155,
+    weeklySpend: 122,
+    daysUnderBudget: 6,
+    totalDays: 7,
+    currentStreak: 12,
+    rankChange: 0
+  },
+  {
+    username: "Chloe R.",
+    weeklyBudget: 135,
+    weeklySpend: 102,
+    daysUnderBudget: 7,
+    totalDays: 7,
+    currentStreak: 16,
+    rankChange: 2
+  },
+  {
+    username: "Noah T.",
+    weeklyBudget: 185,
+    weeklySpend: 148,
+    daysUnderBudget: 5,
+    totalDays: 7,
+    currentStreak: 5,
+    rankChange: -2
   }
 ];
 
