@@ -150,7 +150,7 @@ const Saved = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-primary">Saved Lists</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Saved Lists</h1>
       </div>
 
       {/* Saved Lists */}

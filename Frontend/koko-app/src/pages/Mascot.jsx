@@ -4,6 +4,8 @@ import BottomNavigation from '../components/BottomNavigation';
 import LootboxAnimation from '../components/LootboxAnimation';
 import MascotPreview from '../components/MascotPreview';
 import * as LucideIcons from 'lucide-react';
+import lootboxLocked from '../assets/lootbox-locked.png';
+import lootboxUnlocked from '../assets/lootbox-unlocked.png';
 
 /**
  * Mascot Component
@@ -269,13 +271,13 @@ const Mascot = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('customize')}
-            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-4 font-medium transition-all flex items-center justify-center gap-2 rounded-lg ${
               activeTab === 'customize'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <LucideIcons.Palette size={16} />
@@ -283,10 +285,10 @@ const Mascot = () => {
           </button>
           <button
             onClick={() => setActiveTab('shop')}
-            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-4 font-medium transition-all flex items-center justify-center gap-2 rounded-lg ${
               activeTab === 'shop'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <LucideIcons.ShoppingCart size={16} />
@@ -294,10 +296,10 @@ const Mascot = () => {
           </button>
           <button
             onClick={() => setActiveTab('lootbox')}
-            className={`flex-1 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 py-3 px-4 font-medium transition-all flex items-center justify-center gap-2 rounded-lg ${
               activeTab === 'lootbox'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             <LucideIcons.Gift size={16} />
@@ -395,50 +397,73 @@ const Mascot = () => {
           </div>
         )}
         {activeTab === 'lootbox' && (
-          <div className="flex flex-col items-center py-8">
-            <div className="relative mb-6">
-              <div className="w-48 h-48 bg-gradient-to-br from-primary to-purple-700 rounded-3xl animate-pulse flex items-center justify-center shadow-2xl">
-                <span className="text-9xl">📦</span>
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Mystery Lootbox
-            </p>
-            <p className="text-gray-600 dark:text-gray-400 mb-2">
-              Get a random premium item!
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">
-              Win exclusive costumes for Koko!
-            </p>
-            <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-xl p-3 mb-4 border border-primary/20">
-              <p className="text-xs text-gray-700 dark:text-gray-300 mb-2">
-                <span className="font-semibold">Drop Rates:</span>
-              </p>
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Rare Items</span>
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Legendary Combos</span>
-                  <span className="font-semibold text-yellow-600 dark:text-yellow-400">40%</span>
+          <div className="max-w-md mx-auto">
+            {/* Main Lootbox Card */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden mb-4">
+              {/* Lootbox Image Section */}
+              <div className="bg-gradient-to-br from-primary/80 to-purple-500/5 p-8 flex justify-center">
+                <div className="w-40 h-40">
+                  <img 
+                    src={isLootboxOutOfStock() ? lootboxUnlocked : lootboxLocked} 
+                    alt={isLootboxOutOfStock() ? "Unlocked Lootbox" : "Locked Lootbox"}
+                    className="w-full h-full object-contain drop-shadow-2xl"
+                  />
                 </div>
               </div>
+
+              {/* Content Section */}
+              <div className="p-6 space-y-4">
+                {/* Title and Description */}
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Mystery Lootbox
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Get a random premium item!
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Win exclusive costumes for Koko!
+                  </p>
+                </div>
+
+                {/* Drop Rates Card */}
+                <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-xl p-4 border border-primary/20">
+                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    Drop Rates:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Rare Items</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Legendary Combos</span>
+                      <span className="font-semibold text-yellow-600 dark:text-yellow-400">40%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Remaining */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 text-center">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {premiumItems.length - mascotItems.filter(item => item.isPremium).length} / {premiumItems.length} items remaining
+                  </p>
+                </div>
+
+                {/* Purchase Button */}
+                <button
+                  onClick={handlePurchaseLootbox}
+                  disabled={isLootboxOutOfStock()}
+                  className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all ${
+                    isLootboxOutOfStock()
+                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-primary to-purple-600 text-white active:scale-95 hover:shadow-xl'
+                  }`}
+                >
+                  {isLootboxOutOfStock() ? 'Out of Stock' : 'Purchase for $0.99'}
+                </button>
+              </div>
             </div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-6">
-              {premiumItems.length - mascotItems.filter(item => item.isPremium).length} / {premiumItems.length} items remaining
-            </p>
-            <button
-              onClick={handlePurchaseLootbox}
-              disabled={isLootboxOutOfStock()}
-              className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-transform ${
-                isLootboxOutOfStock()
-                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-primary text-white active:scale-95 hover:bg-primary/90'
-              }`}
-            >
-              {isLootboxOutOfStock() ? 'Out of Stock' : 'Purchase for $0.99'}
-            </button>
           </div>
         )}
       </div>
@@ -456,8 +481,12 @@ const Mascot = () => {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl transform animate-scale-in">
             <div className="text-center mb-6">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-purple-700 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-                <span className="text-6xl">📦</span>
+              <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+                <img 
+                  src={lootboxLocked} 
+                  alt="Lootbox"
+                  className="w-full h-full object-contain drop-shadow-xl"
+                />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Purchase Lootbox?
