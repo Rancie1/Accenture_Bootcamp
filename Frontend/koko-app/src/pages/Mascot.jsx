@@ -43,14 +43,9 @@ const Mascot = () => {
 
   // Premium items available from lootbox
   const premiumItems = [
-    // Rare items (60% chance - basic costumes)
-    { id: "premium_chef", name: "Chef Hat", type: "costume", rarity: "rare", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" },
-    { id: "premium_sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "rare", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" },
-    { id: "premium_scuba", name: "Scuba Gear", type: "costume", rarity: "rare", icon: "Waves", emoji: "🤿", isPremium: true, image: "koko-scuba.PNG" },
-    
-    // Legendary items (40% chance - combo costumes)
-    { id: "premium_sunglasses_chef", name: "Chef with Sunglasses", type: "costume", rarity: "legendary", icon: "Sparkles", emoji: "😎👨‍🍳", isPremium: true, image: "koko-sunglasses-chef.PNG" },
-    { id: "premium_scuba_chef", name: "Scuba Chef", type: "costume", rarity: "legendary", icon: "Crown", emoji: "🤿👨‍🍳", isPremium: true, image: "koko-scuba-chef.PNG" }
+    { id: "sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "rare", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" },
+    { id: "scuba", name: "Scuba Gear", type: "costume", rarity: "rare", icon: "Waves", emoji: "🤿", isPremium: true, image: "koko-scuba.PNG" },
+    { id: "chef", name: "Chef Hat", type: "costume", rarity: "rare", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" }
   ];
 
   // Shop items available for purchase
@@ -93,26 +88,6 @@ const Mascot = () => {
       icon: "Waves",
       emoji: "🤿",
       image: "koko-scuba.PNG"
-    },
-    { 
-      id: "sunglasses_chef", 
-      name: "Chef with Sunglasses", 
-      type: "costume", 
-      rarity: "legendary", 
-      cost: 350, 
-      icon: "Sparkles",
-      emoji: "😎👨‍🍳",
-      image: "koko-sunglasses-chef.PNG"
-    },
-    { 
-      id: "scuba_chef", 
-      name: "Scuba Chef", 
-      type: "costume", 
-      rarity: "legendary", 
-      cost: 350, 
-      icon: "Crown",
-      emoji: "🤿👨‍🍳",
-      image: "koko-scuba-chef.PNG"
     }
   ];
 
@@ -155,24 +130,8 @@ const Mascot = () => {
       return; // No items left to win
     }
     
-    // Rarity-based selection: 60% rare, 40% legendary
-    const roll = Math.random();
-    let targetRarity;
-    
-    if (roll < 0.60) {
-      targetRarity = "rare";
-    } else {
-      targetRarity = "legendary";
-    }
-    
-    // Filter unowned items by target rarity
-    const unownedOfRarity = unownedItems.filter(item => item.rarity === targetRarity);
-    
-    // If no items of target rarity available, pick from any unowned
-    const itemPool = unownedOfRarity.length > 0 ? unownedOfRarity : unownedItems;
-    
-    // Select a random item from the pool
-    const randomItem = itemPool[Math.floor(Math.random() * itemPool.length)];
+    // Select a random item from unowned items
+    const randomItem = unownedItems[Math.floor(Math.random() * unownedItems.length)];
     
     // Add to mascot items
     setMascotItems([...mascotItems, randomItem]);
@@ -216,17 +175,42 @@ const Mascot = () => {
    * Handle equipping/unequipping an item
    * Requirements: 9.6
    */
-  const handleEquipItem = (item) => {
-    // For costume type, only one can be equipped at a time (replaces entire image)
-    if (item.type === 'costume') {
-      if (equippedItems.costume === item.id) {
-        // Unequip if already equipped
-        setEquippedItems({ costume: null });
+  const handleEquipItem = (item, category) => {
+    setEquippedItems(prev => {
+      const newEquipped = { ...prev };
+      
+      // Toggle the item in its category
+      if (newEquipped[category] === item.id) {
+        newEquipped[category] = null;
       } else {
-        // Equip the costume (replaces all other items)
-        setEquippedItems({ costume: item.id });
+        newEquipped[category] = item.id;
       }
-    }
+      
+      // Determine the combined costume based on equipped items
+      const eyewear = newEquipped.eyewear;
+      const headwear = newEquipped.headwear;
+      
+      // Map combinations to costume IDs
+      if (eyewear && headwear) {
+        // Both equipped - use combination
+        if (eyewear === 'sunglasses' && headwear === 'chef') {
+          newEquipped.costume = 'sunglasses_chef';
+        } else if (eyewear === 'scuba' && headwear === 'chef') {
+          newEquipped.costume = 'scuba_chef';
+        }
+      } else if (eyewear && !headwear) {
+        // Only eyewear
+        newEquipped.costume = eyewear;
+      } else if (!eyewear && headwear) {
+        // Only headwear
+        newEquipped.costume = headwear;
+      } else {
+        // Nothing equipped
+        newEquipped.costume = null;
+      }
+      
+      return newEquipped;
+    });
   };
 
   /**
@@ -320,30 +304,90 @@ const Mascot = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
-                {mascotItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleEquipItem(item)}
-                    className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-3 text-center transition-all hover:scale-102 ${
-                      equippedItems.costume === item.id
-                        ? 'ring-2 ring-primary shadow-lg'
-                        : ''
-                    }`}
-                  >
-                    <div className="flex justify-center items-center text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
-                    <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1">
-                      {item.name}
-                    </p>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${getRarityClasses(
-                        item.rarity
-                      )}`}
-                    >
-                      {item.rarity}
-                    </span>
-                  </button>
-                ))}
+              <div className="space-y-6">
+                {/* Eyewear Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <LucideIcons.Glasses size={20} className="text-primary" />
+                    Eyewear
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {mascotItems
+                      .filter(item => ['sunglasses', 'scuba'].includes(item.id))
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleEquipItem(item, 'eyewear')}
+                          className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-3 text-center transition-all hover:scale-102 ${
+                            equippedItems.eyewear === item.id
+                              ? 'ring-2 ring-primary shadow-lg'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex justify-center items-center text-gray-900 dark:text-white mb-2">
+                            {renderIcon(item.icon, 32)}
+                          </div>
+                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1">
+                            {item.name}
+                          </p>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${getRarityClasses(
+                              item.rarity
+                            )}`}
+                          >
+                            {item.rarity}
+                          </span>
+                        </button>
+                      ))}
+                    {mascotItems.filter(item => ['sunglasses', 'scuba'].includes(item.id)).length === 0 && (
+                      <div className="col-span-3 text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
+                        No eyewear items yet
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Headwear Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <LucideIcons.ChefHat size={20} className="text-primary" />
+                    Headwear
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {mascotItems
+                      .filter(item => item.id === 'chef')
+                      .map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleEquipItem(item, 'headwear')}
+                          className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-3 text-center transition-all hover:scale-102 ${
+                            equippedItems.headwear === item.id
+                              ? 'ring-2 ring-primary shadow-lg'
+                              : ''
+                          }`}
+                        >
+                          <div className="flex justify-center items-center text-gray-900 dark:text-white mb-2">
+                            {renderIcon(item.icon, 32)}
+                          </div>
+                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate mb-1">
+                            {item.name}
+                          </p>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full ${getRarityClasses(
+                              item.rarity
+                            )}`}
+                          >
+                            {item.rarity}
+                          </span>
+                        </button>
+                      ))}
+                    {mascotItems.filter(item => item.id === 'chef').length === 0 && (
+                      <div className="col-span-3 text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
+                        No headwear items yet
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -429,16 +473,20 @@ const Mascot = () => {
                 {/* Drop Rates Card */}
                 <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-xl p-4 border border-primary/20">
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                    Drop Rates:
+                    Available Items:
                   </p>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Rare Items</span>
-                      <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Cool Sunglasses</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">Rare</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Legendary Combos</span>
-                      <span className="font-semibold text-yellow-600 dark:text-yellow-400">40%</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Scuba Gear</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">Rare</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Chef Hat</span>
+                      <span className="font-semibold text-blue-600 dark:text-blue-400">Rare</span>
                     </div>
                   </div>
                 </div>
@@ -460,7 +508,7 @@ const Mascot = () => {
                       : 'bg-gradient-to-r from-primary to-purple-600 text-white active:scale-95 hover:shadow-xl'
                   }`}
                 >
-                  {isLootboxOutOfStock() ? 'Out of Stock' : 'Purchase for $0.99'}
+                  {isLootboxOutOfStock() ? 'All items Unlocked' : 'Purchase for $0.99'}
                 </button>
               </div>
             </div>

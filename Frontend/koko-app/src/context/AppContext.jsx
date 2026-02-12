@@ -49,10 +49,9 @@ export const AppProvider = ({ children }) => {
   // Mascot customization
   const [mascotItems, setMascotItems] = useState([]);
   const [equippedItems, setEquippedItems] = useState({
-    hat: null,
-    accessory: null,
-    background: null,
-    outfit: null
+    eyewear: null,
+    headwear: null,
+    costume: null
   });
 
   // Calculate derived values using useMemo for performance
@@ -83,10 +82,9 @@ export const AppProvider = ({ children }) => {
         setHistory(loadedState.history || []);
         setMascotItems(loadedState.mascotItems || []);
         setEquippedItems(loadedState.equippedItems || {
-          hat: null,
-          accessory: null,
-          background: null,
-          outfit: null
+          eyewear: null,
+          headwear: null,
+          costume: null
         });
       });
     }
