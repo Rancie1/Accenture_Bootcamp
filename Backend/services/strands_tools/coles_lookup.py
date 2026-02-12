@@ -6,6 +6,7 @@ and can find nearby Coles stores via Google Places.
 """
 
 import os
+import re
 import asyncio
 import logging
 
@@ -13,6 +14,12 @@ from strands import tool
 from services.n8n_service import call_n8n_webhook
 
 logger = logging.getLogger(__name__)
+
+
+def _clean_location(loc: str) -> str:
+    """Strip [USER_HOME_ADDRESS=...] wrapper if the agent passed the tag verbatim."""
+    m = re.search(r"\[USER_HOME_ADDRESS=(.+?)\]", loc)
+    return m.group(1).strip() if m else loc
 
 
 @tool
@@ -42,6 +49,7 @@ def lookup_coles_prices(items: list[str] = None, location: str = "") -> dict:
 
     items = items or []
     items_str = ", ".join(items) if items else ""
+    location = _clean_location(location) if location else ""
 
     logger.info(f"Looking up Coles prices for {len(items)} items, location: {location or 'none'}")
 

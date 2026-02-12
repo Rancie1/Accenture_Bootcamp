@@ -6,6 +6,7 @@ two locations using the Google Routes API.
 """
 
 import os
+import re
 import asyncio
 import logging
 
@@ -13,6 +14,12 @@ from strands import tool
 from services.n8n_service import call_n8n_webhook
 
 logger = logging.getLogger(__name__)
+
+
+def _clean_location(loc: str) -> str:
+    """Strip [USER_HOME_ADDRESS=...] wrapper if the agent passed the tag verbatim."""
+    m = re.search(r"\[USER_HOME_ADDRESS=(.+?)\]", loc)
+    return m.group(1).strip() if m else loc
 
 
 @tool
@@ -38,6 +45,8 @@ def get_directions(start_location: str, end_location: str, travel_mode: str = "D
         "http://localhost:5678/webhook/maps"
     )
 
+    start_location = _clean_location(start_location)
+    end_location = _clean_location(end_location)
     logger.info(f"Getting directions: {start_location} -> {end_location} ({travel_mode})")
 
     # n8n AI agent expects body.message
