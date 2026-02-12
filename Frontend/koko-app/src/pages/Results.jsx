@@ -142,6 +142,7 @@ const Results = () => {
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [customCost, setCustomCost] = useState(estimatedTotal);
   const [customCostInput, setCustomCostInput] = useState(estimatedTotal > 0 ? estimatedTotal.toFixed(2) : '');
+  const [retailerName, setRetailerName] = useState('Coles');
   const [hasAdjusted, setHasAdjusted] = useState(false);
   const [showChatSummary, setShowChatSummary] = useState(false);
 
@@ -195,7 +196,8 @@ const Results = () => {
         savingsPercentage,
         xpEarned,
         savingsAmount: budgetDiff,
-        transportMode
+        transportMode,
+        storeName: hasAdjusted ? retailerName : 'Coles' // Use adjusted retailer if edited
       },
       timestamp
     };
@@ -246,7 +248,7 @@ const Results = () => {
         xpEarned,
         savingsAmount: budgetDiff,
         transportMode,
-        storeName: 'Coles', // Default retailer
+        storeName: hasAdjusted ? retailerName : 'Coles', // Use adjusted retailer if edited
         timestamp
       },
       xpEarned,
@@ -512,7 +514,7 @@ const Results = () => {
           onClick={() => setShowAdjustModal(true)}
           className="w-full py-3 text-primary border-2 border-primary rounded-xl font-semibold hover:bg-primary/5 transition-colors"
         >
-          {hasAdjusted ? 'Update Actual Cost' : 'Enter Actual Cost'}
+          {hasAdjusted ? 'Update Trip Details' : 'Edit Trip Details'}
         </button>
 
         <div className="grid grid-cols-3 gap-3">
@@ -542,8 +544,21 @@ const Results = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-sm">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              What did you actually spend?
+              Edit Trip Details
             </h3>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Retailer Name
+              </label>
+              <input
+                type="text"
+                value={retailerName}
+                onChange={(e) => setRetailerName(e.target.value)}
+                placeholder="e.g., Coles, Woolworths, Aldi"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -556,7 +571,6 @@ const Results = () => {
                 onChange={(e) => handleCostInputChange(e.target.value)}
                 placeholder="0.00"
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent text-lg font-semibold"
-                autoFocus
               />
             </div>
 

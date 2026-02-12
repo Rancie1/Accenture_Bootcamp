@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { ArrowLeft } from 'lucide-react';
@@ -19,25 +19,30 @@ const Settings = () => {
   const [transportPreference, setTransportPreference] = useState(userPreferences.transportPreference);
   const [localDarkMode, setLocalDarkMode] = useState(darkMode);
 
-  const handleSave = () => {
-    // Update user preferences in context — spread existing to preserve address etc.
+  // Save to context (and localStorage) as user types
+  useEffect(() => {
     setUserPreferences({
       ...userPreferences,
       name,
       budget: parseFloat(budget),
       address: address.trim(),
+      budget: parseFloat(budget) || 0,
       transportPreference
     });
-    
-    // Update dark mode
+  }, [name, budget, transportPreference]);
+
+  // Save dark mode changes immediately
+  useEffect(() => {
     setDarkMode(localDarkMode);
-    
-    // Navigate back to dashboard
+  }, [localDarkMode, setDarkMode]);
+
+  const handleSave = () => {
+    // Data is already saved, just navigate back
     navigate('/dashboard');
   };
 
   const handleBack = () => {
-    // Navigate back without saving
+    // Navigate back (data is already saved)
     navigate('/dashboard');
   };
 
@@ -146,7 +151,7 @@ const Settings = () => {
           onClick={handleSave}
           className="w-full py-4 bg-primary text-white rounded-xl font-semibold text-lg shadow-lg active:scale-95 transition-transform mt-8"
         >
-          Save Changes
+          Done
         </button>
       </div>
     </div>
