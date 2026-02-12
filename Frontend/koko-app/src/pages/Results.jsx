@@ -73,23 +73,32 @@ const Results = () => {
   const TransportIcon = transport.icon;
 
   // ── Derived values from real shopping list ──────────────────────────
+  // Filter out fuel/petrol items — fuel is NOT a grocery item
+  const isFuelItem = (item) =>
+    /\bfuel\b|\bpetrol\b|\bgasoline\b|\blitres?\s+of\s+fuel\b/i.test(item.name || '');
+
+  const groceryItems = useMemo(
+    () => shoppingList.filter(item => !isFuelItem(item)),
+    [shoppingList]
+  );
+
   const groceryTotal = useMemo(() => {
-    return shoppingList.reduce((sum, item) => {
+    return groceryItems.reduce((sum, item) => {
       const price = item.price || 0;
       const qty = item.quantity || 1;
       return sum + price * qty;
     }, 0);
-  }, [shoppingList]);
+  }, [groceryItems]);
 
-  const itemsWithPrice = shoppingList.filter(
+  const itemsWithPrice = groceryItems.filter(
     (item) => item.price && item.price > 0
   );
-  const itemsWithoutPrice = shoppingList.filter(
+  const itemsWithoutPrice = groceryItems.filter(
     (item) => !item.price || item.price <= 0
   );
 
   // Items flagged as a good buy by the backend price-trend check
-  const goodBuyItems = useMemo(() => shoppingList.filter(item => item.isGoodBuy), [shoppingList]);
+  const goodBuyItems = useMemo(() => groceryItems.filter(item => item.isGoodBuy), [groceryItems]);
   const GOOD_CHOICE_XP_BONUS = 10;
 
   // ── Extract transport cost from agent's last message ────────────────
@@ -399,18 +408,18 @@ const Results = () => {
         <div className="flex items-center gap-2 mb-4">
           <ShoppingCart size={20} className="text-primary" />
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            Shopping List ({shoppingList.length}{" "}
-            {shoppingList.length === 1 ? "item" : "items"})
+            Shopping List ({groceryItems.length}{" "}
+            {groceryItems.length === 1 ? "item" : "items"})
           </h2>
         </div>
 
-        {shoppingList.length === 0 ? (
+        {groceryItems.length === 0 ? (
           <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
             No items yet. Go back and chat with Koko to build your list!
           </p>
         ) : (
           <div className="space-y-3">
-            {shoppingList.map((item, idx) => (
+            {groceryItems.map((item, idx) => (
               <div
                 key={item.id || idx}
                 className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
@@ -452,7 +461,7 @@ const Results = () => {
         )}
 
         {/* Grocery subtotal row */}
-        {shoppingList.length > 0 && (
+        {groceryItems.length > 0 && (
           <div className="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-600 flex items-center justify-between">
             <p className="text-base font-bold text-gray-900 dark:text-white">
               Grocery Subtotal

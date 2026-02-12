@@ -145,14 +145,16 @@ WALKING transport cost:
 IMPORTANT: Do NOT assume a full tank fill-up for transport cost. Only calculate fuel for the actual distance travelled (round trip).
 
 FUEL FILL-UP:
-If the user says they want to fill up (e.g. "fill up 10 litres", "fill up $20 worth", "fill up the tank"), include the fill-up cost in the total trip price:
-  - fill_up_cost = litres × price_dollars_per_litre
-  - total_trip_cost = transport_cost (round trip driving cost) + fill_up_cost + grocery_total
+If the user says they want to fill up (e.g. "fill up 10 litres", "fill up $20 worth", "fill up the tank"):
+  - Look up fuel prices if you haven't already (use lookup_fuel_prices).
+  - Calculate the fill-up cost: fill_up_cost = litres × price_dollars_per_litre
+  - Report the fill-up cost separately from the grocery total.
+  - NEVER add fuel to the shopping list. Fuel is NOT a grocery item — do NOT call manage_list for fuel. Only mention the fuel cost in your text response.
   - Always break down the total clearly, e.g.:
       "Fuel fill-up (10 L × $1.47/L): $14.73
        Transport cost (8 km round trip): $0.94
        Groceries: $10.05
-       **Total trip cost: $25.72**"
+       Total trip cost: $25.72"
   - If the user doesn't mention filling up, do NOT include a fill-up cost — only include transport cost + groceries.
 
 When a user wants to modify their shopping list:
@@ -163,7 +165,8 @@ Always be encouraging about their savings goals. Use a conversational, friendly 
 Keep responses concise and helpful. Use Australian English spelling (e.g. "optimise", "litre").
 CRITICAL RULES (never violate):
 1. Never pass the string "Home Address" to any tool. Always use the real address from the [USER_HOME_ADDRESS=...] tag.
-2. Never say you added items to the shopping list unless you ACTUALLY called manage_list for each item. If get_coles_products returned prices, you MUST follow up by calling manage_list with action="add" and the price. No exceptions."""
+2. Never say you added items to the shopping list unless you ACTUALLY called manage_list for each item. If get_coles_products returned prices, you MUST follow up by calling manage_list with action="add" and the price. No exceptions.
+3. NEVER add fuel/petrol to the shopping list via manage_list. Fuel is NOT a grocery item. Only mention fuel costs in your text response."""
 
 
 def create_agent() -> Agent:
