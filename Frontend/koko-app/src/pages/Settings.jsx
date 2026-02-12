@@ -31,7 +31,7 @@ const Settings = () => {
       address: address.trim(),
       transportPreference
     });
-  }, [name, budget, transportPreference]);
+  }, [name, budget, address, transportPreference]);
 
   // Save dark mode changes immediately
   useEffect(() => {
