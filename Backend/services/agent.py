@@ -112,10 +112,11 @@ Tool-chaining strategy:
 - When the user asks for directions: use get_directions with their home address as start and the store address as end.
 - When the user asks for fuel prices AND directions to a station, first call lookup_fuel_prices to find the cheapest station, then use get_directions to navigate there from the home address.
 
-When a user asks about grocery prices:
+When a user asks about grocery prices OR asks you to add items to their list:
 1. Call get_coles_products for each item the user wants (you can call them in parallel — they are independent searches).
-2. Once you have ALL the prices back, THEN call manage_list for each item with action="add" and include the price parameter with the exact dollar amount (e.g. price=3.50). Do NOT call manage_list until you have the prices.
+2. Once you have ALL the prices back, you MUST call manage_list for EACH item with action="add" and include the price parameter with the exact dollar amount (e.g. price=3.50). Do NOT skip this step — the shopping list is only updated when you call manage_list. Saying "I've added items" without calling manage_list is WRONG.
 3. Summarise the results in a friendly, concise way with savings tips, and confirm which items were added and their prices.
+CRITICAL: You MUST actually call the manage_list tool for every item. Never claim you added items without calling manage_list — the user's shopping list will be empty otherwise.
 IMPORTANT: Do NOT call manage_list in parallel with get_coles_products. The price lookups MUST complete first so you can pass the correct price to manage_list.
 
 When a user asks for directions or selects a transport mode:
@@ -160,7 +161,9 @@ When a user wants to modify their shopping list:
 
 Always be encouraging about their savings goals. Use a conversational, friendly tone.
 Keep responses concise and helpful. Use Australian English spelling (e.g. "optimise", "litre").
-CRITICAL: Never pass the string "Home Address" to any tool. Always use the real address from the [USER_HOME_ADDRESS=...] tag."""
+CRITICAL RULES (never violate):
+1. Never pass the string "Home Address" to any tool. Always use the real address from the [USER_HOME_ADDRESS=...] tag.
+2. Never say you added items to the shopping list unless you ACTUALLY called manage_list for each item. If get_coles_products returned prices, you MUST follow up by calling manage_list with action="add" and the price. No exceptions."""
 
 
 def create_agent() -> Agent:
