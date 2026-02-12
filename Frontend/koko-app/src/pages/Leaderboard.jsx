@@ -1,6 +1,7 @@
-import { useContext, useMemo, useState, useEffect } from 'react';
+﻿import { useContext, useMemo, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
+import MascotPreview from '../components/MascotPreview';
 import { calculateWeeklySpending, calculateSavingsScore } from '../utils/calculations';
 import { Trophy, TrendingUp, Info, X, Share2 } from 'lucide-react';
 
@@ -228,31 +229,35 @@ const Leaderboard = () => {
 
         {/* Podium for Top 3 */}
         <div className="mb-6">
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="flex items-end justify-center gap-4 mb-4 px-4">
             {leaderboardData.slice(0, 3).map((user, index) => {
-              // Heights: 2nd place (shorter), 1st place (tallest), 3rd place (shortest)
-              const heights = ['h-28', 'h-40', 'h-24'];
-              // Order: 2nd, 1st, 3rd
+              const heights = ['h-44', 'h-56', 'h-36'];
+              const widths = 'w-36';
               const displayOrder = index === 0 ? 1 : index === 1 ? 0 : 2;
-              const medals = ['�', '�', '🥉'];
               const gradients = [
-                'from-purple-400 to-purple-600',  // 1st place - purple
-                'from-purple-300 to-purple-400',  // 2nd place - light purple
-                'from-purple-500 to-indigo-600'   // 3rd place - deep purple
+                'from-purple-500 to-purple-600',
+                'from-purple-400 to-purple-500',
+                'from-indigo-500 to-indigo-600'
               ];
               
               return (
                 <div key={user.rank} className={`flex flex-col items-center ${index === 0 ? 'order-2' : index === 1 ? 'order-1' : 'order-3'}`}>
-                  <div className={`w-full bg-gradient-to-t ${gradients[index]} rounded-t-2xl ${heights[displayOrder]} flex flex-col items-center justify-end pb-4 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden`}>
+                  <div className={`${widths} bg-gradient-to-b ${gradients[index]} rounded-3xl ${heights[displayOrder]} flex flex-col items-center justify-center py-4 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
-                    <div className="relative text-center">
-                      <div className="text-4xl mb-2 animate-bounce">{medals[index]}</div>
-                      <p className="text-white font-bold text-sm truncate px-2 max-w-full">{user.username}</p>
-                      <p className="text-white/90 text-xs font-semibold">{user.savingsPercentage}%</p>
+                    <div className="relative text-center z-10">
+                      <div className="mb-2 flex justify-center">
+                        <MascotPreview 
+                          equippedItems={{}}
+                          mascotItems={[]}
+                          size="small"
+                        />
+                      </div>
+                      <p className="text-white font-bold text-sm truncate px-2 max-w-full drop-shadow-lg">{user.username}</p>
+                      <p className="text-white/90 text-xs font-semibold mt-1">{user.savingsPercentage}%</p>
                     </div>
                   </div>
-                  <div className="w-full bg-gradient-to-b from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 h-8 rounded-b-lg flex items-center justify-center">
-                    <span className="text-xs font-bold text-gray-700 dark:text-gray-300">#{user.rank}</span>
+                  <div className={`${widths} bg-gradient-to-b from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 h-10 rounded-b-2xl flex items-center justify-center shadow-md`}>
+                    <span className="text-base font-bold text-gray-700 dark:text-gray-300">#{user.rank}</span>
                   </div>
                 </div>
               );
@@ -465,3 +470,8 @@ const Leaderboard = () => {
 };
 
 export default Leaderboard;
+
+
+
+
+
