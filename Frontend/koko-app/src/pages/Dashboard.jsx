@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
-import { Settings, Flame, Share2 } from 'lucide-react';
+import { Settings, Flame, Share2, Trash2 } from 'lucide-react';
 
 /**
  * Dashboard Component
@@ -28,6 +28,9 @@ const Dashboard = () => {
 
   // State for swipe-to-delete functionality
   const [swipedItemId, setSwipedItemId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [longPressTimer, setLongPressTimer] = useState(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -99,12 +102,53 @@ const Dashboard = () => {
   };
 
   /**
-   * Delete history item and subtract XP from weekly score
-   * Requirements: 6.13
+   * Handle long press start
    */
-  const handleDeleteHistory = (itemId) => {
-    const updatedHistory = history.filter(item => item.id !== itemId);
-    setHistory(updatedHistory);
+  const handleLongPressStart = (itemId) => {
+    const timer = setTimeout(() => {
+      setItemToDelete(itemId);
+      setShowDeleteModal(true);
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  /**
+   * Handle long press end
+   */
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  /**
+   * Handle delete button click (from swipe)
+   */
+  const handleDeleteClick = (itemId) => {
+    setItemToDelete(itemId);
+    setShowDeleteModal(true);
+  };
+
+  /**
+   * Confirm delete
+   */
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      const updatedHistory = history.filter(item => item.id !== itemToDelete);
+      setHistory(updatedHistory);
+      setSwipedItemId(null);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
+  };
+
+  /**
+   * Cancel delete
+   */
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setItemToDelete(null);
     setSwipedItemId(null);
   };
 
@@ -252,9 +296,21 @@ const Dashboard = () => {
               <div 
                 key={item.id}
                 className="relative overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={() => handleTouchEnd(item.id)}
+                onTouchStart={(e) => {
+                  handleTouchStart(e);
+                  handleLongPressStart(item.id);
+                }}
+                onTouchMove={(e) => {
+                  handleTouchMove(e);
+                  handleLongPressEnd();
+                }}
+                onTouchEnd={() => {
+                  handleTouchEnd(item.id);
+                  handleLongPressEnd();
+                }}
+                onMouseDown={() => handleLongPressStart(item.id)}
+                onMouseUp={handleLongPressEnd}
+                onMouseLeave={handleLongPressEnd}
               >
                 <div 
                   className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md transition-transform duration-300 ease-out ${
@@ -282,9 +338,10 @@ const Dashboard = () => {
                 {/* Delete button shown on swipe */}
                 {swipedItemId === item.id && (
                   <button
-                    onClick={() => handleDeleteHistory(item.id)}
-                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl transition-opacity duration-300"
+                    onClick={() => handleDeleteClick(item.id)}
+                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl transition-opacity duration-300 gap-2"
                   >
+                    <Trash2 size={20} />
                     Delete
                   </button>
                 )}
@@ -293,6 +350,38 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Trash2 size={32} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Shopping Trip?</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                This action cannot be undone. Are you sure you want to delete this shopping trip from your history?
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <BottomNavigation />
     </div>

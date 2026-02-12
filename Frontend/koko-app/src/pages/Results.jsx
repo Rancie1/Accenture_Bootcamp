@@ -73,6 +73,7 @@ const Results = () => {
   const [customStoreName, setCustomStoreName] = useState('');
   const [showStreakSaverModal, setShowStreakSaverModal] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
+  const [showSubmittedModal, setShowSubmittedModal] = useState(false);
   const [hasAdjusted, setHasAdjusted] = useState(false);
 
   // Calculate savings and XP for selected result
@@ -209,7 +210,8 @@ const Results = () => {
     };
     setHistory([...history, historyEntry]);
 
-    navigate('/shop');
+    // Show success modal
+    setShowSubmittedModal(true);
   };
 
   return (
@@ -523,6 +525,39 @@ const Results = () => {
               <button
                 onClick={() => {
                   setShowSavedModal(false);
+                  navigate('/shop');
+                }}
+                className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submitted Confirmation Modal */}
+      {showSubmittedModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Submitted!</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-2">
+                Your shopping trip has been recorded successfully.
+              </p>
+              {xpEarned > 0 && (
+                <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 mb-6">
+                  <p className="text-primary font-bold text-lg">+{xpEarned} XP earned!</p>
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setShowSubmittedModal(false);
                   navigate('/shop');
                 }}
                 className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
