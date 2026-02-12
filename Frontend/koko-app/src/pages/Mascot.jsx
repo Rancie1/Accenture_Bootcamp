@@ -273,7 +273,7 @@ const Mascot = () => {
             }`}
           >
             <LucideIcons.Palette size={16} />
-            <span>Customize</span>
+            <span>Customise</span>
           </button>
           <button
             onClick={() => setActiveTab('shop')}
