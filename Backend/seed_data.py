@@ -29,12 +29,15 @@ def seed_historical_prices(db: Session) -> None:
     """
     
     # Define items with base prices (in AUD)
+    # Prices are set slightly ABOVE typical Coles prices so that
+    # current real Coles prices often fall at or below the average,
+    # triggering "good buy" gamification.
     items = {
-        "Milk (1L)": 1.50,
-        "Bread (Loaf)": 3.00,
-        "Eggs (Dozen)": 5.50,
-        "Chicken Breast (1kg)": 12.00,
-        "Rice (1kg)": 4.00,
+        "Milk (1L)": 5.00,       # Coles Full Cream Milk ~$4.65
+        "Bread (Loaf)": 4.80,    # Coles Wholemeal Bread ~$4.50
+        "Eggs (Dozen)": 7.00,    # Coles Free Range 12pk ~$6.50
+        "Chicken Breast (1kg)": 14.00,  # Coles Chicken ~$12.99
+        "Rice (1kg)": 5.00,      # Coles Rice ~$4.50
     }
     
     stores = ["Coles", "Woolworths", "Aldi"]

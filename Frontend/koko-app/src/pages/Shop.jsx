@@ -156,7 +156,7 @@ const MINIMUM_BUDGET_THRESHOLD = 20; // Minimum weekly budget in dollars
 
 const Shop = () => {
   const navigate = useNavigate();
-  const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history } = useContext(AppContext);
+  const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history, xp, setXp } = useContext(AppContext);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showManualMode, setShowManualMode] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
@@ -177,8 +177,33 @@ const Shop = () => {
   const [sessionId, setSessionId] = useState(null);
   const [isTransportLoading, setIsTransportLoading] = useState(false);
   const [showListEditor, setShowListEditor] = useState(false);
+  const [goodChoiceToast, setGoodChoiceToast] = useState(null); // { productName, xpBonus }
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+
+  // Helper: is this product's price trending down? (good time to buy)
+  const isGoodTimeToBuy = (product) => {
+    if (!product.priceHistory || product.priceHistory.length < 2) return false;
+    const prevPrice = product.priceHistory[product.priceHistory.length - 2].price;
+    return product.price < prevPrice;
+  };
+
+  const GOOD_CHOICE_XP_BONUS = 10;
+
+  // Check if the agent flagged any newly added items as a good buy
+  const checkForGoodBuys = (updatedList) => {
+    const goodBuyItems = updatedList.filter(item => item.isGoodBuy);
+    if (goodBuyItems.length > 0) {
+      const names = goodBuyItems.map(item => item.name).join(', ');
+      setXp(prev => prev + GOOD_CHOICE_XP_BONUS * goodBuyItems.length);
+      setGoodChoiceToast({
+        productName: names,
+        xpBonus: GOOD_CHOICE_XP_BONUS * goodBuyItems.length
+      });
+      setTimeout(() => setGoodChoiceToast(null), 3500);
+    }
+  };
+
   const isRecordingRef = useRef(false);
   const lastTranscriptRef = useRef('');
 
@@ -384,6 +409,7 @@ const Shop = () => {
 
           if (response.updatedList) {
             setShoppingList(response.updatedList);
+            checkForGoodBuys(response.updatedList);
           }
         } catch (error) {
           console.error('Error sending message:', error);
@@ -427,6 +453,7 @@ const Shop = () => {
 
       if (response.updatedList) {
         setShoppingList(response.updatedList);
+        checkForGoodBuys(response.updatedList);
       }
     } catch {
       const errorMessage = {
@@ -543,7 +570,10 @@ const Shop = () => {
       );
 
       if (response.sessionId) setSessionId(response.sessionId);
-      if (response.updatedList) setShoppingList(response.updatedList);
+      if (response.updatedList) {
+        setShoppingList(response.updatedList);
+        checkForGoodBuys(response.updatedList);
+      }
 
       const botMsg = {
         id: (Date.now() + 1).toString(),
@@ -645,6 +675,11 @@ const Shop = () => {
                             }`}>
                               {product.stock > 0 ? `✓ In Stock (${product.stock})` : '✗ Out of Stock'}
                             </span>
+                            {isGoodTimeToBuy(product) && (
+                              <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1.5 rounded-full shadow-md animate-pulse">
+                                📉 Good time to buy! +{GOOD_CHOICE_XP_BONUS} XP
+                              </span>
+                            )}
                           </div>
                           
                           {product.isOnSale && product.originalPrice && (
@@ -690,6 +725,12 @@ const Shop = () => {
                                     ...productQuantities,
                                     [product.id]: 1
                                   });
+                                  // Award bonus XP if the price is trending down
+                                  if (isGoodTimeToBuy(product)) {
+                                    setXp(prev => prev + GOOD_CHOICE_XP_BONUS);
+                                    setGoodChoiceToast({ productName: product.name, xpBonus: GOOD_CHOICE_XP_BONUS });
+                                    setTimeout(() => setGoodChoiceToast(null), 3000);
+                                  }
                                 } else {
                                   // Remove from list if already added
                                   setShoppingList(shoppingList.filter(i => i.id !== product.id));
@@ -920,7 +961,7 @@ const Shop = () => {
                         : 'bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white'
                     }`}
                   >
-                    {msg.text}
+                    {msg.isUser ? msg.text : (msg.text || '').replace(/\*\*/g, '')}
                   </div>
                 </div>
               ))}
@@ -1404,6 +1445,19 @@ const Shop = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Good Choice Toast */}
+      {goodChoiceToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] animate-bounce-slow">
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3">
+            <span className="text-2xl">🌟</span>
+            <div>
+              <p className="font-bold text-sm">Good choice! +{goodChoiceToast.xpBonus} XP</p>
+              <p className="text-xs text-white/80">{goodChoiceToast.productName} is at a great price right now!</p>
+            </div>
           </div>
         </div>
       )}
