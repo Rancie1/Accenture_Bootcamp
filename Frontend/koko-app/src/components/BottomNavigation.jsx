@@ -14,8 +14,8 @@ const BottomNavigation = () => {
   const tabs = [
     { path: '/dashboard', icon: User, label: 'Profile' },
     { path: '/saved', icon: Bookmark, label: 'Saved' },
-    { path: '/shop', icon: ShoppingCart, label: 'Shop' },
     { path: '/mascot', icon: KoalaIcon, label: 'Koko', size: 36 },
+    { path: '/shop', icon: ShoppingCart, label: 'Shop' },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' }
   ];
 

@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
-import useSwipeGesture from '../hooks/useSwipeGesture';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart } from 'lucide-react';
+import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -153,129 +152,7 @@ const sampleProducts = [
 const MINIMUM_BUDGET_THRESHOLD = 20; // Minimum weekly budget in dollars
 
 // Sample leaderboard data with realistic user profiles
-const sampleLeaderboardUsers = [
-  { 
-    username: 'Sarah M.', 
-    weeklyBudget: 150, 
-    weeklySpend: 112, 
-    daysUnderBudget: 7, // 7 out of 7 days
-    totalDays: 7 
-  },
-  { 
-    username: 'Mike T.', 
-    weeklyBudget: 200, 
-    weeklySpend: 145, 
-    daysUnderBudget: 6, 
-    totalDays: 7 
-  },
-  { 
-    username: 'Emma L.', 
-    weeklyBudget: 120, 
-    weeklySpend: 85, 
-    daysUnderBudget: 7, 
-    totalDays: 7 
-  },
-  { 
-    username: 'John D.', 
-    weeklyBudget: 180, 
-    weeklySpend: 140, 
-    daysUnderBudget: 5, 
-    totalDays: 7 
-  },
-  { 
-    username: 'Lisa K.', 
-    weeklyBudget: 100, 
-    weeklySpend: 75, 
-    daysUnderBudget: 6, 
-    totalDays: 7 
-  },
-  { 
-    username: 'Tom R.', 
-    weeklyBudget: 250, 
-    weeklySpend: 210, 
-    daysUnderBudget: 4, 
-    totalDays: 7 
-  },
-  { 
-    username: 'Anna P.', 
-    weeklyBudget: 160, 
-    weeklySpend: 115, 
-    daysUnderBudget: 7, 
-    totalDays: 7 
-  },
-  { 
-    username: 'Chris W.', 
-    weeklyBudget: 90, 
-    weeklySpend: 70, 
-    daysUnderBudget: 5, 
-    totalDays: 7 
-  },
-];
 
-/**
- * Calculate leaderboard score for a user
- * @param {Object} user - User data with budget and spending info
- * @returns {Object} User with calculated score and metrics
- */
-const calculateLeaderboardScore = (user) => {
-  // Disqualify users with budgets below minimum threshold
-  if (user.weeklyBudget < MINIMUM_BUDGET_THRESHOLD) {
-    return {
-      ...user,
-      leaderboardScore: 0,
-      savingsRate: 0,
-      consistencyFactor: 0,
-      savingsPercentage: 0,
-      disqualified: true
-    };
-  }
-
-  // Calculate savings rate: (budget - spend) / budget
-  // This gives us the percentage of budget saved
-  const savingsRate = Math.max(0, (user.weeklyBudget - user.weeklySpend) / user.weeklyBudget);
-  
-  // Calculate consistency factor: days under budget / total days
-  // This rewards consistent behavior throughout the week
-  const consistencyFactor = user.daysUnderBudget / user.totalDays;
-  
-  // Final leaderboard score: weighted combination
-  // 70% weight on savings rate (primary metric)
-  // 30% weight on consistency (prevents gaming with one-time big saves)
-  const leaderboardScore = (savingsRate * 0.7) + (consistencyFactor * 0.3);
-  
-  // Calculate display percentage
-  const savingsPercentage = savingsRate * 100;
-
-  return {
-    ...user,
-    leaderboardScore,
-    savingsRate,
-    consistencyFactor,
-    savingsPercentage: Math.round(savingsPercentage),
-    disqualified: false
-  };
-};
-
-/**
- * Get sorted leaderboard with calculated scores
- * @returns {Array} Sorted array of users with ranks
- */
-const getLeaderboard = () => {
-  // Calculate scores for all users
-  const usersWithScores = sampleLeaderboardUsers.map(calculateLeaderboardScore);
-  
-  // Filter out disqualified users
-  const qualifiedUsers = usersWithScores.filter(u => !u.disqualified);
-  
-  // Sort by leaderboard score (descending)
-  const sortedUsers = qualifiedUsers.sort((a, b) => b.leaderboardScore - a.leaderboardScore);
-  
-  // Add rank to each user
-  return sortedUsers.map((user, index) => ({
-    ...user,
-    rank: index + 1
-  }));
-};
 
 const Shop = () => {
   const navigate = useNavigate();
@@ -290,8 +167,7 @@ const Shop = () => {
   const [showPriceHistory, setShowPriceHistory] = useState(false);
   const [priceHistoryProduct, setPriceHistoryProduct] = useState(null);
   const [productQuantities, setProductQuantities] = useState({});
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
+  const [showTransportModal, setShowTransportModal] = useState(false);
   
   // Chat state
   const [messages, setMessages] = useState([]);
@@ -415,48 +291,13 @@ const Shop = () => {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
+        // eslint-disable-next-line no-unused-vars
         } catch (e) {
           // Ignore errors on cleanup
         }
       }
     };
   }, []);
-
-  /**
-   * Check if item is in shopping list
-   */
-  const isItemInList = (itemId) => {
-    return shoppingList.some(i => i.id === itemId);
-  };
-
-  /**
-   * Add item to shopping list
-   */
-  const handleAddToList = (item) => {
-    if (swipedItemId === item.id) {
-      return;
-    }
-
-    const existingItem = shoppingList.find(i => i.id === item.id);
-    
-    if (existingItem) {
-      setShoppingList(shoppingList.map(i => 
-        i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-      ));
-    } else {
-      setShoppingList([...shoppingList, { ...item, quantity: 1 }]);
-    }
-  };
-
-  /**
-   * Delete item from default items
-   */
-  const handleDeleteItem = (itemId) => {
-    if (window.confirm('Remove this item from your default list?')) {
-      setDefaultItems(defaultItems.filter(item => item.id !== itemId));
-      resetSwipe();
-    }
-  };
 
   /**
    * Add custom item to default items
@@ -492,19 +333,6 @@ const Shop = () => {
   const handlePriceHistoryClick = (product) => {
     setPriceHistoryProduct(product);
     setShowPriceHistory(true);
-  };
-
-  /**
-   * Exit chat mode
-   */
-  const handleExitChatMode = () => {
-    setIsChatMode(false);
-    setMessages([]);
-    setInputText('');
-    // Navigate to results if there are items
-    if (shoppingList.length > 0) {
-      navigate('/results');
-    }
   };
 
   /**
@@ -695,6 +523,7 @@ const Shop = () => {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  // eslint-disable-next-line no-undef
                   onClick={() => setShowLeaderboard(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
                 >
@@ -1048,7 +877,7 @@ const Shop = () => {
             {/* Calculate Savings Button */}
             <div className="pb-2 shrink-0">
               <button
-                onClick={() => navigate('/results')}
+                onClick={() => setShowTransportModal(true)}
                 className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
               >
                 Calculate my savings
@@ -1414,113 +1243,80 @@ const Shop = () => {
         </div>
       )}
 
-      {/* Leaderboard Modal */}
-      {showLeaderboard && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl transform animate-scale-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl">
-                  <Trophy size={24} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Top Savers Leaderboard</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Weekly rankings</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowLeaderboard(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Ranking Info Tooltip */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-6 border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                <Info size={20} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-1">How Rankings Work</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Rankings are based on your savings rate and consistency. We reward users who save consistently throughout the week, not just one-time big saves. Minimum budget of ${MINIMUM_BUDGET_THRESHOLD}/week required to prevent gaming.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Leaderboard List */}
-            <div className="space-y-3">
-              {getLeaderboard().map((user, index) => {
-                // Determine medal/badge color based on rank
-                const getRankBadge = (rank) => {
-                  if (rank === 1) return { bg: 'bg-gradient-to-r from-yellow-400 to-yellow-600', text: 'text-white', icon: '🥇' };
-                  if (rank === 2) return { bg: 'bg-gradient-to-r from-gray-300 to-gray-500', text: 'text-white', icon: '🥈' };
-                  if (rank === 3) return { bg: 'bg-gradient-to-r from-orange-400 to-orange-600', text: 'text-white', icon: '🥉' };
-                  return { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-700 dark:text-gray-300', icon: `#${rank}` };
-                };
-
-                const badge = getRankBadge(user.rank);
-                const streakText = user.daysUnderBudget === 7 ? '7-day streak! 🔥' : `${user.daysUnderBudget}/7 days`;
-
-                return (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-                      user.rank <= 3
-                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/10 dark:to-orange-900/10 border-yellow-200 dark:border-yellow-800 shadow-md'
-                        : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
-                    }`}
-                  >
-                    {/* Rank Badge */}
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${badge.bg} ${badge.text} font-bold text-lg flex-shrink-0 shadow-md`}>
-                      {badge.icon}
-                    </div>
-
-                    {/* User Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold text-gray-900 dark:text-white truncate">{user.username}</p>
-                        {user.daysUnderBudget === 7 && (
-                          <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-0.5 rounded-full">
-                            Perfect Week
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="text-green-600 dark:text-green-400 font-semibold">
-                          {user.savingsPercentage}% saved
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400 text-xs">
-                          {streakText}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Score Indicator (subtle) */}
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Score</p>
-                      <p className="text-lg font-bold text-primary">
-                        {(user.leaderboardScore * 100).toFixed(0)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Footer Note */}
-            <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Rankings update weekly. Keep saving consistently to climb the leaderboard!
+      {/* Transport Mode Selection Modal */}
+      {showTransportModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Select Transport Mode
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                How will you get to the store?
               </p>
             </div>
 
+            <div className="space-y-3">
+              {/* Walking Option */}
+              <button
+                onClick={() => {
+                  setShowTransportModal(false);
+                  navigate('/results', { state: { transportMode: 'walking' } });
+                }}
+                className="w-full p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-green-200 dark:bg-green-700 rounded-full">
+                    <Footprints size={28} className="text-green-700 dark:text-green-200" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
+                    Walking
+                  </h3>
+                </div>
+              </button>
+
+              {/* Public Transport Option */}
+              <button
+                onClick={() => {
+                  setShowTransportModal(false);
+                  navigate('/results', { state: { transportMode: 'public_transport' } });
+                }}
+                className="w-full p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-200 dark:bg-blue-700 rounded-full">
+                    <Bus size={28} className="text-blue-700 dark:text-blue-200" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    Public Transport
+                  </h3>
+                </div>
+              </button>
+
+              {/* Driving Option */}
+              <button
+                onClick={() => {
+                  setShowTransportModal(false);
+                  navigate('/results', { state: { transportMode: 'driving' } });
+                }}
+                className="w-full p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-2 border-purple-200 dark:border-purple-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-200 dark:bg-purple-700 rounded-full">
+                    <Car size={28} className="text-purple-700 dark:text-purple-200" />
+                  </div>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                    Driving
+                  </h3>
+                </div>
+              </button>
+            </div>
+
             <button
-              onClick={() => setShowLeaderboard(false)}
-              className="w-full mt-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              onClick={() => setShowTransportModal(false)}
+              className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
             >
-              Close
+              Cancel
             </button>
           </div>
         </div>
