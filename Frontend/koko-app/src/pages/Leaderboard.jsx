@@ -288,21 +288,14 @@ const Leaderboard = () => {
 
   // Calculate user's weekly spending and create their leaderboard entry
   const userLeaderboardData = useMemo(() => {
-    console.log('=== User Leaderboard Debug ===');
-    console.log('Budget:', userPreferences.budget);
-    console.log('Minimum threshold:', MINIMUM_BUDGET_THRESHOLD);
-    console.log('History:', history);
-    
     if (
       !userPreferences.budget ||
       userPreferences.budget < MINIMUM_BUDGET_THRESHOLD
     ) {
-      console.log('User disqualified: budget too low or not set');
       return null;
     }
 
     const weeklySpend = calculateWeeklySpending(history);
-    console.log('Weekly spend:', weeklySpend);
 
     // Calculate days under budget (simplified - count shopping trips that were under budget)
     const weekStart = new Date();
@@ -312,15 +305,11 @@ const Leaderboard = () => {
     const thisWeekHistory = history.filter(
       (item) => item.timestamp >= weekStart.getTime()
     );
-    console.log('This week history:', thisWeekHistory);
     
     const dailyBudget = userPreferences.budget / 7;
     const daysUnderBudget = thisWeekHistory.filter((item) => {
       return (item.totalSpent || 0) <= dailyBudget;
     }).length;
-    
-    console.log('Days under budget:', daysUnderBudget);
-    console.log('Streak:', streak);
 
     const userData = {
       username: userPreferences.name || "You",
@@ -333,7 +322,6 @@ const Leaderboard = () => {
       isCurrentUser: true
     };
     
-    console.log('User leaderboard data:', userData);
     return userData;
   }, [userPreferences, history, streak]);
 
@@ -386,33 +374,23 @@ const Leaderboard = () => {
   }, []);
 
   const leaderboardData = useMemo(() => {
-    console.log('=== Leaderboard Data Calculation ===');
-    console.log('Backend leaderboard length:', backendLeaderboard.length);
-    console.log('User leaderboard data:', userLeaderboardData);
-    
     // Use backend data if available, otherwise fall back to sample data
     const baseUsers =
       backendLeaderboard.length > 0
         ? backendLeaderboard
         : sampleLeaderboardUsers.map(calculateLeaderboardScore);
     const allUsers = [...baseUsers];
-    
-    console.log('Base users count:', baseUsers.length);
 
     // Add user to leaderboard if they qualify
     if (userLeaderboardData) {
       // Check if user is already in backend data
       const userAlreadyExists = allUsers.some(u => u.isCurrentUser);
-      console.log('User already exists:', userAlreadyExists);
       
       if (!userAlreadyExists) {
         const userWithScore = calculateLeaderboardScore(userLeaderboardData);
-        console.log('Adding user with score:', userWithScore);
         allUsers.push(userWithScore);
       }
     }
-    
-    console.log('All users count after adding user:', allUsers.length);
 
     // Sort and rank if not already ranked (when using sample data)
     if (backendLeaderboard.length === 0) {
@@ -424,7 +402,6 @@ const Leaderboard = () => {
         ...user,
         rank: index + 1
       }));
-      console.log('Final leaderboard (sample data):', rankedUsers);
       return rankedUsers;
     }
 
@@ -437,7 +414,6 @@ const Leaderboard = () => {
       ...user,
       rank: index + 1
     }));
-    console.log('Final leaderboard (backend data):', rankedUsers);
     return rankedUsers;
   }, [userLeaderboardData, backendLeaderboard]);
 
