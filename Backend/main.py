@@ -129,7 +129,7 @@ async def startup_event():
     """Initialize database on application startup"""
     init_db(seed_demo_data=True)
     print("✓ Database initialized (in-memory SQLite)")
-    print("✓ Demo historical price data seeded")
+    print("✓ Demo data seeded: 10 items @ 4 weeks, 5 users, 14 weekly plans")
 
 
 @app.get("/", tags=["system"])
