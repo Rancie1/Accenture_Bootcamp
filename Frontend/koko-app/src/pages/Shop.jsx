@@ -1044,7 +1044,7 @@ const Shop = () => {
                   className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-3xl px-5 py-3 shadow-lg backdrop-blur-sm ${
+                    className={`max-w-[80%] rounded-3xl px-5 py-3 shadow-lg backdrop-blur-sm whitespace-pre-wrap ${
                       msg.isUser
                         ? "bg-primary text-white"
                         : "bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white"
