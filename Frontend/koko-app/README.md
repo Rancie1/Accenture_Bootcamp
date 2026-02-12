@@ -56,15 +56,60 @@ src/
 # Install dependencies
 npm install
 
-# Start dev server
+# Start dev server (local only)
 npm run dev
+
+# Start dev server for mobile testing (accessible from network)
+npm run dev:mobile
+
+# Quick start with IP display (macOS/Linux)
+./start-mobile.sh
 
 # Build for production
 npm run build
 
-# Preview production build
+# Preview production build (local)
 npm run preview
+
+# Preview production build (mobile testing)
+npm run preview:mobile
 ```
+
+## Mobile Testing (Android)
+
+### Quick Start
+```bash
+./start-mobile.sh
+```
+This will show your IP address and start the dev server.
+
+### Manual Setup
+1. Start the mobile dev server:
+   ```bash
+   npm run dev:mobile
+   ```
+
+2. Find your computer's IP address:
+   - macOS: `ipconfig getifaddr en0`
+   - Windows: `ipconfig` (look for IPv4)
+   - Linux: `hostname -I`
+
+3. On your Android device:
+   - Connect to the same WiFi network
+   - Open Chrome
+   - Navigate to `http://YOUR_IP:5173`
+
+### PWA Testing
+See [PWA_SETUP.md](./PWA_SETUP.md) for detailed PWA installation and testing instructions.
+
+## PWA Features
+
+- ✅ Standalone display mode (no browser UI)
+- ✅ Offline support with service workers
+- ✅ Auto-update functionality
+- ✅ Custom app icons (192x192, 512x512)
+- ✅ Theme color integration
+- ✅ Portrait orientation lock
 
 ## Next Steps
 

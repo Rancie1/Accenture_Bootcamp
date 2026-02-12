@@ -45,4 +45,13 @@ npm run dev
 Preview build:
 npm run preview
 
+## Run on MacOS and access via Android Emulator
+`npm run dev -- --host 0.0.0.0 --port 5173`
+
+Enter 10.0.2.2:5173 in Chrome.
+
+## Run on MacOS and access via iOS Emulator
+`npm run dev:mobile`
+
+Enter http://localhost:5173/ in Safari, Share > Save to Home Screen
 
