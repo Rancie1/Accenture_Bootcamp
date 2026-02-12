@@ -190,7 +190,7 @@ const Leaderboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-800 pb-24 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100/50 to-pink-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-800 pb-24-safe font-sans">
       
       {/* Header with animated trophy - removed sticky positioning */}
       <div className="bg-purple-50/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm relative z-20">

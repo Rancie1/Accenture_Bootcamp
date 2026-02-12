@@ -603,7 +603,7 @@ const Shop = () => {
             )}
           </div>
 
-          <div className="p-4 pb-24">
+          <div className="p-4 pb-24-safe">
             <div className="grid grid-cols-1 gap-4">
               {sampleProducts.map(product => {
                 const inList = shoppingList.some(i => i.name === product.name);

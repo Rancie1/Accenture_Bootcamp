@@ -70,3 +70,32 @@
 .scale-105 {
   transform: scale(1.05);
 }
+
+/* PWA Safe Area Support for iOS - Bottom only */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pb-safe {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  }
+  
+  /* Page bottom padding that accounts for tab bar + safe area */
+  .pb-24-safe {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Fallback for browsers that don't support safe-area-inset */
+.safe-area-inset-bottom {
+  padding-bottom: 0;
+}
+
+.pb-safe {
+  padding-bottom: 0.5rem;
+}
+
+.pb-24-safe {
+  padding-bottom: 6rem;
+}
