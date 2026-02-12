@@ -208,7 +208,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-nav-safe">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe">
       {/* Header with grid layout */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm">
         {/* Top row: Profile pic, name/level, and action buttons */}

@@ -569,7 +569,7 @@ const Shop = () => {
   };
 
   return (
-    <div className="h-screen bg-linear-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 relative overflow-hidden flex flex-col">
+    <div className="h-screen bg-gradient-to-b from-purple-100 to-gray-50 dark:from-purple-900/40 dark:to-gray-900 relative overflow-hidden flex flex-col">
       
       {/* Watch List Overlay */}
       {showManualMode && (
@@ -899,9 +899,9 @@ const Shop = () => {
                   setInputText('');
                   setSessionId(null);
                 }}
-                className="text-gray-600 dark:text-gray-400 hover:text-primary transition-colors p-1.5"
+                className="text-gray-900 dark:text-white hover:text-primary transition-colors p-1.5 bg-white/50 dark:bg-gray-800/50 rounded-full"
               >
-                <ArrowLeft size={20} />
+                <ArrowLeft size={24} />
               </button>
             </div>
 
