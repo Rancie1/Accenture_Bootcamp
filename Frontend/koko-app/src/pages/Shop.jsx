@@ -4,7 +4,7 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, ChevronUp, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car, Trophy, Plus, Minus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car, Trophy, Plus, Minus, Trash2, Receipt } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
