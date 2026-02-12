@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
@@ -25,6 +25,54 @@ const Saved = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [listToDelete, setListToDelete] = useState(null);
   const [longPressTimer, setLongPressTimer] = useState(null);
+
+  // Prefill some example saved lists when none exist so the UI isn't empty
+  useEffect(() => {
+    if (savedLists.length === 0) {
+      const now = Date.now();
+      const sample = [
+        {
+          id: 'saved-1',
+          timestamp: now - 1000 * 60 * 60 * 24, // 1 day ago
+          items: [
+            { id: 'i1', name: 'Bananas', icon: 'ShoppingCart', quantity: 2, price: 0.49 },
+            { id: 'i2', name: 'Milk', icon: 'Coffee', quantity: 1, price: 2.99 },
+            { id: 'i3', name: 'Bread', icon: 'Package', quantity: 1, price: 1.99 },
+          ],
+          results: {
+            totalPrice: 5.96,
+            savingsPercentage: 12.5,
+            storeName: 'Coles',
+            location: '123 Market St',
+            label: 'Best Value',
+            travelTime: 8,
+            xpEarned: 15,
+          },
+        },
+        {
+          id: 'saved-2',
+          timestamp: now - 1000 * 60 * 60 * 48, // 2 days ago
+          items: [
+            { id: 'i4', name: 'Eggs (Dozen)', icon: 'Zap', quantity: 1, price: 3.49 },
+            { id: 'i5', name: 'Chicken Breast', icon: 'Feather', quantity: 1, price: 8.99 },
+          ],
+          results: {
+            totalPrice: 12.48,
+            savingsPercentage: 8.2,
+            storeName: 'Woolworths',
+            location: '456 Greenway Ave',
+            label: 'Nearby',
+            travelTime: 5,
+            xpEarned: 10,
+          },
+        },
+      ];
+
+      setSavedLists(sample);
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Format timestamp to readable date
