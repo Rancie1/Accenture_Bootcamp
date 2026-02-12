@@ -800,19 +800,9 @@ const Leaderboard = () => {
                 }`}
               >
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-lg ${isCurrentUser ? "bg-primary" : isTopThree ? "bg-primary/30" : "bg-gray-200 dark:bg-gray-700"} ${isCurrentUser || isTopThree ? "text-white" : "text-gray-700 dark:text-gray-300"} font-bold text-sm shrink-0 shadow-md group-hover:scale-110 transition-transform overflow-hidden`}
+                  className={`flex items-center justify-center w-10 h-10 rounded-lg ${isCurrentUser ? "bg-primary" : isTopThree ? "bg-primary/30" : "bg-gray-200 dark:bg-gray-700"} ${isCurrentUser || isTopThree ? "text-white" : "text-gray-700 dark:text-gray-300"} font-bold text-sm shrink-0 shadow-md group-hover:scale-110 transition-transform`}
                 >
-                  {isCurrentUser ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <MascotPreview 
-                        equippedItems={equippedItems}
-                        mascotItems={mascotItems}
-                        size="small"
-                      />
-                    </div>
-                  ) : (
-                    getMedalIcon(user.rank)
-                  )}
+                  {getMedalIcon(user.rank)}
                 </div>
 
                 <div
