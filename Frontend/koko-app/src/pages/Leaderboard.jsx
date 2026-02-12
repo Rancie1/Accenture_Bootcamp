@@ -212,13 +212,52 @@ const Leaderboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center font-sans">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 border-4 border-gray-200 dark:border-gray-700 border-t-primary rounded-full animate-spin"></div>
-          <p className="text-lg font-semibold text-primary">
-            Loading Leaderboard...
-          </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe font-sans relative">
+        {/* Blurred background UI */}
+        <div className="blur-sm pointer-events-none">
+          {/* Header */}
+          <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary rounded-2xl blur-xl opacity-50"></div>
+                <div className="relative p-3 bg-primary rounded-2xl shadow-lg">
+                  <Trophy size={32} className="text-white" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">
+                  Top Savers Leaderboard
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <span className="inline-block w-2 h-2 bg-primary rounded-full"></span>
+                  Live weekly rankings
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4">
+            {/* Placeholder cards */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 mb-6 h-20"></div>
+            <div className="mb-6 space-y-3">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 h-24"></div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 h-24"></div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 h-24"></div>
+            </div>
+          </div>
         </div>
+
+        {/* Loading spinner overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
+            <div className="w-16 h-16 mx-auto mb-4 border-4 border-gray-200 dark:border-gray-700 border-t-primary rounded-full animate-spin"></div>
+            <p className="text-lg font-semibold text-primary">
+              Loading Leaderboard...
+            </p>
+          </div>
+        </div>
+
+        <BottomNavigation />
       </div>
     );
   }
