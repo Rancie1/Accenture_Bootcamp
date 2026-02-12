@@ -38,6 +38,7 @@ const Mascot = () => {
   const [activeTab, setActiveTab] = useState('customize'); // 'customize' | 'shop' | 'lootbox'
   const [showLootboxAnimation, setShowLootboxAnimation] = useState(false);
   const [wonItem, setWonItem] = useState(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
   // Premium items available from lootbox
   const premiumItems = [
@@ -179,12 +180,15 @@ const Mascot = () => {
    * Requirements: 9.12
    */
   const handlePurchaseLootbox = () => {
-    // In a real app, this would trigger the IAP flow
-    // For now, we'll simulate it
-    const confirmed = window.confirm('Purchase lootbox for $0.99?');
-    if (confirmed) {
-      openLootbox();
-    }
+    setShowPurchaseModal(true);
+  };
+
+  /**
+   * Confirm lootbox purchase
+   */
+  const confirmPurchase = () => {
+    setShowPurchaseModal(false);
+    openLootbox();
   };
 
   /**
@@ -414,6 +418,62 @@ const Mascot = () => {
       {/* Lootbox Animation Modal */}
       {showLootboxAnimation && wonItem && (
         <LootboxAnimation wonItem={wonItem} onClose={closeLootboxAnimation} />
+      )}
+
+      {/* Purchase Confirmation Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl transform animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="w-24 h-24 bg-gradient-to-br from-primary to-purple-700 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <span className="text-6xl">📦</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Purchase Lootbox?
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Get a random premium item for your mascot!
+              </p>
+              <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-2xl p-4 mb-4 border border-primary/20">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  <span className="font-semibold">Drop Rates:</span>
+                </p>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Rare Items</span>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Epic Items</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">30%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Legendary Items</span>
+                    <span className="font-semibold text-yellow-600 dark:text-yellow-400">10%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 mb-4">
+                <p className="text-3xl font-bold text-primary">$0.99</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowPurchaseModal(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPurchase}
+                className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Purchase
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
