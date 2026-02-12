@@ -61,12 +61,10 @@ def test_property_5_validation_error_response_format(invalid_data):
     """
     Feature: budget-optimization-backend, Property 5: Validation Error Response Format
     
-    For any invalid input to any endpoint, the API should return a 400 or 422 status code
+    For any invalid input to any endpoint, the API should return a 400 status code
     with field-specific error messages in a consistent JSON format.
     
     Validates: Requirements 1.6, 11.1
-    
-    Note: FastAPI returns 422 for Pydantic validation errors and 400 for custom validation errors.
     """
     # Send invalid data to onboard endpoint
     response = client.post("/onboard", json=invalid_data)
@@ -83,41 +81,22 @@ def test_property_5_validation_error_response_format(invalid_data):
         "Error response should be a JSON object"
     
     # Check for consistent error format
-    # FastAPI's default validation errors have a 'detail' field
-    assert "detail" in response_json, \
-        "Error response should contain 'detail' field"
+    # Our API uses error_code, message, and details fields
+    assert "error_code" in response_json, \
+        "Error response should contain 'error_code' field"
+    assert "message" in response_json, \
+        "Error response should contain 'message' field"
     
-    # The detail can be either:
-    # 1. A dict with error_code and message (custom validation errors)
-    # 2. A list of validation errors (Pydantic validation errors)
-    detail = response_json["detail"]
+    # Verify error_code and message are strings
+    assert isinstance(response_json["error_code"], str), \
+        "error_code should be a string"
+    assert isinstance(response_json["message"], str), \
+        "message should be a string"
     
-    if isinstance(detail, dict):
-        # Custom validation error format
-        assert "error_code" in detail, \
-            "Custom error response should contain 'error_code' field"
-        assert "message" in detail, \
-            "Custom error response should contain 'message' field"
-        assert isinstance(detail["error_code"], str), \
-            "error_code should be a string"
-        assert isinstance(detail["message"], str), \
-            "message should be a string"
-    elif isinstance(detail, list):
-        # Pydantic validation error format
-        # Each error should have loc, msg, and type fields
-        for error in detail:
-            assert isinstance(error, dict), \
-                "Each validation error should be a dict"
-            assert "loc" in error, \
-                "Validation error should contain 'loc' field"
-            assert "msg" in error, \
-                "Validation error should contain 'msg' field"
-            assert "type" in error, \
-                "Validation error should contain 'type' field"
-    else:
-        # Detail should be either dict or list
-        assert False, \
-            f"Error detail should be dict or list, got {type(detail)}"
+    # The details field contains field-specific errors (can be None or dict)
+    if "details" in response_json and response_json["details"] is not None:
+        assert isinstance(response_json["details"], dict), \
+            "details field should be a dict with field-specific errors"
 
 
 @given(
@@ -138,9 +117,10 @@ def test_property_5_empty_name_validation(name, weekly_budget, home_address):
         "home_address": home_address
     })
     
-    assert response.status_code in [400, 422]
+    assert response.status_code == 400
     response_json = response.json()
-    assert "detail" in response_json
+    assert "error_code" in response_json
+    assert response_json["error_code"] == "VALIDATION_ERROR"
 
 
 @given(
@@ -161,9 +141,10 @@ def test_property_5_negative_budget_validation(name, weekly_budget, home_address
         "home_address": home_address
     })
     
-    assert response.status_code in [400, 422]
+    assert response.status_code == 400
     response_json = response.json()
-    assert "detail" in response_json
+    assert "error_code" in response_json
+    assert response_json["error_code"] == "VALIDATION_ERROR"
 
 
 @given(
@@ -184,6 +165,7 @@ def test_property_5_empty_address_validation(name, weekly_budget, home_address):
         "home_address": home_address
     })
     
-    assert response.status_code in [400, 422]
+    assert response.status_code == 400
     response_json = response.json()
-    assert "detail" in response_json
+    assert "error_code" in response_json
+    assert response_json["error_code"] == "VALIDATION_ERROR"

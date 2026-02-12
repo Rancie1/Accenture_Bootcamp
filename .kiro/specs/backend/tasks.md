@@ -130,8 +130,8 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
 - [ ] 8. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Implement transport cost comparison
-  - [ ] 9.1 Create transport service with compare_transport_costs function
+- [x] 9. Implement transport cost comparison
+  - [x] 9.1 Create transport service with compare_transport_costs function
     - Fetch user's home_address as origin
     - Call n8n webhook with destination and fuel_amount_needed
     - Receive petrol station data from n8n
@@ -143,7 +143,7 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - **Property 14: Total Cost Calculation**
     - **Property 15: Station Sorting by Total Cost**
     - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.6**
-  - [ ] 9.3 Create transport router with POST /transport/compare endpoint
+  - [x] 9.3 Create transport router with POST /transport/compare endpoint
     - Validate fuel_amount_needed is positive
     - Call transport service
     - Return 200 with sorted station list
@@ -154,8 +154,8 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - **Property 16: Fuel Amount Validation**
     - **Validates: Requirements 3.8**
 
-- [ ] 10. Implement weekly plan recording
-  - [ ] 10.1 Create weekly plan service with record_weekly_plan function
+- [x] 10. Implement weekly plan recording
+  - [x] 10.1 Create weekly plan service with record_weekly_plan function
     - Fetch user's weekly_budget
     - Calculate optimization_score: (weekly_budget - actual_cost) / weekly_budget
     - Create WeeklyPlan record with timestamp
@@ -169,15 +169,15 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
   - [ ]\* 10.3 Write unit test for negative optimization score edge case
     - Test that actual_cost > weekly_budget results in negative score
     - _Requirements: 4.5_
-  - [ ] 10.4 Create weekly plan router with POST /weekly-plan/record endpoint
+  - [x] 10.4 Create weekly plan router with POST /weekly-plan/record endpoint
     - Validate actual_cost is positive
     - Call weekly plan service
     - Return 201 with plan details including calculated score
     - Return 400 on validation errors
     - _Requirements: 4.1, 4.6, 4.7_
 
-- [ ] 11. Implement leaderboard
-  - [ ] 11.1 Create leaderboard service with calculate_leaderboard function
+- [x] 11. Implement leaderboard
+  - [x] 11.1 Create leaderboard service with calculate_leaderboard function
     - Query all WeeklyPlan records grouped by user_id
     - Calculate average optimization_score for each user
     - Exclude users with no WeeklyPlan records
@@ -188,17 +188,17 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
   - [ ]\* 11.2 Write property test for leaderboard calculation
     - **Property 19: Leaderboard Calculation and Ranking**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.5, 5.6**
-  - [ ] 11.3 Create leaderboard router with GET /leaderboard endpoint
+  - [x] 11.3 Create leaderboard router with GET /leaderboard endpoint
     - Call leaderboard service
     - Return 200 with ranked list
     - Handle database errors
     - _Requirements: 5.1, 5.7_
 
-- [ ] 12. Checkpoint - Ensure all tests pass
+- [x] 12. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 13. Implement comprehensive error handling
-  - [ ] 13.1 Create error handling middleware and exception classes
+- [x] 13. Implement comprehensive error handling
+  - [x] 13.1 Create error handling middleware and exception classes
     - Define custom exceptions: ValidationError, NotFoundError, ServiceUnavailableError, DatabaseError
     - Create error response format with error_code and message fields
     - Implement exception handlers for each error type
@@ -214,8 +214,8 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - Verify no internal implementation details exposed
     - _Requirements: 11.6_
 
-- [ ] 14. Implement database constraints and integrity
-  - [ ] 14.1 Add database constraints and test enforcement
+- [x] 14. Implement database constraints and integrity
+  - [x] 14.1 Add database constraints and test enforcement
     - Ensure unique constraint on user_id
     - Ensure foreign key constraint on weekly_plans.user_id
     - Test constraint violations return appropriate errors
@@ -227,8 +227,8 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - **Property 25: Transaction Atomicity**
     - **Validates: Requirements 7.2, 7.3, 7.4, 7.5, 7.6**
 
-- [ ] 15. Add OpenAPI documentation and finalize API
-  - [ ] 15.1 Configure OpenAPI documentation
+- [x] 15. Add OpenAPI documentation and finalize API
+  - [x] 15.1 Configure OpenAPI documentation
     - Add endpoint descriptions and examples
     - Document all request/response schemas
     - Document all error responses with status codes
@@ -240,20 +240,20 @@ This implementation plan breaks down the FastAPI backend into incremental, testa
     - Verify examples are present
     - _Requirements: 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 16. Integration and final testing
-  - [ ] 16.1 Create integration tests for full user flows
+- [x] 16. Integration and final testing
+  - [x] 16.1 Create integration tests for full user flows
     - Test: onboard → optimize groceries → record plan → view leaderboard
     - Test: onboard → compare transport
     - Test: concurrent user operations
     - _Requirements: All_
-  - [ ] 16.2 Run demo data seeding and verify system
+  - [x] 16.2 Run demo data seeding and verify system
     - Seed historical price data for 5 items
     - Create test users and weekly plans
     - Verify leaderboard displays correctly
     - Test all endpoints with realistic data
     - _Requirements: 8.5, 8.6_
 
-- [ ] 17. Final checkpoint - Ensure all tests pass
+- [x] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

@@ -43,15 +43,21 @@ async def optimize_groceries(
     user = await get_user_by_id(db, user_id)
     home_address = user.home_address
     
-    # 2. Call n8n webhook with grocery_list and home_address
+    # 2. Call n8n main webhook (handles routing to all agents)
     n8n_webhook_url = os.getenv(
-        "N8N_GROCERY_WEBHOOK_URL",
-        "http://localhost:5678/webhook/grocery"
+        "N8N_MAIN_WEBHOOK_URL",  # Your one webhook that handles everything
+        "http://localhost:5678/webhook/chat"  # Or whatever your webhook path is
     )
     
+    # Format as a chat message for your n8n webhook
+    # Your n8n will parse this message and route to Coles + Maps agents
+    message = f"Find grocery prices for {', '.join(grocery_list)} near {home_address}"
+    
     payload = {
-        "grocery_list": grocery_list,
-        "home_address": home_address
+        "message": message,
+        "grocery_list": grocery_list,  # Include structured data too
+        "home_address": home_address,
+        "type": "grocery_optimization"  # Help n8n identify the request type
     }
     
     # Get response from n8n

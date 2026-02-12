@@ -8,21 +8,7 @@ import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, OperationalError
 from models.db_models import User
-
-
-class ValidationError(Exception):
-    """Raised when input validation fails."""
-    pass
-
-
-class NotFoundError(Exception):
-    """Raised when a resource is not found."""
-    pass
-
-
-class DatabaseError(Exception):
-    """Raised when a database operation fails."""
-    pass
+from exceptions import ValidationError, NotFoundError, DatabaseError
 
 
 async def create_user(
