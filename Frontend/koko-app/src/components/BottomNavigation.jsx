@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { User, Bookmark, ShoppingCart, Sparkles, Trophy } from 'lucide-react';
+import { User, Bookmark, ShoppingCart, Trophy } from 'lucide-react';
+import KoalaIcon from './KoalaIcon';
 
 /**
  * BottomNavigation Component
@@ -14,7 +15,7 @@ const BottomNavigation = () => {
     { path: '/dashboard', icon: User, label: 'Profile' },
     { path: '/saved', icon: Bookmark, label: 'Saved' },
     { path: '/shop', icon: ShoppingCart, label: 'Shop' },
-    { path: '/mascot', icon: Sparkles, label: 'Koko' },
+    { path: '/mascot', icon: KoalaIcon, label: 'Koko', size: 36 },
     { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' }
   ];
 
@@ -33,7 +34,7 @@ const BottomNavigation = () => {
                 isActive(tab.path) ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
-              <IconComponent size={22} />
+              <IconComponent size={tab.size ?? 22} />
               <span className="text-[10px] font-medium leading-tight">{tab.label}</span>
             </button>
           );
