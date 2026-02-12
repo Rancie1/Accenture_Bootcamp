@@ -2,7 +2,7 @@ import { useContext, useMemo, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import { calculateWeeklySpending, calculateSavingsScore } from '../utils/calculations';
-import { Trophy, TrendingUp, Info, X } from 'lucide-react';
+import { Trophy, TrendingUp, Info, X, Share2 } from 'lucide-react';
 
 /**
  * Leaderboard Component
@@ -149,6 +149,8 @@ const getLeaderboard = () => {
 const Leaderboard = () => {
   const { userPreferences, history } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const leaderboardData = useMemo(() => getLeaderboard(), []);
 
@@ -159,6 +161,11 @@ const Leaderboard = () => {
     }, 800);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleShare = (user) => {
+    setSelectedUser(user);
+    setShowShareModal(true);
+  };
 
   if (isLoading) {
     return (
@@ -223,22 +230,23 @@ const Leaderboard = () => {
         <div className="mb-6">
           <div className="grid grid-cols-3 gap-3 mb-4">
             {leaderboardData.slice(0, 3).map((user, index) => {
-              const heights = ['h-32', 'h-40', 'h-28'];
-              const positions = [1, 0, 2];
-              const actualIndex = positions.indexOf(index);
-              const medals = ['🥈', '🥇', '🥉'];
+              // Heights: 2nd place (shorter), 1st place (tallest), 3rd place (shortest)
+              const heights = ['h-28', 'h-40', 'h-24'];
+              // Order: 2nd, 1st, 3rd
+              const displayOrder = index === 0 ? 1 : index === 1 ? 0 : 2;
+              const medals = ['�', '�', '🥉'];
               const gradients = [
-                'from-purple-300 to-purple-500',
-                'from-purple-400 to-pink-500',
-                'from-pink-400 to-pink-600'
+                'from-purple-400 to-purple-600',  // 1st place - purple
+                'from-purple-300 to-purple-400',  // 2nd place - light purple
+                'from-purple-500 to-indigo-600'   // 3rd place - deep purple
               ];
               
               return (
-                <div key={user.rank} className={`flex flex-col items-center ${index === 1 ? 'order-2' : index === 0 ? 'order-1' : 'order-3'}`}>
-                  <div className={`w-full bg-gradient-to-t ${gradients[actualIndex]} rounded-t-2xl ${heights[actualIndex]} flex flex-col items-center justify-end pb-4 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden`}>
+                <div key={user.rank} className={`flex flex-col items-center ${index === 0 ? 'order-2' : index === 1 ? 'order-1' : 'order-3'}`}>
+                  <div className={`w-full bg-gradient-to-t ${gradients[index]} rounded-t-2xl ${heights[displayOrder]} flex flex-col items-center justify-end pb-4 shadow-lg transform hover:scale-105 transition-all duration-300 relative overflow-hidden`}>
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative text-center">
-                      <div className="text-4xl mb-2 animate-bounce">{medals[actualIndex]}</div>
+                      <div className="text-4xl mb-2 animate-bounce">{medals[index]}</div>
                       <p className="text-white font-bold text-sm truncate px-2 max-w-full">{user.username}</p>
                       <p className="text-white/90 text-xs font-semibold">{user.savingsPercentage}%</p>
                     </div>
@@ -336,17 +344,28 @@ const Leaderboard = () => {
                   </div>
                 </div>
 
-                <div className="text-right flex-shrink-0">
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Score</p>
-                  <p className="text-base font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    {(user.leaderboardScore * 100).toFixed(0)}
-                  </p>
-                  <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
-                    <div 
-                      className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-500"
-                      style={{ width: `${user.leaderboardScore * 100}%` }}
-                    ></div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="text-right">
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">Score</p>
+                    <p className="text-base font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {(user.leaderboardScore * 100).toFixed(0)}
+                    </p>
+                    <div className="w-12 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mt-1">
+                      <div 
+                        className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-500"
+                        style={{ width: `${user.leaderboardScore * 100}%` }}
+                      ></div>
+                    </div>
                   </div>
+                  
+                  {/* Share Button */}
+                  <button
+                    onClick={() => handleShare(user)}
+                    className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-all active:scale-95 self-center"
+                    aria-label={`Share ${user.username}'s achievement`}
+                  >
+                    <Share2 size={16} />
+                  </button>
                 </div>
               </div>
             );
@@ -366,6 +385,79 @@ const Leaderboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-md shadow-2xl transform animate-scale-in">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                  <Share2 size={24} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Achievement!</h3>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-4 mb-4 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="text-3xl">🏆</div>
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">{selectedUser.username}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Rank #{selectedUser.rank}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Savings</p>
+                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{selectedUser.savingsPercentage}%</p>
+                  </div>
+                  <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Streak</p>
+                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{selectedUser.currentStreak} days</p>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                Share this amazing achievement and inspire others to save smarter! 🎉
+              </p>
+              
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  <span className="text-2xl">💡</span> <span className="font-semibold">Tip:</span> Sharing success stories motivates the community to reach their savings goals!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  alert('Share functionality would open here!');
+                  setShowShareModal(false);
+                }}
+                className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <Share2 size={18} />
+                Share Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNavigation />
     </div>
