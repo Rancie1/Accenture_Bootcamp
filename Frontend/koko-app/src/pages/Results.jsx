@@ -195,12 +195,19 @@ const Results = () => {
 
   // ── Parse fuel fill-up cost from chat (only when user specified an amount) ──
   const parsedFuelFillUp = useMemo(() => {
-    // Check if the user actually asked to fill up (scan user messages)
+    // Check if the user mentioned fuel in any form (scan user messages)
     const userMessages = chatMessages.filter(m => m.isUser);
-    const userMentionedFillUp = userMessages.some(m =>
-      /fill\s*up|top\s*up|refuel/i.test(m.text || '')
-    );
-    if (!userMentionedFillUp) return null;
+    const userMentionedFuel = userMessages.some(m => {
+      const txt = (m.text || '');
+      // "fill up", "top up", "refuel"
+      if (/fill\s*up|top\s*up|refuel/i.test(txt)) return true;
+      // "X litres of fuel/petrol" or "get/buy/need fuel"
+      if (/\d+\s*(?:L|litres?|liters?)\s+(?:of\s+)?(?:fuel|petrol)/i.test(txt)) return true;
+      if (/(?:get|buy|need|want|grab|pick\s*up|also)\s+.*?\d+\s*(?:L|litres?|liters?).*?(?:fuel|petrol)/i.test(txt)) return true;
+      if (/(?:get|buy|need|want|grab)\s+(?:some\s+)?(?:fuel|petrol)/i.test(txt)) return true;
+      return false;
+    });
+    if (!userMentionedFuel) return null;
 
     // Now parse the agent's fill-up cost from bot messages
     const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
@@ -209,11 +216,24 @@ const Results = () => {
       const lines = text.split('\n');
 
       for (const line of lines) {
-        // Match lines containing "fuel fill-up" or "fill up" with a dollar amount
+        // Match lines mentioning fuel fill-up with a dollar amount
         // e.g. "Fuel fill-up (20 L × $1.473/L): $29.46"
         // e.g. "- 20 L × $1.473/L = $29.46"
-        if (/fuel\s*fill[- ]?up|fill[- ]?up\s*\(/i.test(line)) {
-          // Grab the LAST dollar amount on the line (the total, not per-litre)
+        // e.g. "filling up 20 litres ... $29.46"
+        if (/fuel\s*fill[- ]?up|fill[- ]?up\s*\(|filling\s+up\s+\d+/i.test(line)) {
+          const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
+          if (allDollars.length > 0) {
+            const cost = parseFloat(allDollars[allDollars.length - 1][1]);
+            const litresMatch = line.match(/(\d+)\s*(?:L|litres?|liters?)/i);
+            return {
+              cost,
+              litres: litresMatch ? parseInt(litresMatch[1]) : null,
+            };
+          }
+        }
+
+        // "cost of filling up 20 litres ... $29.46" or "20 litres of fuel ... $29.46"
+        if (/\d+\s*(?:L|litres?)\s+(?:of\s+)?fuel/i.test(line) || /cost\s+of\s+fill/i.test(line)) {
           const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
           if (allDollars.length > 0) {
             const cost = parseFloat(allDollars[allDollars.length - 1][1]);
@@ -226,13 +246,22 @@ const Results = () => {
         }
       }
 
-      // Also check for standalone "fill up cost: $29.46" or "filling up 20 litres ... $29.46"
+      // Fallback: "fill up cost: $29.46" or "filling up 20 litres ... $29.46"
       const fillCostMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+\d+\s*(?:L|litres?|liters?).*?\$(\d+\.?\d*)/i);
       if (fillCostMatch) {
         const litresMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+(\d+)\s*(?:L|litres?|liters?)/i);
         return {
           cost: parseFloat(fillCostMatch[1]),
           litres: litresMatch ? parseInt(litresMatch[1]) : null,
+        };
+      }
+
+      // Fallback: "X L × $Y/L ... $Z" pattern anywhere in text (common agent format)
+      const multiplyMatch = text.match(/(\d+)\s*L\s*[×x]\s*\$[\d.]+\/L[^$]*\$(\d+\.?\d*)/i);
+      if (multiplyMatch) {
+        return {
+          cost: parseFloat(multiplyMatch[2]),
+          litres: parseInt(multiplyMatch[1]),
         };
       }
     }
