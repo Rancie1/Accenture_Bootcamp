@@ -15,15 +15,15 @@ def seed_historical_prices(db: Session) -> None:
     """
     Seed database with 4 weeks of demo historical price data.
 
-    Creates realistic price variations for 10 common items:
-    - Milk (2L, 1L)
-    - Bread (White, Wholemeal)
-    - Eggs (Dozen)
-    - Chicken Breast (1kg)
-    - Rice (1kg)
-    - Pasta (500g)
-    - Tomato (1kg)
-    - Banana (1kg)
+    Creates realistic price variations for 8 common items:
+    - Australian Full Cream Long Life Milk
+    - White Bread
+    - Free Range Eggs 6 Pack
+    - RSPCA Approved Chicken Breast Fillets Large Pack
+    - Basmati Rice
+    - Bananas
+    - Cheese Fetta Aust Style
+    - Pasta Spirals
 
     For each item, creates 28 records (4 weeks * 7 days) with:
     - Random price variations (±10% from base price)
@@ -33,16 +33,14 @@ def seed_historical_prices(db: Session) -> None:
     
     # Define items with base prices (in AUD)
     items = {
-        "Milk (2L)": 3.20,
-        "Milk (1L)": 1.50,
-        "Bread (White)": 3.00,
-        "Bread (Wholemeal)": 3.50,
-        "Eggs (Dozen)": 5.50,
-        "Chicken Breast (1kg)": 12.00,
-        "Rice (1kg)": 4.00,
-        "Pasta (500g)": 2.50,
-        "Tomato (1kg)": 4.50,
-        "Banana (1kg)": 3.80,
+        "Australian Full Cream Long Life Milk": 1.65,
+        "White Bread": 2.50,
+        "Free Range Eggs 6 Pack": 4.20,
+        "RSPCA Approved Chicken Breast Fillets Large Pack": 15.40,
+        "Basmati Rice": 4.00,
+        "Bananas": 0.81,
+        "Cheese Fetta Aust Style": 3.20,
+        "Pasta Spirals": 0.90,
     }
     
     stores = ["Coles", "Woolworths", "Aldi"]
@@ -87,12 +85,18 @@ def seed_demo_users(db: Session) -> list[str]:
     """
     Seed demo users for leaderboard testing.
     
-    Creates 5 demo users with realistic data and fixed user_ids.
+    Creates 6 demo users (5 for leaderboard + 1 for frontend) with realistic data and fixed user_ids.
     Returns list of user_ids for weekly plan seeding.
     """
     from models.db_models import User
     
     demo_users = [
+        {
+            "user_id": "demo_user_001",
+            "name": "Demo User",
+            "weekly_budget": 100.00,
+            "home_address": "Sydney NSW 2000",
+        },
         {
             "user_id": "usr_alice_demo_001",
             "name": "Alice Chen",
@@ -141,12 +145,17 @@ def seed_weekly_plans(db: Session, user_ids: list[str]) -> None:
     Seed demo weekly plan records for leaderboard.
     
     Creates multiple weekly plan records per user with varying optimization scores
-    to demonstrate leaderboard ranking.
+    to demonstrate leaderboard ranking. Skips the first user (demo_user_001) as they're
+    for frontend API calls only.
     """
     from models.db_models import WeeklyPlan
     
+    # Skip demo_user_001, only create plans for leaderboard users
+    leaderboard_user_ids = user_ids[1:]  # Skip first user
+    
     # Define demo weekly plans with varying performance
     # Format: (user_id_index, optimal_cost, actual_cost)
+    # Indices are now relative to leaderboard_user_ids (0-4 instead of 0-5)
     plans = [
         # Alice - Best performer (avg score ~0.35)
         (0, 80.00, 115.00),   # score = (180-115)/180 = 0.361
@@ -178,14 +187,14 @@ def seed_weekly_plans(db: Session, user_ids: list[str]) -> None:
     base_date = datetime.utcnow() - timedelta(weeks=4)
     
     for i, (user_idx, optimal_cost, actual_cost) in enumerate(plans):
-        # Get the user's budget for score calculation
+        # Get the user's budget for score calculation (skip demo_user_001's budget)
         budgets = [180.00, 150.00, 200.00, 120.00, 160.00]
         weekly_budget = budgets[user_idx]
         
         optimization_score = (weekly_budget - actual_cost) / weekly_budget
         
         record = WeeklyPlan(
-            user_id=user_ids[user_idx],
+            user_id=leaderboard_user_ids[user_idx],
             optimal_cost=optimal_cost,
             actual_cost=actual_cost,
             optimization_score=optimization_score,

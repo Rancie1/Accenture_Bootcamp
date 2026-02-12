@@ -57,8 +57,9 @@ Tool-chaining strategy:
 
 When a user asks about prices:
 1. First, call lookup_coles_prices to get the prices. Do NOT call manage_list at the same time — you MUST wait for the price results to come back first.
-2. Once you have the prices, THEN call manage_list for each item with action="add" and include the price parameter with the exact dollar amount from the lookup (e.g. price=3.50). Never call manage_list without the price when you are looking up prices.
-3. Summarise the results in a friendly, concise way with savings tips, and confirm which items were added and their prices.
+2. The response will have a "prices" array with objects containing "item" (full item name), "price" (dollar amount), and "unit" (per what unit).
+3. Once you have the prices, THEN call manage_list for each item with action="add", item_name set to the "item" value from the response, and price set to the "price" value from the response (e.g. price=3.20).
+4. Summarise the results in a friendly, concise way with savings tips, and confirm which items were added and their prices.
 IMPORTANT: Do NOT call manage_list in parallel with lookup_coles_prices. The price lookup MUST complete first so you can pass the correct price to manage_list.
 
 When a user asks for directions or selects a transport mode:
