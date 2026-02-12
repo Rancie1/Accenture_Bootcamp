@@ -41,20 +41,9 @@ const Mascot = () => {
 
   // Premium items available from lootbox
   const premiumItems = [
-    // Rare items (60% chance)
-    { id: "premium_hat1", name: "Wizard Hat", type: "hat", rarity: "rare", icon: "Wand2", emoji: "🧙", isPremium: true },
-    { id: "premium_hat2", name: "Pirate Hat", type: "hat", rarity: "rare", icon: "Anchor", emoji: "🏴‍☠️", isPremium: true },
-    { id: "premium_acc1", name: "Monocle", type: "accessory", rarity: "rare", icon: "Glasses", emoji: "🧐", isPremium: true },
-    { id: "premium_acc3", name: "Scarf", type: "accessory", rarity: "rare", icon: "Wind", emoji: "🧣", isPremium: true },
-    
-    // Epic items (30% chance)
-    { id: "premium_hat3", name: "Dragon Helm", type: "hat", rarity: "epic", icon: "Flame", emoji: "🐉", isPremium: true },
-    { id: "premium_acc2", name: "Magic Wand", type: "accessory", rarity: "epic", icon: "Sparkles", emoji: "✨", isPremium: true },
-    { id: "premium_hat5", name: "Chef Hat", type: "hat", rarity: "epic", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true },
-    
-    // Legendary items (10% chance)
-    { id: "premium_hat4", name: "Cosmic Crown", type: "hat", rarity: "legendary", icon: "Crown", emoji: "👑", isPremium: true },
-    { id: "premium_acc4", name: "Laurel Wreath", type: "accessory", rarity: "legendary", icon: "Award", emoji: "🏆", isPremium: true }
+    // Epic items (50% chance each)
+    { id: "premium_chef", name: "Chef Hat", type: "costume", rarity: "epic", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" },
+    { id: "premium_sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "epic", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" }
   ];
 
   // Shop items available for purchase
@@ -69,49 +58,24 @@ const Mascot = () => {
       description: "Protect your streak once" 
     },
     { 
-      id: "hat1", 
-      name: "Party Hat", 
-      type: "hat", 
-      rarity: "common", 
-      cost: 50, 
-      icon: "PartyPopper",
-      emoji: "🎉"
-    },
-    { 
-      id: "hat2", 
-      name: "Crown", 
-      type: "hat", 
-      rarity: "rare", 
-      cost: 150, 
-      icon: "Crown",
-      emoji: "👑"
-    },
-    { 
-      id: "acc1", 
-      name: "Sunglasses", 
-      type: "accessory", 
-      rarity: "common", 
-      cost: 75, 
-      icon: "Glasses",
-      emoji: "😎"
-    },
-    { 
-      id: "acc2", 
-      name: "Bow Tie", 
-      type: "accessory", 
-      rarity: "rare", 
-      cost: 100, 
-      icon: "Ribbon",
-      emoji: "🎀"
-    },
-    { 
-      id: "hat3", 
-      name: "Top Hat", 
-      type: "hat", 
-      rarity: "rare", 
+      id: "chef", 
+      name: "Chef Hat", 
+      type: "costume", 
+      rarity: "epic", 
       cost: 200, 
-      icon: "Sparkles",
-      emoji: "🎩"
+      icon: "ChefHat",
+      emoji: "👨‍🍳",
+      image: "koko-chef.PNG"
+    },
+    { 
+      id: "sunglasses", 
+      name: "Cool Sunglasses", 
+      type: "costume", 
+      rarity: "epic", 
+      cost: 200, 
+      icon: "Glasses",
+      emoji: "😎",
+      image: "koko-sunglasses.PNG"
     }
   ];
 
@@ -147,31 +111,28 @@ const Mascot = () => {
    * Requirements: 9.11, 9.12, 9.13
    */
   const openLootbox = () => {
-    // Rarity distribution: 60% rare, 30% epic, 10% legendary
-    const roll = Math.random();
-    let rarity;
+    // Get items that are not yet owned
+    const unownedItems = premiumItems.filter(item => !isItemOwned(item.id));
     
-    if (roll < 0.10) {
-      rarity = "legendary";
-    } else if (roll < 0.40) {
-      rarity = "epic";
-    } else {
-      rarity = "rare";
+    if (unownedItems.length === 0) {
+      return; // No items left to win
     }
-
-    // Get items of the selected rarity
-    const itemsOfRarity = premiumItems.filter(item => item.rarity === rarity);
     
-    // Select a random item from that rarity
-    const randomItem = itemsOfRarity[Math.floor(Math.random() * itemsOfRarity.length)];
+    // Select a random item from unowned items
+    const randomItem = unownedItems[Math.floor(Math.random() * unownedItems.length)];
     
-    // Add to mascot items if not already owned
-    if (!isItemOwned(randomItem.id)) {
-      setMascotItems([...mascotItems, randomItem]);
-    }
+    // Add to mascot items
+    setMascotItems([...mascotItems, randomItem]);
     
     setWonItem(randomItem);
     setShowLootboxAnimation(true);
+  };
+
+  /**
+   * Check if all lootbox items are owned
+   */
+  const isLootboxOutOfStock = () => {
+    return premiumItems.every(item => isItemOwned(item.id));
   };
 
   /**
@@ -203,21 +164,15 @@ const Mascot = () => {
    * Requirements: 9.6
    */
   const handleEquipItem = (item) => {
-    const itemType = item.type;
-    const currentlyEquipped = equippedItems[itemType];
-
-    if (currentlyEquipped === item.id) {
-      // Unequip if already equipped
-      setEquippedItems({
-        ...equippedItems,
-        [itemType]: null
-      });
-    } else {
-      // Equip the item
-      setEquippedItems({
-        ...equippedItems,
-        [itemType]: item.id
-      });
+    // For costume type, only one can be equipped at a time (replaces entire image)
+    if (item.type === 'costume') {
+      if (equippedItems.costume === item.id) {
+        // Unequip if already equipped
+        setEquippedItems({ costume: null });
+      } else {
+        // Equip the costume (replaces all other items)
+        setEquippedItems({ costume: item.id });
+      }
     }
   };
 
@@ -318,7 +273,7 @@ const Mascot = () => {
                     key={item.id}
                     onClick={() => handleEquipItem(item)}
                     className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-3 text-center transition-all hover:scale-102 ${
-                      equippedItems[item.type] === item.id
+                      equippedItems.costume === item.id
                         ? 'ring-2 ring-primary shadow-lg'
                         : ''
                     }`}
@@ -401,14 +356,22 @@ const Mascot = () => {
             <p className="text-gray-600 dark:text-gray-400 mb-2">
               Get a random premium item!
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-              60% Rare • 30% Epic • 10% Legendary
+            <p className="text-sm text-gray-500 dark:text-gray-500 mb-2">
+              Win exclusive costumes for Koko!
+            </p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-6">
+              {premiumItems.length - mascotItems.filter(item => item.isPremium).length} / {premiumItems.length} items remaining
             </p>
             <button
               onClick={handlePurchaseLootbox}
-              className="px-8 py-4 bg-primary text-white rounded-xl font-bold text-lg shadow-lg active:scale-95 transition-transform hover:bg-primary/90"
+              disabled={isLootboxOutOfStock()}
+              className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition-transform ${
+                isLootboxOutOfStock()
+                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-primary text-white active:scale-95 hover:bg-primary/90'
+              }`}
             >
-              Purchase for $0.99
+              {isLootboxOutOfStock() ? 'Out of Stock' : 'Purchase for $0.99'}
             </button>
           </div>
         )}
@@ -438,20 +401,12 @@ const Mascot = () => {
               </p>
               <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-2xl p-4 mb-4 border border-primary/20">
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  <span className="font-semibold">Drop Rates:</span>
+                  <span className="font-semibold">Contains:</span>
                 </p>
                 <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Rare Items</span>
-                    <span className="font-semibold text-blue-600 dark:text-blue-400">60%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Epic Items</span>
-                    <span className="font-semibold text-purple-600 dark:text-purple-400">30%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Legendary Items</span>
-                    <span className="font-semibold text-yellow-600 dark:text-yellow-400">10%</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">Chef Koko Costume</span>
+                    <span className="font-semibold text-purple-600 dark:text-purple-400">Epic</span>
                   </div>
                 </div>
               </div>

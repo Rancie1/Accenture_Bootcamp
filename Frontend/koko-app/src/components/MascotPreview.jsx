@@ -1,8 +1,11 @@
 import kokoImage from '../assets/koko-1024.PNG';
+import kokoChef from '../assets/dlc/koko-chef.PNG';
+import kokoSunglasses from '../assets/dlc/koko-sunglasses.PNG';
 
 /**
  * MascotPreview Component
  * Renders the Koko mascot with equipped customization items
+ * Uses PNG replacement for costumes - entire image changes
  * Requirements: 6.2, 9.1
  * 
  * @param {Object} props - Component props
@@ -14,77 +17,55 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
   // Size configurations
   const sizeConfig = {
     small: {
-      container: 'w-24 h-24',
-      mascot: 'text-5xl',
-      item: 'text-2xl'
+      container: 'w-24 h-24'
     },
     medium: {
-      container: 'w-48 h-48',
-      mascot: 'text-8xl',
-      item: 'text-4xl'
+      container: 'w-48 h-48'
     },
     large: {
-      container: 'w-56 h-56',
-      mascot: 'text-9xl',
-      item: 'text-5xl'
+      container: 'w-56 h-56'
     }
   };
 
   const config = sizeConfig[size] || sizeConfig.medium;
 
-  // Get equipped item by type
-  const getEquippedItem = (type) => {
-    const itemId = equippedItems[type];
-    if (!itemId) return null;
-    return mascotItems.find(item => item.id === itemId);
+  // Get equipped costume item
+  const getEquippedCostume = () => {
+    const costumeId = equippedItems.costume;
+    if (!costumeId) return null;
+    return mascotItems.find(item => item.id === costumeId);
   };
 
-  const equippedBackground = getEquippedItem('background');
-  const equippedOutfit = getEquippedItem('outfit');
-  const equippedHat = getEquippedItem('hat');
-  const equippedAccessory = getEquippedItem('accessory');
+  const equippedCostume = getEquippedCostume();
+
+  // Determine which image to display
+  const getKokoImage = () => {
+    if (equippedCostume) {
+      // Map costume IDs to their images
+      const costumeImages = {
+        'premium_chef': kokoChef,
+        'chef': kokoChef,
+        'premium_sunglasses': kokoSunglasses,
+        'sunglasses': kokoSunglasses
+      };
+      return costumeImages[equippedCostume.id] || kokoImage;
+    }
+    return kokoImage;
+  };
 
   return (
     <div className="relative inline-block">
-      {/* Background layer */}
-      {equippedBackground && (
-        <div className={`absolute inset-0 flex items-center justify-center ${config.item} opacity-30`}>
-          {equippedBackground.emoji || equippedBackground.icon}
-        </div>
-      )}
-
       {/* Main mascot container */}
       <div 
         className={`${config.container} rounded-full flex items-center justify-center relative`}
         style={{ backgroundColor: '#845EEE' }}
       >
-        {/* Outfit layer (behind mascot) */}
-        {equippedOutfit && (
-          <div className={`absolute inset-0 flex items-center justify-center ${config.item}`}>
-            {equippedOutfit.emoji || equippedOutfit.icon}
-          </div>
-        )}
-
-        {/* Base mascot - Koko */}
+        {/* Koko image - changes based on equipped costume */}
         <img 
-          src={kokoImage} 
+          src={getKokoImage()} 
           alt="Koko mascot" 
-          className="w-full h-full object-contain relative z-10"
+          className="w-full h-full object-contain"
         />
-
-        {/* Hat layer (above mascot) */}
-        {equippedHat && (
-          <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 ${config.item} z-20`}>
-            {equippedHat.emoji || equippedHat.icon}
-          </div>
-        )}
-
-        {/* Accessory layer (on mascot) */}
-        {equippedAccessory && (
-          <div className={`absolute bottom-1/4 right-1/4 ${config.item} z-20`}>
-            {equippedAccessory.emoji || equippedAccessory.icon}
-          </div>
-        )}
       </div>
     </div>
   );

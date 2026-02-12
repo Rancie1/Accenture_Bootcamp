@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useContext, useEffect, lazy, Suspense } from 'react'
 import { AppProvider, AppContext } from './context/AppContext'
+import MascotPreview from './components/MascotPreview'
 
 // Lazy load page components for better performance
 const SplashScreen = lazy(() => import('./pages/SplashScreen'))
@@ -18,7 +19,9 @@ const Grimace = lazy(() => import('./pages/Grimace'))
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
     <div className="text-center">
-      <div className="text-6xl mb-4 animate-bounce">🐨</div>
+      <div className="mb-4 animate-bounce">
+        <MascotPreview equippedItems={{}} mascotItems={[]} size="medium" />
+      </div>
       <p className="text-gray-600 dark:text-gray-400">Loading...</p>
     </div>
   </div>
