@@ -761,11 +761,26 @@ const Shop = () => {
       <div className={`flex-1 flex flex-col overflow-hidden min-h-0 ${isChatMode ? 'pb-4' : 'pb-16'}`}>
         
         {/* Mascot - Transitions from center to top */}
-        <div className={`flex justify-center items-center transition-all duration-700 ease-in-out ${
+        <div className={`flex justify-center items-center transition-all duration-700 ease-in-out relative ${
           isChatMode 
             ? 'pt-1 pb-0 shrink-0' 
             : 'pt-6 pb-4 shrink-0'
         }`}>
+          {/* Back arrow - only visible in chat mode, positioned at top left */}
+          {isChatMode && (
+            <button
+              onClick={() => {
+                setIsChatMode(false);
+                setMessages([]);
+                setInputText('');
+                setSessionId(null);
+              }}
+              className="absolute left-4 top-2 text-gray-900 dark:text-white hover:text-primary transition-colors p-1.5 bg-white/50 dark:bg-gray-800/50 rounded-full z-10"
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
+          
           <div className="relative">
             <div className={`transition-all duration-700 ease-in-out ${
               isChatMode ? 'scale-75' : 'scale-100'
@@ -890,24 +905,9 @@ const Shop = () => {
 
         {/* Chat View - Fades in when chat mode starts */}
         {isChatMode && (
-          <div className="flex-1 flex flex-col transition-all duration-500 animate-fade-in px-4 overflow-hidden min-h-0">
-            {/* Exit button */}
-            <div className="flex justify-start py-1.5 shrink-0">
-              <button
-                onClick={() => {
-                  setIsChatMode(false);
-                  setMessages([]);
-                  setInputText('');
-                  setSessionId(null);
-                }}
-                className="text-gray-900 dark:text-white hover:text-primary transition-colors p-1.5 bg-white/50 dark:bg-gray-800/50 rounded-full"
-              >
-                <ArrowLeft size={24} />
-              </button>
-            </div>
-
+          <div className="flex-1 flex flex-col transition-all duration-500 animate-fade-in overflow-hidden min-h-0">
             {/* Messages - Scrollable area */}
-            <div className="flex-1 overflow-y-auto space-y-2.5 mb-2 px-2 min-h-0">
+            <div className="flex-1 overflow-y-auto space-y-2.5 mb-2 px-4 min-h-0">
               {messages.map(msg => (
                 <div 
                   key={msg.id} 
@@ -940,7 +940,7 @@ const Shop = () => {
 
             {/* Collapsible Shopping List Editor */}
             {shoppingList.length > 0 && (
-              <div className="shrink-0">
+              <div className="shrink-0 px-4">
               <button
                   onClick={() => setShowListEditor(!showListEditor)}
                   className="w-full flex items-center justify-between px-4 py-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
@@ -1028,7 +1028,7 @@ const Shop = () => {
 
             {/* Calculate Savings Button — only visible once the list has items */}
             {shoppingList.length > 0 && (
-              <div className="pb-2 pt-1 shrink-0">
+              <div className="pb-2 pt-1 shrink-0 px-4">
                 {!userPreferences.address && (
                   <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-1">
                     ⚠️ Set your home address in <button onClick={() => navigate('/settings')} className="underline font-semibold">Settings</button> for accurate directions &amp; costs
@@ -1050,7 +1050,7 @@ const Shop = () => {
             )}
 
             {/* Input Area - Fixed at bottom */}
-            <div className="pb-3 shrink-0">
+            <div className="pb-3 shrink-0 px-4">
               <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-full shadow-2xl p-1.5 flex items-center gap-2">
                 {isRecording ? (
                   /* Waveform animation while recording */
@@ -1509,3 +1509,4 @@ const Shop = () => {
 };
 
 export default Shop;
+
