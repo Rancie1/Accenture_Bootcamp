@@ -225,9 +225,8 @@ const Results = () => {
     setXp(xp + xpEarned);
     setSavings(savings + Math.max(0, budgetDiff));
 
-    if (isUnderBudget) {
-      setStreak(streak + 1);
-    }
+    // Always increment streak when submitting a shop
+    setStreak(streak + 1);
 
     // eslint-disable-next-line react-hooks/purity
     const timestamp = Date.now();

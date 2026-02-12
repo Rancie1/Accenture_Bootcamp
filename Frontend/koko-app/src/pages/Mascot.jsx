@@ -467,12 +467,19 @@ const Mascot = () => {
               </p>
               <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-2xl p-4 mb-4 border border-primary/20">
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  <span className="font-semibold">Contains:</span>
+                  <span className="font-semibold">Potentially contains:</span>
                 </p>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">Chef Koko Costume</span>
                     <span className="font-semibold text-purple-600 dark:text-purple-400">Epic</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">Scuba Koko Costume</span>
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">Rare</span>
+                  </div>
+                  <div className="text-center pt-1">
+                    <span className="text-gray-500 dark:text-gray-400 italic">...and more!</span>
                   </div>
                 </div>
               </div>
