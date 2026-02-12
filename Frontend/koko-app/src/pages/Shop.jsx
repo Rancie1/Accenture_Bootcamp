@@ -4,7 +4,11 @@ import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import MascotPreview from '../components/MascotPreview';
+<<<<<<< Updated upstream
 import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car, Trophy, Receipt } from 'lucide-react';
+=======
+import { ChevronDown, ChevronUp, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp, ShoppingCart, Footprints, Bus, Car, Trophy, Plus, Minus, Trash2 } from 'lucide-react';
+>>>>>>> Stashed changes
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -176,6 +180,7 @@ const Shop = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [isTransportLoading, setIsTransportLoading] = useState(false);
+  const [showListEditor, setShowListEditor] = useState(false);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const isRecordingRef = useRef(false);
@@ -373,7 +378,7 @@ const Shop = () => {
           const response = await sendMessageToN8nWithFallback(shoppingList, transcript.trim(), null, sessionId, userPreferences.address);
           
           if (response.sessionId) setSessionId(response.sessionId);
-
+          
           const botMessage = {
             id: (Date.now() + 1).toString(),
             text: response.reply,
@@ -416,7 +421,7 @@ const Shop = () => {
       const response = await sendMessageToN8nWithFallback(shoppingList, inputText, null, sessionId, userPreferences.address);
       
       if (response.sessionId) setSessionId(response.sessionId);
-
+      
       const botMessage = {
         id: (Date.now() + 1).toString(),
         text: response.reply,
@@ -529,7 +534,7 @@ const Shop = () => {
 
     const address = userPreferences.address || 'my home address';
     const transportPrompt =
-      `I'll ${modeLabel} to the nearest Coles store from ${address}. Please get directions and tell me the travel time, distance, and estimated transport cost (fuel cost if driving, fare if bus, $0 if walking).`;
+      `I'll ${modeLabel} to the nearest Coles store. Using the store location and fuel prices you already found earlier in our conversation (do NOT look them up again), just get directions from ${address} to that store for ${modeLabel === 'drive' ? 'driving' : modeLabel === 'take public transport (bus)' ? 'TRANSIT' : 'WALKING'} mode and tell me the travel time, distance, and estimated transport cost (fuel cost if driving, fare if bus, $0 if walking).`;
 
     // Add the user message to chat history
     const userMsg = { id: Date.now().toString(), text: transportPrompt, isUser: true };
@@ -553,14 +558,14 @@ const Shop = () => {
       setMessages(finalMessages);
 
       setShowTransportModal(false);
-      navigate('/results', {
+      navigate('/results', { 
         state: { transportMode: mode, chatMessages: finalMessages }
       });
     } catch (error) {
       console.error('Transport query error:', error);
       // Navigate anyway with what we have
       setShowTransportModal(false);
-      navigate('/results', {
+      navigate('/results', { 
         state: { transportMode: mode, chatMessages: updatedMessages }
       });
     } finally {
@@ -937,16 +942,115 @@ const Shop = () => {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Collapsible Shopping List Editor */}
+            {shoppingList.length > 0 && (
+              <div className="shrink-0">
+              <button
+                  onClick={() => setShowListEditor(!showListEditor)}
+                  className="w-full flex items-center justify-between px-4 py-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart size={16} className="text-primary" />
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      My List ({shoppingList.length} {shoppingList.length === 1 ? 'item' : 'items'})
+                    </span>
+                    {(() => {
+                      const total = shoppingList.reduce((s, i) => s + (i.price || 0) * (i.quantity || 1), 0);
+                      return total > 0 ? (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          — ${total.toFixed(2)}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+                  {showListEditor ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronUp size={16} className="text-gray-500" />}
+                </button>
+
+                {showListEditor && (
+                  <div className="mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 dark:border-gray-700 max-h-52 overflow-y-auto">
+                    {shoppingList.map((item, idx) => (
+                      <div
+                        key={item.id || idx}
+                        className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                      >
+                        {/* Item name + price */}
+                        <div className="flex-1 min-w-0 mr-3">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {item.name}
+                          </p>
+                          {item.price > 0 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              ${item.price.toFixed(2)} ea
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Quantity controls */}
+                        <div className="flex items-center gap-1.5 mr-2">
+                          <button
+                            onClick={() => {
+                              if ((item.quantity || 1) <= 1) return;
+                              setShoppingList(shoppingList.map((it, i) =>
+                                i === idx ? { ...it, quantity: (it.quantity || 1) - 1 } : it
+                              ));
+                            }}
+                            disabled={(item.quantity || 1) <= 1}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="w-6 text-center text-sm font-semibold text-gray-800 dark:text-gray-200">
+                            {item.quantity || 1}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setShoppingList(shoppingList.map((it, i) =>
+                                i === idx ? { ...it, quantity: (it.quantity || 1) + 1 } : it
+                              ));
+                            }}
+                            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+
+                        {/* Remove button */}
+                        <button
+                          onClick={() => {
+                            setShoppingList(shoppingList.filter((_, i) => i !== idx));
+                          }}
+                          className="w-7 h-7 flex items-center justify-center rounded-full text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Calculate Savings Button — only visible once the list has items */}
             {shoppingList.length > 0 && (
-              <div className="pb-2 shrink-0">
+              <div className="pb-2 pt-1 shrink-0">
+                {!userPreferences.address && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 text-center mb-1">
+                    ⚠️ Set your home address in <button onClick={() => navigate('/settings')} className="underline font-semibold">Settings</button> for accurate directions &amp; costs
+                  </p>
+                )}
                 <button
-                  onClick={() => setShowTransportModal(true)}
-                  className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
-                >
-                  Calculate my savings
-                </button>
-              </div>
+                  onClick={() => {
+                    if (!userPreferences.address) {
+                      navigate('/settings');
+                      return;
+                    }
+                    setShowTransportModal(true);
+                  }}
+                className="w-full py-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl font-semibold hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors active:scale-95 shadow-md"
+              >
+                Calculate my savings
+              </button>
+            </div>
             )}
 
             {/* Input Area - Fixed at bottom */}
@@ -1327,77 +1431,77 @@ const Shop = () => {
               </div>
             ) : (
               <>
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    Select Transport Mode
-                  </h2>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    How will you get to the store?
-                  </p>
-                </div>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Select Transport Mode
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                How will you get to the store?
+              </p>
+            </div>
 
-                <div className="space-y-3">
-                  {/* Walking Option */}
-                  <button
+            <div className="space-y-3">
+              {/* Walking Option */}
+              <button
                     onClick={() => handleTransportSelect('walking')}
-                    className="w-full p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-green-200 dark:bg-green-700 rounded-full">
-                        <Footprints size={28} className="text-green-700 dark:text-green-200" />
-                      </div>
+                className="w-full p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-200 dark:border-green-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-green-200 dark:bg-green-700 rounded-full">
+                    <Footprints size={28} className="text-green-700 dark:text-green-200" />
+                  </div>
                       <div className="text-left">
-                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
-                          Walking
-                        </h3>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">
+                    Walking
+                  </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Free — no transport cost</p>
                       </div>
-                    </div>
-                  </button>
+                </div>
+              </button>
 
-                  {/* Public Transport Option */}
-                  <button
+              {/* Public Transport Option */}
+              <button
                     onClick={() => handleTransportSelect('public_transport')}
-                    className="w-full p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-blue-200 dark:bg-blue-700 rounded-full">
-                        <Bus size={28} className="text-blue-700 dark:text-blue-200" />
-                      </div>
+                className="w-full p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-blue-200 dark:bg-blue-700 rounded-full">
+                    <Bus size={28} className="text-blue-700 dark:text-blue-200" />
+                  </div>
                       <div className="text-left">
-                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                          Public Transport
-                        </h3>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                    Public Transport
+                  </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Bus / train fare applies</p>
                       </div>
-                    </div>
-                  </button>
+                </div>
+              </button>
 
-                  {/* Driving Option */}
-                  <button
+              {/* Driving Option */}
+              <button
                     onClick={() => handleTransportSelect('driving')}
-                    className="w-full p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-2 border-purple-200 dark:border-purple-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-purple-200 dark:bg-purple-700 rounded-full">
-                        <Car size={28} className="text-purple-700 dark:text-purple-200" />
-                      </div>
+                className="w-full p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-2 border-purple-200 dark:border-purple-700 rounded-xl hover:shadow-lg active:scale-95 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-200 dark:bg-purple-700 rounded-full">
+                    <Car size={28} className="text-purple-700 dark:text-purple-200" />
+                  </div>
                       <div className="text-left">
-                        <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                          Driving
-                        </h3>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                    Driving
+                  </h3>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Fuel cost will be estimated</p>
                       </div>
-                    </div>
-                  </button>
                 </div>
+              </button>
+            </div>
 
-                <button
-                  onClick={() => setShowTransportModal(false)}
-                  className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
-                >
-                  Cancel
-                </button>
+            <button
+              onClick={() => setShowTransportModal(false)}
+              className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
               </>
             )}
           </div>

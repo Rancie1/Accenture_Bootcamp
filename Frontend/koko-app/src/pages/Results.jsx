@@ -91,27 +91,34 @@ const Results = () => {
     // Look at bot messages from newest to oldest
     const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
     for (const msg of botMessages) {
-      const text = msg.text || '';
+      // Strip markdown bold markers so **transport cost**: parses cleanly
+      const text = (msg.text || '').replace(/\*{1,2}/g, '');
 
-      // Match "transport cost is $0.10" — require "is" or ":" right before $
+      // 1. "approximately $2.09" — the agent's preferred phrasing for calculated costs
+      const approxMatch = text.match(/approximately\s*\$(\d+\.?\d*)/i);
+      if (approxMatch) return parseFloat(approxMatch[1]);
+
+      // 2. "transport cost is $X.XX" / "transport cost: $X.XX"
       const transportIsMatch = text.match(/transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
       if (transportIsMatch) return parseFloat(transportIsMatch[1]);
 
-      // Fallback: grab the LAST "$X.XX" after any "transport cost" mention
-      const allTransportMatches = [...text.matchAll(/transport cost[\s\S]*?\$(\d+\.?\d*)/gi)];
-      if (allTransportMatches.length > 0) {
-        return parseFloat(allTransportMatches[allTransportMatches.length - 1][1]);
+      // 3. "fuel cost is $X.XX" / "fuel cost will be … $X.XX"
+      const fuelCostMatch = text.match(/fuel cost\s*(?:is|will be|:|=)[^$]*\$(\d+\.?\d*)/i);
+      if (fuelCostMatch) return parseFloat(fuelCostMatch[1]);
+
+      // 4. Grab the LAST "$X.XX" in any message that mentions "transport cost"
+      if (/transport cost/i.test(text)) {
+        const allDollars = [...text.matchAll(/\$(\d+\.?\d*)/g)];
+        if (allDollars.length > 0) {
+          return parseFloat(allDollars[allDollars.length - 1][1]);
+        }
       }
 
-      // Match "fuel cost is $X.XX"
-      const fuelMatch = text.match(/fuel cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
-      if (fuelMatch) return parseFloat(fuelMatch[1]);
-
-      // Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
+      // 5. Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
       const fareMatch = text.match(/fare[^$]*\$(\d+\.?\d*)/i) || text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
       if (fareMatch) return parseFloat(fareMatch[1]);
 
-      // For walking, look for "$0" or "free" mentions
+      // 6. For walking, look for "$0" or "free" mentions
       if (transportMode === 'walking' && /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)) {
         return 0;
       }
