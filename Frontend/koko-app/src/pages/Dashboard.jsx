@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
-import { Settings, Flame, Share2, Trash2, ShoppingCart, X } from 'lucide-react';
+import { Settings, Flame, Share2, Trash2, ShoppingCart, X, Receipt } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -173,7 +173,7 @@ const Dashboard = () => {
    * Handle share profile
    */
   const handleShare = async () => {
-    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: $${savings.toFixed(2)}\n🔥 ${streak} day streak\n\nJoin me in saving smarter!`;
+    const shareText = `Check out my Koko savings profile! 🎉\n\nLevel ${level} | ${xp} XP\n💰 Lifetime Savings: ${savings.toFixed(2)}\n🔥 ${streak} day streak\n\nJoin me in saving smarter!`;
     
     if (navigator.share) {
       try {
@@ -208,7 +208,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-24-safe">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 pb-nav-safe">
       {/* Header with grid layout */}
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 shadow-sm">
         {/* Top row: Profile pic, name/level, and action buttons */}
@@ -331,16 +331,19 @@ const Dashboard = () => {
                     }
                   }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {formatDate(item.timestamp)}
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg shrink-0">
+                      <Receipt size={20} className="text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {item.results?.storeName || 'Store'}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {item.items?.length || 0} items
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatDate(item.timestamp)} • {item.items?.length || 0} items
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-primary font-bold">+{item.xpEarned} XP</p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         ${item.totalSpent?.toFixed(2) || '0.00'}

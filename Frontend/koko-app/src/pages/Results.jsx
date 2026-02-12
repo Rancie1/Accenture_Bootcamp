@@ -18,6 +18,7 @@ const Results = () => {
   const location = useLocation();
   const {
     shoppingList,
+    setShoppingList,
     userPreferences,
     xp,
     setXp,
@@ -238,13 +239,19 @@ const Results = () => {
         savingsPercentage,
         xpEarned,
         savingsAmount: budgetDiff,
-        transportMode
+        transportMode,
+        storeName: 'Coles', // Default retailer
+        timestamp
       },
       xpEarned,
       totalSpent: finalCost,
       timestamp
     };
     setHistory([...history, historyEntry]);
+    
+    // Clear the shopping list after submission
+    setShoppingList([]);
+    
     setShowSubmittedModal(true);
   };
 

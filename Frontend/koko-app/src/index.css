@@ -99,3 +99,14 @@
 .pb-24-safe {
   padding-bottom: 6rem;
 }
+
+/* Additional spacing for floating nav bar */
+.pb-nav-safe {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-nav-safe {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+}

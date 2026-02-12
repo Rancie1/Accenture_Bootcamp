@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import useSwipeGesture from '../hooks/useSwipeGesture';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Receipt } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 
 /**
@@ -147,7 +147,7 @@ const Saved = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24-safe">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-nav-safe">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 p-6 shadow-sm">
         <h1 className="text-2xl font-bold text-primary">Saved Lists</h1>
@@ -188,14 +188,19 @@ const Saved = () => {
                 onClick={() => handleListTap(list)}
                 className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm active:scale-95 transition-transform cursor-pointer"
               >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {formatDate(list.timestamp)}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {list.items.length} {list.items.length === 1 ? 'item' : 'items'}
-                    </p>
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg">
+                      <Receipt size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {list.results?.storeName || 'Store'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatDate(list.timestamp)}
+                      </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900 dark:text-white">
@@ -206,6 +211,9 @@ const Saved = () => {
                     </p>
                   </div>
                 </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {list.items.length} {list.items.length === 1 ? 'item' : 'items'}
+                </p>
               </div>
 
               {/* Delete Button (shown on swipe) */}
