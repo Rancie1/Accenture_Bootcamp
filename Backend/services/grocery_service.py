@@ -44,18 +44,29 @@ async def optimize_groceries(
     # 1. Fetch user's home_address
     user = await get_user_by_id(db, user_id)
     home_address = user.home_address
-
-    # 2. Location resolution is now handled by the Coles agent directly
-    #    (it has Google Places access built in)
-
-    # 3. Get Coles prices via Coles agent
-    try:
-        coles_data = lookup_coles_prices(location=home_address, items=grocery_list)
-    except Exception as e:
-        raise ServiceUnavailableError(f"Coles agent failed: {str(e)}")
-
-    # 4. Parse optimization results from Coles response
-    # Expected response format from Coles agent:
+    
+    # 2. Call n8n main webhook (handles routing to all agents)
+    n8n_webhook_url = os.getenv(
+        "N8N_MAIN_WEBHOOK_URL",  # Your one webhook that handles everything
+        "http://localhost:5678/webhook/chat"  # Or whatever your webhook path is
+    )
+    
+    # Format as a chat message for your n8n webhook
+    # Your n8n will parse this message and route to Coles + Maps agents
+    message = f"Find grocery prices for {', '.join(grocery_list)} near {home_address}"
+    
+    payload = {
+        "message": message,
+        "grocery_list": grocery_list,  # Include structured data too
+        "home_address": home_address,
+        "type": "grocery_optimization"  # Help n8n identify the request type
+    }
+    
+    # Get response from n8n
+    n8n_response = await call_n8n_webhook(n8n_webhook_url, payload)
+    
+    # 3. Parse optimization results from n8n
+    # Expected n8n response format:
     # {
     #   "optimal_cost": float,
     #   "store_recommendations": [str],

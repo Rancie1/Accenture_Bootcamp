@@ -3,13 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import BottomNavigation from '../components/BottomNavigation';
 import MascotPreview from '../components/MascotPreview';
-import { Settings, Flame, Share2 } from 'lucide-react';
+import { Settings, Flame, Share2, Trash2, ShoppingCart, X } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 
 /**
  * Dashboard Component
  * Displays user profile, mascot, stats, streak, and shopping history
  * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.8, 6.9, 6.10, 6.11, 6.12, 6.13, 6.14, 14.1, 14.2
  */
+
+// Helper function to render Lucide icon from string name
+const renderIcon = (iconName, size = 24) => {
+  const IconComponent = LucideIcons[iconName] || LucideIcons.ShoppingBag;
+  return <IconComponent size={size} />;
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const {
@@ -28,6 +36,10 @@ const Dashboard = () => {
 
   // State for swipe-to-delete functionality
   const [swipedItemId, setSwipedItemId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState(null);
+  const [longPressTimer, setLongPressTimer] = useState(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -99,12 +111,53 @@ const Dashboard = () => {
   };
 
   /**
-   * Delete history item and subtract XP from weekly score
-   * Requirements: 6.13
+   * Handle long press start
    */
-  const handleDeleteHistory = (itemId) => {
-    const updatedHistory = history.filter(item => item.id !== itemId);
-    setHistory(updatedHistory);
+  const handleLongPressStart = (itemId) => {
+    const timer = setTimeout(() => {
+      setItemToDelete(itemId);
+      setShowDeleteModal(true);
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  /**
+   * Handle long press end
+   */
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  /**
+   * Handle delete button click (from swipe)
+   */
+  const handleDeleteClick = (itemId) => {
+    setItemToDelete(itemId);
+    setShowDeleteModal(true);
+  };
+
+  /**
+   * Confirm delete
+   */
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      const updatedHistory = history.filter(item => item.id !== itemToDelete);
+      setHistory(updatedHistory);
+      setSwipedItemId(null);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
+  };
+
+  /**
+   * Cancel delete
+   */
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setItemToDelete(null);
     setSwipedItemId(null);
   };
 
@@ -252,14 +305,31 @@ const Dashboard = () => {
               <div 
                 key={item.id}
                 className="relative overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={() => handleTouchEnd(item.id)}
+                onTouchStart={(e) => {
+                  handleTouchStart(e);
+                  handleLongPressStart(item.id);
+                }}
+                onTouchMove={(e) => {
+                  handleTouchMove(e);
+                  handleLongPressEnd();
+                }}
+                onTouchEnd={() => {
+                  handleTouchEnd(item.id);
+                  handleLongPressEnd();
+                }}
+                onMouseDown={() => handleLongPressStart(item.id)}
+                onMouseUp={handleLongPressEnd}
+                onMouseLeave={handleLongPressEnd}
               >
                 <div 
-                  className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md transition-transform duration-300 ease-out ${
+                  className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 shadow-md transition-transform duration-300 ease-out cursor-pointer ${
                     swipedItemId === item.id ? '-translate-x-20' : 'translate-x-0'
                   }`}
+                  onClick={() => {
+                    if (swipedItemId !== item.id) {
+                      setSelectedHistoryEntry(item);
+                    }
+                  }}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -282,9 +352,10 @@ const Dashboard = () => {
                 {/* Delete button shown on swipe */}
                 {swipedItemId === item.id && (
                   <button
-                    onClick={() => handleDeleteHistory(item.id)}
-                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl transition-opacity duration-300"
+                    onClick={() => handleDeleteClick(item.id)}
+                    className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-6 flex items-center justify-center rounded-r-xl transition-opacity duration-300 gap-2"
                   >
+                    <Trash2 size={20} />
                     Delete
                   </button>
                 )}
@@ -293,6 +364,146 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Trash2 size={32} className="text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Shopping Trip?</h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                This action cannot be undone. Are you sure you want to delete this shopping trip from your history?
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded History Entry Modal */}
+      {selectedHistoryEntry && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl transform animate-scale-in">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Shopping Trip</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(selectedHistoryEntry.timestamp)}</p>
+              </div>
+              <button
+                onClick={() => setSelectedHistoryEntry(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Summary Stats */}
+            <div className="bg-gradient-to-br from-primary/10 to-purple-500/10 dark:from-primary/20 dark:to-purple-500/20 rounded-2xl p-5 mb-6 border border-primary/20">
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${selectedHistoryEntry.totalSpent?.toFixed(2) || '0.00'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Items</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {selectedHistoryEntry.items?.length || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-primary/20">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">XP Earned</p>
+                  <p className="text-3xl font-bold text-primary">
+                    +{selectedHistoryEntry.xpEarned || 0}
+                  </p>
+                </div>
+                {selectedHistoryEntry.savingsPercentage && (
+                  <div className="bg-green-100 dark:bg-green-900/30 px-4 py-2 rounded-full">
+                    <span className="text-green-600 dark:text-green-400 font-bold">
+                      {selectedHistoryEntry.savingsPercentage.toFixed(1)}% saved
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Items List */}
+            {selectedHistoryEntry.items && selectedHistoryEntry.items.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                  Items ({selectedHistoryEntry.items.length})
+                </h4>
+                <div className="space-y-2">
+                  {selectedHistoryEntry.items.map((item, index) => (
+                    <div
+                      key={item.id || index}
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-xl"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="text-gray-700 dark:text-gray-300">
+                          {renderIcon(item.icon || 'ShoppingBag', 24)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">{item.name}</p>
+                          {item.quantity > 1 && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Qty: {item.quantity}</p>
+                          )}
+                        </div>
+                      </div>
+                      {item.price && (
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          ${(item.price * (item.quantity || 1)).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setItemToDelete(selectedHistoryEntry.id);
+                  setShowDeleteModal(true);
+                }}
+                className="flex-1 py-3 border-2 border-red-500 text-red-500 rounded-xl font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Trash2 size={20} />
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedHistoryEntry(null)}
+                className="flex-1 py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <BottomNavigation />
     </div>

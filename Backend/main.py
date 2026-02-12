@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from database import init_db
-from routers import user, grocery, chat
+from routers import user, grocery, transport, weekly_plan, leaderboard
+from error_handlers import register_exception_handlers
 
 # Load environment variables
 load_dotenv()
@@ -16,14 +17,97 @@ load_dotenv()
 # Create FastAPI app
 app = FastAPI(
     title="Budget Optimization Backend",
-    description="REST API for university students to optimize weekly budgets",
-    version="1.0.0"
+    description="""
+## Budget Optimization Backend API
+
+A comprehensive REST API designed for university students to optimize their weekly budgets through:
+
+* **User Onboarding**: Register with personal details and weekly budget
+* **Grocery Optimization**: Get optimal shopping strategies with price predictions
+* **Transport Cost Comparison**: Compare fuel costs at nearby petrol stations
+* **Weekly Plan Recording**: Track actual spending vs. optimal costs
+* **Leaderboard**: View rankings based on optimization performance
+
+### Key Features
+
+- **Price Predictions**: Historical price analysis to identify items likely to drop in price
+- **Smart Recommendations**: Store recommendations based on optimal cost calculations
+- **Real-time Fuel Prices**: Integration with NSW Fuel API for accurate petrol pricing
+- **Gamification**: Leaderboard system to motivate budget optimization
+
+### Architecture
+
+The backend uses a three-layer architecture:
+- **Router Layer**: HTTP request/response handling
+- **Service Layer**: Business logic and external integrations
+- **Model Layer**: Database schemas and validation
+
+### External Services
+
+- **n8n Workflow Service**: Handles complex optimization calculations
+- **Supabase PostgreSQL**: Data persistence (or SQLite in-memory for demos)
+- **NSW Fuel API**: Real-time petrol price data (via n8n)
+
+### Error Handling
+
+All endpoints return consistent error responses with:
+- `error_code`: Machine-readable error identifier
+- `message`: Human-readable error description
+- `details`: Additional context (optional)
+
+Common status codes:
+- `200/201`: Success
+- `400`: Validation error
+- `404`: Resource not found
+- `500`: Internal server error
+- `503`: External service unavailable
+    """,
+    version="1.0.0",
+    contact={
+        "name": "Budget Optimization Team",
+        "email": "support@budgetoptimization.example.com"
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT"
+    },
+    openapi_tags=[
+        {
+            "name": "users",
+            "description": "User onboarding and management operations"
+        },
+        {
+            "name": "grocery",
+            "description": "Grocery optimization with price predictions"
+        },
+        {
+            "name": "transport",
+            "description": "Transport cost comparison for fuel purchases"
+        },
+        {
+            "name": "weekly-plan",
+            "description": "Weekly spending tracking and optimization scoring"
+        },
+        {
+            "name": "leaderboard",
+            "description": "User rankings based on optimization performance"
+        },
+        {
+            "name": "system",
+            "description": "System health and debugging endpoints"
+        }
+    ]
 )
+
+# Register exception handlers
+register_exception_handlers(app)
 
 # Include routers
 app.include_router(user.router)
 app.include_router(grocery.router)
-app.include_router(chat.router)
+app.include_router(transport.router)
+app.include_router(weekly_plan.router)
+app.include_router(leaderboard.router)
 
 # Configure CORS middleware
 app.add_middleware(
@@ -43,19 +127,27 @@ async def startup_event():
     print("✓ Demo historical price data seeded")
 
 
-@app.get("/")
+@app.get("/", tags=["system"])
 async def root():
-    """Health check endpoint"""
+    """
+    Root endpoint - API health check.
+    
+    Returns basic status information to confirm the API is running.
+    """
     return {"status": "ok", "message": "Budget Optimization Backend is running"}
 
 
-@app.get("/health")
+@app.get("/health", tags=["system"])
 async def health():
-    """Health check endpoint"""
+    """
+    Health check endpoint.
+    
+    Used by monitoring systems to verify API availability.
+    """
     return {"status": "healthy"}
 
 
-@app.get("/debug/historical-prices")
+@app.get("/debug/historical-prices", tags=["system"])
 async def debug_historical_prices():
     """
     Debug endpoint to view seeded historical price data.

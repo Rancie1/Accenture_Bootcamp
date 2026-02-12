@@ -1,0 +1,17 @@
+# Hypothesis property-based testing cache
+.hypothesis/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/

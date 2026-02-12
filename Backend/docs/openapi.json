@@ -1,0 +1,1007 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Budget Optimization Backend",
+    "description": "\n## Budget Optimization Backend API\n\nA comprehensive REST API designed for university students to optimize their weekly budgets through:\n\n* **User Onboarding**: Register with personal details and weekly budget\n* **Grocery Optimization**: Get optimal shopping strategies with price predictions\n* **Transport Cost Comparison**: Compare fuel costs at nearby petrol stations\n* **Weekly Plan Recording**: Track actual spending vs. optimal costs\n* **Leaderboard**: View rankings based on optimization performance\n\n### Key Features\n\n- **Price Predictions**: Historical price analysis to identify items likely to drop in price\n- **Smart Recommendations**: Store recommendations based on optimal cost calculations\n- **Real-time Fuel Prices**: Integration with NSW Fuel API for accurate petrol pricing\n- **Gamification**: Leaderboard system to motivate budget optimization\n\n### Architecture\n\nThe backend uses a three-layer architecture:\n- **Router Layer**: HTTP request/response handling\n- **Service Layer**: Business logic and external integrations\n- **Model Layer**: Database schemas and validation\n\n### External Services\n\n- **n8n Workflow Service**: Handles complex optimization calculations\n- **Supabase PostgreSQL**: Data persistence (or SQLite in-memory for demos)\n- **NSW Fuel API**: Real-time petrol price data (via n8n)\n\n### Error Handling\n\nAll endpoints return consistent error responses with:\n- `error_code`: Machine-readable error identifier\n- `message`: Human-readable error description\n- `details`: Additional context (optional)\n\nCommon status codes:\n- `200/201`: Success\n- `400`: Validation error\n- `404`: Resource not found\n- `500`: Internal server error\n- `503`: External service unavailable\n    ",
+    "contact": {
+      "name": "Budget Optimization Team",
+      "email": "support@budgetoptimization.example.com"
+    },
+    "license": {
+      "name": "MIT License",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/onboard": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Onboard User",
+        "description": "Create a new user account for budget optimization.\n\nThis endpoint registers a new user in the system with their personal details\nand weekly budget. The user_id is automatically generated and returned.\n\n## Request Body\n\n- **name** (string, required): User's full name (non-empty)\n- **weekly_budget** (number, required): Weekly budget in dollars (must be positive)\n- **home_address** (string, required): User's home address for location-based optimization\n\n## Response\n\nReturns the created user object with:\n- **user_id**: Unique identifier for the user\n- **name**: User's name\n- **weekly_budget**: Weekly budget amount\n- **home_address**: User's home address\n- **created_at**: Timestamp of account creation\n\n## Error Responses\n\n- **400 Bad Request**: Invalid input data\n    - `VALIDATION_ERROR`: One or more fields failed validation\n        - weekly_budget must be positive\n        - name must be non-empty\n        - home_address must be non-empty\n- **500 Internal Server Error**: Database error\n    - `DATABASE_ERROR`: Failed to create user in database\n\n## Example Request\n\n```json\n{\n    \"name\": \"John Smith\",\n    \"weekly_budget\": 150.00,\n    \"home_address\": \"123 University Ave, Sydney NSW 2000\"\n}\n```\n\n## Example Response\n\n```json\n{\n    \"user_id\": \"usr_abc123def456\",\n    \"name\": \"John Smith\",\n    \"weekly_budget\": 150.00,\n    \"home_address\": \"123 University Ave, Sydney NSW 2000\",\n    \"created_at\": \"2024-01-15T10:30:00Z\"\n}\n```",
+        "operationId": "onboard_user_onboard_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserOnboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                },
+                "example": {
+                  "user_id": "usr_abc123def456",
+                  "name": "John Smith",
+                  "weekly_budget": 150.0,
+                  "home_address": "123 University Ave, Sydney NSW 2000",
+                  "created_at": "2024-01-15T10:30:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - Invalid input data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "VALIDATION_ERROR",
+                  "message": "Validation failed",
+                  "details": {
+                    "weekly_budget": "must be positive"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "DATABASE_ERROR",
+                  "message": "Failed to create user in database"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/optimise/groceries": {
+      "post": {
+        "tags": [
+          "grocery"
+        ],
+        "summary": "Optimize Groceries Endpoint",
+        "description": "Optimize grocery shopping with AI-powered price predictions.\n\nThis endpoint analyzes your grocery list and provides:\n- Optimal cost calculation\n- Store recommendations for best prices\n- Price predictions based on 4-week historical data\n- Item-by-item breakdown with current prices\n\n## Request Body\n\n- **user_id** (string, required): User identifier from onboarding\n- **grocery_list** (array, required): List of grocery item names (non-empty)\n\n## Response\n\nReturns optimization results with:\n- **optimal_cost**: Total cost for optimal shopping strategy\n- **store_recommendations**: List of recommended stores\n- **item_breakdown**: Detailed breakdown for each item including:\n    - item_name: Name of the grocery item\n    - current_price: Current price at recommended store\n    - store_name: Store with best price\n    - price_prediction: \"likely to drop next week\" or \"historically rising\" (based on 4-week average)\n\n## Price Prediction Logic\n\n- **\"likely to drop next week\"**: Current price is below 4-week average\n- **\"historically rising\"**: Current price is at or above 4-week average\n- **null**: No historical data available for this item\n\n## Error Responses\n\n- **400 Bad Request**: Invalid input data\n    - `VALIDATION_ERROR`: grocery_list is empty or invalid\n- **404 Not Found**: User not found\n    - `NOT_FOUND`: user_id does not exist\n- **503 Service Unavailable**: External service error\n    - `SERVICE_UNAVAILABLE`: n8n optimization service is unavailable\n\n## Example Request\n\n```json\n{\n    \"user_id\": \"usr_abc123def456\",\n    \"grocery_list\": [\"Milk (1L)\", \"Bread (Loaf)\", \"Eggs (Dozen)\"]\n}\n```\n\n## Example Response\n\n```json\n{\n    \"optimal_cost\": 12.50,\n    \"store_recommendations\": [\"Woolworths\", \"Coles\"],\n    \"item_breakdown\": [\n        {\n            \"item_name\": \"Milk (1L)\",\n            \"current_price\": 3.50,\n            \"store_name\": \"Woolworths\",\n            \"price_prediction\": \"likely to drop next week\"\n        },\n        {\n            \"item_name\": \"Bread (Loaf)\",\n            \"current_price\": 4.00,\n            \"store_name\": \"Coles\",\n            \"price_prediction\": \"historically rising\"\n        },\n        {\n            \"item_name\": \"Eggs (Dozen)\",\n            \"current_price\": 5.00,\n            \"store_name\": \"Woolworths\",\n            \"price_prediction\": null\n        }\n    ]\n}\n```",
+        "operationId": "optimize_groceries_endpoint_optimise_groceries_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroceryOptimizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Grocery optimization successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroceryOptimizationResponse"
+                },
+                "example": {
+                  "optimal_cost": 12.5,
+                  "store_recommendations": [
+                    "Woolworths",
+                    "Coles"
+                  ],
+                  "item_breakdown": [
+                    {
+                      "item_name": "Milk (1L)",
+                      "current_price": 3.5,
+                      "store_name": "Woolworths",
+                      "price_prediction": "likely to drop next week"
+                    },
+                    {
+                      "item_name": "Bread (Loaf)",
+                      "current_price": 4.0,
+                      "store_name": "Coles",
+                      "price_prediction": "historically rising"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - Invalid input",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "VALIDATION_ERROR",
+                  "message": "grocery_list cannot be empty"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "NOT_FOUND",
+                  "message": "User with id 'usr_invalid' not found"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "SERVICE_UNAVAILABLE",
+                  "message": "n8n optimization service is currently unavailable"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transport/compare": {
+      "post": {
+        "tags": [
+          "transport"
+        ],
+        "summary": "Compare Transport Endpoint",
+        "description": "Compare fuel costs at nearby petrol stations for optimal refueling.\n\nThis endpoint calculates the total cost of refueling at different petrol stations,\nconsidering both the fuel cost to reach each station and the fuel price at that station.\nResults are sorted by total cost (cheapest first).\n\n## Request Body\n\n- **user_id** (string, required): User identifier from onboarding\n- **destination** (string, required): Destination address for context\n- **fuel_amount_needed** (number, required): Liters of fuel needed (must be positive)\n\n## Response\n\nReturns a list of petrol stations sorted by total cost, each containing:\n- **station_name**: Name of the petrol station\n- **address**: Station address\n- **distance_from_home**: Distance from user's home in kilometers\n- **price_per_liter**: Fuel price per liter at this station\n- **cost_to_reach_station**: Fuel cost to drive to this station\n- **fuel_cost_at_station**: Cost of fuel purchase at this station\n- **total_cost**: Total cost (cost_to_reach + fuel_cost_at_station)\n\n## Calculation Logic\n\nFor each station:\n```\ntotal_cost = cost_to_reach_station + (fuel_amount_needed \u00d7 price_per_liter)\n```\n\nStations are sorted by `total_cost` in ascending order.\n\n## Error Responses\n\n- **400 Bad Request**: Invalid input data\n    - `VALIDATION_ERROR`: fuel_amount_needed must be positive\n- **404 Not Found**: User not found\n    - `NOT_FOUND`: user_id does not exist\n- **503 Service Unavailable**: External service error\n    - `SERVICE_UNAVAILABLE`: n8n service or NSW Fuel API is unavailable\n\n## Example Request\n\n```json\n{\n    \"user_id\": \"usr_abc123def456\",\n    \"destination\": \"UNSW Sydney, Kensington NSW 2052\",\n    \"fuel_amount_needed\": 40.0\n}\n```\n\n## Example Response\n\n```json\n{\n    \"stations\": [\n        {\n            \"station_name\": \"7-Eleven Kensington\",\n            \"address\": \"456 Anzac Parade, Kensington NSW 2033\",\n            \"distance_from_home\": 2.5,\n            \"price_per_liter\": 1.85,\n            \"cost_to_reach_station\": 0.50,\n            \"fuel_cost_at_station\": 74.00,\n            \"total_cost\": 74.50\n        },\n        {\n            \"station_name\": \"Caltex Randwick\",\n            \"address\": \"789 Alison Rd, Randwick NSW 2031\",\n            \"distance_from_home\": 3.8,\n            \"price_per_liter\": 1.82,\n            \"cost_to_reach_station\": 0.76,\n            \"fuel_cost_at_station\": 72.80,\n            \"total_cost\": 73.56\n        }\n    ]\n}\n```\n\n## Notes\n\n- Stations are sorted by total_cost (cheapest first)\n- Sometimes a slightly more expensive station closer to home is cheaper overall\n- Fuel prices are sourced from NSW Fuel API via n8n integration",
+        "operationId": "compare_transport_endpoint_transport_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransportComparisonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Transport comparison successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransportComparisonResponse"
+                },
+                "example": {
+                  "stations": [
+                    {
+                      "station_name": "7-Eleven Kensington",
+                      "address": "456 Anzac Parade, Kensington NSW 2033",
+                      "distance_from_home": 2.5,
+                      "price_per_liter": 1.85,
+                      "cost_to_reach_station": 0.5,
+                      "fuel_cost_at_station": 74.0,
+                      "total_cost": 74.5
+                    },
+                    {
+                      "station_name": "Caltex Randwick",
+                      "address": "789 Alison Rd, Randwick NSW 2031",
+                      "distance_from_home": 3.8,
+                      "price_per_liter": 1.82,
+                      "cost_to_reach_station": 0.76,
+                      "fuel_cost_at_station": 72.8,
+                      "total_cost": 73.56
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - Invalid input",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "VALIDATION_ERROR",
+                  "message": "fuel_amount_needed must be positive"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "NOT_FOUND",
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "SERVICE_UNAVAILABLE",
+                  "message": "n8n service or NSW Fuel API is unavailable"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/weekly-plan/record": {
+      "post": {
+        "tags": [
+          "weekly-plan"
+        ],
+        "summary": "Record Weekly Plan Endpoint",
+        "description": "Record actual spending for the week and calculate optimization score.\n\nThis endpoint tracks how much you actually spent compared to the optimal cost,\nand calculates an optimization score to measure your budget performance.\n\n## Request Body\n\n- **user_id** (string, required): User identifier from onboarding\n- **optimal_cost** (number, required): Optimal cost from grocery optimization (\u2265 0)\n- **actual_cost** (number, required): Amount actually spent (must be positive)\n\n## Response\n\nReturns the created weekly plan with:\n- **id**: Unique identifier for this weekly plan\n- **user_id**: User identifier\n- **optimal_cost**: Optimal cost that was calculated\n- **actual_cost**: Amount actually spent\n- **optimization_score**: Performance score (see calculation below)\n- **created_at**: Timestamp of record creation\n\n## Optimization Score Calculation\n\n```\noptimization_score = (weekly_budget - actual_cost) / weekly_budget\n```\n\n### Score Interpretation\n\n- **Positive score**: Spent less than budget (good!)\n    - Example: Budget $150, spent $120 \u2192 score = 0.20 (20% under budget)\n- **Zero score**: Spent exactly the budget\n- **Negative score**: Spent more than budget (overspent)\n    - Example: Budget $150, spent $180 \u2192 score = -0.20 (20% over budget)\n\n## Error Responses\n\n- **400 Bad Request**: Invalid input data\n    - `VALIDATION_ERROR`: actual_cost must be positive, optimal_cost must be non-negative\n- **404 Not Found**: User not found\n    - `NOT_FOUND`: user_id does not exist\n- **500 Internal Server Error**: Database error\n    - `DATABASE_ERROR`: Failed to create weekly plan record\n\n## Example Request\n\n```json\n{\n    \"user_id\": \"usr_abc123def456\",\n    \"optimal_cost\": 85.50,\n    \"actual_cost\": 92.30\n}\n```\n\n## Example Response\n\n```json\n{\n    \"id\": 42,\n    \"user_id\": \"usr_abc123def456\",\n    \"optimal_cost\": 85.50,\n    \"actual_cost\": 92.30,\n    \"optimization_score\": 0.385,\n    \"created_at\": \"2024-01-22T18:45:00Z\"\n}\n```\n\n## Notes\n\n- Weekly plans are used to calculate leaderboard rankings\n- Multiple weekly plans can be recorded for the same user\n- Negative scores are allowed (when spending exceeds budget)",
+        "operationId": "record_weekly_plan_endpoint_weekly_plan_record_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeeklyPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Weekly plan successfully recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeeklyPlanResponse"
+                },
+                "example": {
+                  "id": 42,
+                  "user_id": "usr_abc123def456",
+                  "optimal_cost": 85.5,
+                  "actual_cost": 92.3,
+                  "optimization_score": 0.385,
+                  "created_at": "2024-01-22T18:45:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error - Invalid input",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "VALIDATION_ERROR",
+                  "message": "actual_cost must be positive"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "NOT_FOUND",
+                  "message": "User not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "DATABASE_ERROR",
+                  "message": "Failed to create weekly plan record"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Get Leaderboard",
+        "description": "Get the ranked leaderboard of users by average optimization score.\n\nThis endpoint calculates and returns a leaderboard showing how users rank\nbased on their average optimization performance across all recorded weekly plans.\n\n## Response\n\nReturns a leaderboard with entries containing:\n- **user_id**: User identifier\n- **username**: User's display name\n- **average_score**: Average optimization score across all weekly plans\n- **rank**: Position in the leaderboard (1 = best performer)\n\n## Ranking Logic\n\n1. Calculate average optimization_score for each user across all their weekly plans\n2. Exclude users who have never recorded a weekly plan\n3. Sort by average_score in descending order (highest score = rank 1)\n4. Assign ranks sequentially (1, 2, 3, ...)\n\n## Score Interpretation\n\n- **Higher scores are better** (more money saved)\n- Positive scores indicate spending under budget\n- Negative scores indicate overspending\n\n## Error Responses\n\n- **500 Internal Server Error**: Database error\n    - `DATABASE_ERROR`: Failed to calculate leaderboard\n\n## Example Response\n\n```json\n{\n    \"leaderboard\": [\n        {\n            \"user_id\": \"usr_abc123\",\n            \"username\": \"Alice Johnson\",\n            \"average_score\": 0.25,\n            \"rank\": 1\n        },\n        {\n            \"user_id\": \"usr_def456\",\n            \"username\": \"Bob Smith\",\n            \"average_score\": 0.18,\n            \"rank\": 2\n        },\n        {\n            \"user_id\": \"usr_ghi789\",\n            \"username\": \"Charlie Brown\",\n            \"average_score\": 0.12,\n            \"rank\": 3\n        },\n        {\n            \"user_id\": \"usr_jkl012\",\n            \"username\": \"Diana Prince\",\n            \"average_score\": -0.05,\n            \"rank\": 4\n        }\n    ]\n}\n```\n\n## Notes\n\n- Only users with at least one recorded weekly plan appear on the leaderboard\n- The leaderboard updates in real-time as users record new weekly plans\n- Users with negative average scores still appear (they're just ranked lower)\n- Ties in average_score are handled by database ordering",
+        "operationId": "get_leaderboard_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Leaderboard successfully retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardResponse"
+                },
+                "example": {
+                  "leaderboard": [
+                    {
+                      "user_id": "usr_abc123",
+                      "username": "Alice Johnson",
+                      "average_score": 0.25,
+                      "rank": 1
+                    },
+                    {
+                      "user_id": "usr_def456",
+                      "username": "Bob Smith",
+                      "average_score": 0.18,
+                      "rank": 2
+                    },
+                    {
+                      "user_id": "usr_ghi789",
+                      "username": "Charlie Brown",
+                      "average_score": 0.12,
+                      "rank": 3
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Database error",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error_code": "DATABASE_ERROR",
+                  "message": "Failed to calculate leaderboard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Root",
+        "description": "Root endpoint - API health check.\n\nReturns basic status information to confirm the API is running.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "description": "Health check endpoint.\n\nUsed by monitoring systems to verify API availability.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debug/historical-prices": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Debug Historical Prices",
+        "description": "Debug endpoint to view seeded historical price data.\nShows available items and sample prices.",
+        "operationId": "debug_historical_prices_debug_historical_prices_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GroceryItem": {
+        "properties": {
+          "item_name": {
+            "type": "string",
+            "title": "Item Name",
+            "description": "Name of the grocery item",
+            "examples": [
+              "Milk (1L)"
+            ]
+          },
+          "current_price": {
+            "type": "number",
+            "title": "Current Price",
+            "description": "Current price at recommended store",
+            "examples": [
+              3.5
+            ]
+          },
+          "store_name": {
+            "type": "string",
+            "title": "Store Name",
+            "description": "Store with best price",
+            "examples": [
+              "Woolworths"
+            ]
+          },
+          "price_prediction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Prediction",
+            "description": "Price trend prediction based on historical data",
+            "examples": [
+              "likely to drop next week"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_name",
+          "current_price",
+          "store_name"
+        ],
+        "title": "GroceryItem",
+        "description": "Schema for individual grocery item with price prediction."
+      },
+      "GroceryOptimizationRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User identifier from onboarding",
+            "examples": [
+              "usr_abc123def456"
+            ]
+          },
+          "grocery_list": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Grocery List",
+            "description": "List of grocery item names",
+            "examples": [
+              [
+                "Milk (1L)",
+                "Bread (Loaf)",
+                "Eggs (Dozen)"
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "grocery_list"
+        ],
+        "title": "GroceryOptimizationRequest",
+        "description": "Request schema for grocery optimization."
+      },
+      "GroceryOptimizationResponse": {
+        "properties": {
+          "optimal_cost": {
+            "type": "number",
+            "title": "Optimal Cost"
+          },
+          "store_recommendations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Store Recommendations"
+          },
+          "item_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/GroceryItem"
+            },
+            "type": "array",
+            "title": "Item Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "optimal_cost",
+          "store_recommendations",
+          "item_breakdown"
+        ],
+        "title": "GroceryOptimizationResponse",
+        "description": "Response schema for grocery optimization results."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LeaderboardEntry": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "average_score": {
+            "type": "number",
+            "title": "Average Score"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "username",
+          "average_score",
+          "rank"
+        ],
+        "title": "LeaderboardEntry",
+        "description": "Schema for individual leaderboard entry."
+      },
+      "LeaderboardResponse": {
+        "properties": {
+          "leaderboard": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntry"
+            },
+            "type": "array",
+            "title": "Leaderboard"
+          }
+        },
+        "type": "object",
+        "required": [
+          "leaderboard"
+        ],
+        "title": "LeaderboardResponse",
+        "description": "Response schema for leaderboard data."
+      },
+      "PetrolStation": {
+        "properties": {
+          "station_name": {
+            "type": "string",
+            "title": "Station Name",
+            "description": "Name of the petrol station",
+            "examples": [
+              "7-Eleven Kensington"
+            ]
+          },
+          "address": {
+            "type": "string",
+            "title": "Address",
+            "description": "Station address",
+            "examples": [
+              "456 Anzac Parade, Kensington NSW 2033"
+            ]
+          },
+          "distance_from_home": {
+            "type": "number",
+            "title": "Distance From Home",
+            "description": "Distance from user's home in kilometers",
+            "examples": [
+              2.5
+            ]
+          },
+          "price_per_liter": {
+            "type": "number",
+            "title": "Price Per Liter",
+            "description": "Fuel price per liter at this station",
+            "examples": [
+              1.85
+            ]
+          },
+          "cost_to_reach_station": {
+            "type": "number",
+            "title": "Cost To Reach Station",
+            "description": "Fuel cost to drive to this station",
+            "examples": [
+              0.5
+            ]
+          },
+          "fuel_cost_at_station": {
+            "type": "number",
+            "title": "Fuel Cost At Station",
+            "description": "Cost of fuel purchase at this station",
+            "examples": [
+              74.0
+            ]
+          },
+          "total_cost": {
+            "type": "number",
+            "title": "Total Cost",
+            "description": "Total cost (cost_to_reach + fuel_cost_at_station)",
+            "examples": [
+              74.5
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "station_name",
+          "address",
+          "distance_from_home",
+          "price_per_liter",
+          "cost_to_reach_station",
+          "fuel_cost_at_station",
+          "total_cost"
+        ],
+        "title": "PetrolStation",
+        "description": "Schema for petrol station data."
+      },
+      "TransportComparisonRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User identifier from onboarding",
+            "examples": [
+              "usr_abc123def456"
+            ]
+          },
+          "destination": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Destination",
+            "description": "Destination address",
+            "examples": [
+              "UNSW Sydney, Kensington NSW 2052"
+            ]
+          },
+          "fuel_amount_needed": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Fuel Amount Needed",
+            "description": "Liters of fuel needed",
+            "examples": [
+              40.0
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "destination",
+          "fuel_amount_needed"
+        ],
+        "title": "TransportComparisonRequest",
+        "description": "Request schema for transport cost comparison."
+      },
+      "TransportComparisonResponse": {
+        "properties": {
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/PetrolStation"
+            },
+            "type": "array",
+            "title": "Stations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stations"
+        ],
+        "title": "TransportComparisonResponse",
+        "description": "Response schema for transport comparison results."
+      },
+      "UserOnboardRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "description": "User's full name",
+            "examples": [
+              "John Smith"
+            ]
+          },
+          "weekly_budget": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Weekly Budget",
+            "description": "Weekly budget in dollars",
+            "examples": [
+              150.0
+            ]
+          },
+          "home_address": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Home Address",
+            "description": "User's home address",
+            "examples": [
+              "123 University Ave, Sydney NSW 2000"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "weekly_budget",
+          "home_address"
+        ],
+        "title": "UserOnboardRequest",
+        "description": "Request schema for user onboarding."
+      },
+      "UserResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "weekly_budget": {
+            "type": "number",
+            "title": "Weekly Budget"
+          },
+          "home_address": {
+            "type": "string",
+            "title": "Home Address"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "name",
+          "weekly_budget",
+          "home_address",
+          "created_at"
+        ],
+        "title": "UserResponse",
+        "description": "Response schema for user data."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WeeklyPlanRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "User identifier from onboarding",
+            "examples": [
+              "usr_abc123def456"
+            ]
+          },
+          "optimal_cost": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Optimal Cost",
+            "description": "Optimal cost from grocery optimization",
+            "examples": [
+              85.5
+            ]
+          },
+          "actual_cost": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Actual Cost",
+            "description": "Amount actually spent",
+            "examples": [
+              92.3
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "optimal_cost",
+          "actual_cost"
+        ],
+        "title": "WeeklyPlanRequest",
+        "description": "Request schema for recording weekly plan."
+      },
+      "WeeklyPlanResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "optimal_cost": {
+            "type": "number",
+            "title": "Optimal Cost"
+          },
+          "actual_cost": {
+            "type": "number",
+            "title": "Actual Cost"
+          },
+          "optimization_score": {
+            "type": "number",
+            "title": "Optimization Score"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "optimal_cost",
+          "actual_cost",
+          "optimization_score",
+          "created_at"
+        ],
+        "title": "WeeklyPlanResponse",
+        "description": "Response schema for weekly plan data."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "users",
+      "description": "User onboarding and management operations"
+    },
+    {
+      "name": "grocery",
+      "description": "Grocery optimization with price predictions"
+    },
+    {
+      "name": "transport",
+      "description": "Transport cost comparison for fuel purchases"
+    },
+    {
+      "name": "weekly-plan",
+      "description": "Weekly spending tracking and optimization scoring"
+    },
+    {
+      "name": "leaderboard",
+      "description": "User rankings based on optimization performance"
+    },
+    {
+      "name": "system",
+      "description": "System health and debugging endpoints"
+    }
+  ]
+}

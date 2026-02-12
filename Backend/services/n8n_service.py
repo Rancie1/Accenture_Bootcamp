@@ -7,15 +7,11 @@ Handles HTTP webhook calls to n8n service with error handling and logging.
 import httpx
 import logging
 from typing import Any, Dict
+from exceptions import ServiceUnavailableError
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class ServiceUnavailableError(Exception):
-    """Raised when an external service is unavailable or fails."""
-    pass
 
 
 async def call_n8n_webhook(
