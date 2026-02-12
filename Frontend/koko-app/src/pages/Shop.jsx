@@ -5,7 +5,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import AddItemModal from '../components/AddItemModal';
 import useSwipeGesture from '../hooks/useSwipeGesture';
 import MascotPreview from '../components/MascotPreview';
-import { ChevronDown, Grid3x3, MessageSquare, Mic, Send, X, ArrowLeft, Share2 } from 'lucide-react';
+import { ChevronDown, Eye, MessageSquare, Mic, Send, X, ArrowLeft, Share2, TrendingUp } from 'lucide-react';
 import { sendMessageToN8nWithFallback } from '../utils/api';
 import * as LucideIcons from 'lucide-react';
 
@@ -23,12 +23,117 @@ const renderIcon = (iconName, size = 32) => {
 
 // Sample product catalog data
 const sampleProducts = [
-  { id: 'p1', name: 'Milk 2L', price: 3.50, stock: 15, isOnSale: true, originalPrice: 4.20 },
-  { id: 'p2', name: 'Bread Loaf', price: 2.80, stock: 8, isOnSale: false },
-  { id: 'p3', name: 'Eggs (12 pack)', price: 5.99, stock: 0, isOnSale: false },
-  { id: 'p4', name: 'Cheese 500g', price: 6.50, stock: 12, isOnSale: true, originalPrice: 8.00 },
-  { id: 'p5', name: 'Chicken Breast 1kg', price: 12.99, stock: 5, isOnSale: false },
-  { id: 'p6', name: 'Rice 5kg', price: 15.00, stock: 20, isOnSale: true, originalPrice: 18.50 },
+  { 
+    id: 'p1', 
+    name: 'Milk 2L', 
+    price: 3.50, 
+    stock: 15, 
+    isOnSale: true, 
+    originalPrice: 4.20,
+    priceHistory: [
+      { date: '2024-10-12', price: 4.20 },
+      { date: '2024-10-19', price: 4.10 },
+      { date: '2024-10-26', price: 3.95 },
+      { date: '2024-11-02', price: 3.90 },
+      { date: '2024-11-09', price: 3.80 },
+      { date: '2024-11-16', price: 3.70 },
+      { date: '2024-11-23', price: 3.60 },
+      { date: '2024-11-30', price: 3.55 },
+      { date: '2024-12-07', price: 3.50 }
+    ]
+  },
+  { 
+    id: 'p2', 
+    name: 'Bread Loaf', 
+    price: 2.80, 
+    stock: 8, 
+    isOnSale: false,
+    priceHistory: [
+      { date: '2024-10-12', price: 2.90 },
+      { date: '2024-10-19', price: 2.85 },
+      { date: '2024-10-26', price: 2.80 },
+      { date: '2024-11-02', price: 2.80 },
+      { date: '2024-11-09', price: 2.80 },
+      { date: '2024-11-16', price: 2.85 },
+      { date: '2024-11-23', price: 2.80 },
+      { date: '2024-11-30', price: 2.80 },
+      { date: '2024-12-07', price: 2.80 }
+    ]
+  },
+  { 
+    id: 'p3', 
+    name: 'Eggs (12 pack)', 
+    price: 5.99, 
+    stock: 0, 
+    isOnSale: false,
+    priceHistory: [
+      { date: '2024-10-12', price: 5.50 },
+      { date: '2024-10-19', price: 5.60 },
+      { date: '2024-10-26', price: 5.70 },
+      { date: '2024-11-02', price: 5.75 },
+      { date: '2024-11-09', price: 5.80 },
+      { date: '2024-11-16', price: 5.85 },
+      { date: '2024-11-23', price: 5.90 },
+      { date: '2024-11-30', price: 5.95 },
+      { date: '2024-12-07', price: 5.99 }
+    ]
+  },
+  { 
+    id: 'p4', 
+    name: 'Cheese 500g', 
+    price: 6.50, 
+    stock: 12, 
+    isOnSale: true, 
+    originalPrice: 8.00,
+    priceHistory: [
+      { date: '2024-10-12', price: 8.00 },
+      { date: '2024-10-19', price: 7.90 },
+      { date: '2024-10-26', price: 7.70 },
+      { date: '2024-11-02', price: 7.50 },
+      { date: '2024-11-09', price: 7.20 },
+      { date: '2024-11-16', price: 7.00 },
+      { date: '2024-11-23', price: 6.80 },
+      { date: '2024-11-30', price: 6.65 },
+      { date: '2024-12-07', price: 6.50 }
+    ]
+  },
+  { 
+    id: 'p5', 
+    name: 'Chicken Breast 1kg', 
+    price: 12.99, 
+    stock: 5, 
+    isOnSale: false,
+    priceHistory: [
+      { date: '2024-10-12', price: 13.50 },
+      { date: '2024-10-19', price: 13.40 },
+      { date: '2024-10-26', price: 13.30 },
+      { date: '2024-11-02', price: 13.20 },
+      { date: '2024-11-09', price: 13.10 },
+      { date: '2024-11-16', price: 13.05 },
+      { date: '2024-11-23', price: 13.00 },
+      { date: '2024-11-30', price: 12.99 },
+      { date: '2024-12-07', price: 12.99 }
+    ]
+  },
+  { 
+    id: 'p6', 
+    name: 'Rice 5kg', 
+    price: 15.00, 
+    stock: 20, 
+    isOnSale: true, 
+    originalPrice: 18.50,
+    priceHistory: [
+      { date: '2024-10-12', price: 18.50 },
+      { date: '2024-10-19', price: 18.00 },
+      { date: '2024-10-26', price: 17.50 },
+      { date: '2024-11-02', price: 17.00 },
+      { date: '2024-11-09', price: 16.50 },
+      { date: '2024-11-16', price: 16.00 },
+      { date: '2024-11-23', price: 15.50 },
+      { date: '2024-11-30', price: 15.25 },
+      { date: '2024-12-07', price: 15.00 }
+    ]
+  },
 ];
 
 const Shop = () => {
@@ -42,7 +147,8 @@ const Shop = () => {
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState(null);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showProductCatalog, setShowProductCatalog] = useState(true);
+  const [showPriceHistory, setShowPriceHistory] = useState(false);
+  const [priceHistoryProduct, setPriceHistoryProduct] = useState(null);
   const { swipedItemId, handleTouchStart, handleTouchMove, handleTouchEnd, resetSwipe } = useSwipeGesture();
   
   // Chat state
@@ -228,6 +334,14 @@ const Shop = () => {
   };
 
   /**
+   * Handle price history button click
+   */
+  const handlePriceHistoryClick = (product) => {
+    setPriceHistoryProduct(product);
+    setShowPriceHistory(true);
+  };
+
+  /**
    * Exit chat mode
    */
   const handleExitChatMode = () => {
@@ -347,12 +461,15 @@ const Shop = () => {
   return (
     <div className="h-screen bg-linear-to-b from-primary/10 to-gray-50 dark:from-primary/20 dark:to-gray-900 relative overflow-hidden flex flex-col">
       
-      {/* Manual Mode Overlay */}
+      {/* Watch List Overlay */}
       {showManualMode && (
         <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-40 overflow-y-auto">
           <div className="bg-white dark:bg-gray-800 p-6 shadow-sm sticky top-0 z-10">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-primary">Manual Selection</h1>
+              <div className="flex items-center gap-2">
+                <Eye size={24} className="text-primary" />
+                <h1 className="text-2xl font-bold text-primary">Watch List</h1>
+              </div>
               <button
                 onClick={() => setShowManualMode(false)}
                 className="text-gray-600 dark:text-gray-400 hover:text-primary"
@@ -368,49 +485,110 @@ const Shop = () => {
           </div>
 
           <div className="p-4 pb-24">
-            <div className="grid grid-cols-2 gap-4">
-              {defaultItems.map(item => {
-                const inList = isItemInList(item.id);
+            <div className="grid grid-cols-1 gap-4">
+              {sampleProducts.map(product => {
+                const inList = shoppingList.some(i => i.name === product.name);
                 return (
-                  <div key={item.id} className="relative overflow-hidden">
+                  <div key={product.id} className="relative">
                     <div
-                      onClick={() => handleAddToList(item)}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={() => handleTouchEnd(item.id)}
-                      className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md active:scale-95 transition-all duration-300 ease-out cursor-pointer ${
-                        inList ? 'ring-2 ring-primary shadow-primary/50 shadow-lg' : ''
-                      } ${
-                        swipedItemId === item.id ? '-translate-x-20' : 'translate-x-0'
-                      }`}
+                      className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700"
                     >
-                      <div className="text-gray-900 dark:text-white mb-2">{renderIcon(item.icon, 32)}</div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                      {inList && (
-                        <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
-                          ✓
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                            {product.name}
+                          </h3>
+                          
+                          <div className="flex items-baseline gap-2 mb-3">
+                            <span className="text-3xl font-extrabold text-primary">
+                              ${product.price.toFixed(2)}
+                            </span>
+                            {product.isOnSale && product.originalPrice && (
+                              <span className="text-base text-gray-500 dark:text-gray-400 line-through">
+                                ${product.originalPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 flex-wrap mb-3">
+                            {product.isOnSale && (
+                              <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1.5 rounded-full shadow-md">
+                                🔥 On Sale!
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-full ${
+                              product.stock > 0 
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            }`}>
+                              {product.stock > 0 ? `✓ In Stock (${product.stock})` : '✗ Out of Stock'}
+                            </span>
+                          </div>
+                          
+                          {product.isOnSale && product.originalPrice && (
+                            <div className="inline-flex items-center text-sm font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg mb-3">
+                              💰 Save ${(product.originalPrice - product.price).toFixed(2)}
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 mt-3">
+                            <button
+                              onClick={() => {
+                                if (!inList) {
+                                  setShoppingList([...shoppingList, { 
+                                    id: product.id, 
+                                    name: product.name, 
+                                    icon: 'ShoppingBag', 
+                                    quantity: 1,
+                                    price: product.price 
+                                  }]);
+                                }
+                              }}
+                              disabled={product.stock === 0}
+                              className={`flex-1 py-2.5 rounded-xl font-semibold transition-all ${
+                                inList 
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-default'
+                                  : product.stock === 0
+                                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                  : 'bg-primary text-white hover:bg-primary/90 active:scale-95'
+                              }`}
+                            >
+                              {inList ? '✓ Added' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                            </button>
+                            <button
+                              onClick={() => handlePriceHistoryClick(product)}
+                              className="p-2.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-all"
+                              aria-label={`View price history for ${product.name}`}
+                            >
+                              <TrendingUp size={20} />
+                            </button>
+                            <button
+                              onClick={() => handleShareClick(product)}
+                              className="p-2.5 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl hover:bg-primary hover:text-white transition-all"
+                              aria-label={`Share ${product.name}`}
+                            >
+                              <Share2 size={20} />
+                            </button>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
-                    
-                    {swipedItemId === item.id && (
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="absolute top-0 right-0 bottom-0 bg-red-500 text-white px-4 rounded-r-xl font-medium flex items-center justify-center transition-opacity duration-300"
-                      >
-                        Delete
-                      </button>
-                    )}
                   </div>
                 );
               })}
+            </div>
 
-              <div
-                onClick={() => setShowAddModal(true)}
-                className="bg-primary/10 dark:bg-primary/20 rounded-xl p-4 border-2 border-dashed border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
-              >
-                <span className="text-primary font-medium">+ New Item</span>
+            {/* Footer Message */}
+            <div className="mt-6 mb-4 text-center bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 rounded-2xl p-5 border border-primary/20 shadow-md">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="text-2xl">📈</span>
+                <p className="text-base font-bold text-gray-800 dark:text-gray-200">
+                  Predicted price trends coming soon... <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-red-600">unlock for $1.99</span>
+                </p>
               </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Get AI-powered insights on the best time to buy
+              </p>
             </div>
 
             <button
@@ -555,15 +733,15 @@ const Shop = () => {
                     onClick={handleToggleManualMode}
                     className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 text-gray-900 dark:text-white"
                   >
-                    <Grid3x3 size={20} />
-                    <span>Manual Mode</span>
+                    <Eye size={20} />
+                    <span>Watch List</span>
                   </button>
                 </div>
               )}
             </div>
 
             <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-              Chat with me to build your list, or use manual mode
+              Chat with me to build your list, or use watch list
             </p>
           </div>
         </div>
@@ -822,93 +1000,136 @@ const Shop = () => {
         </div>
       )}
 
-      {/* Product Catalog Section */}
-      {!isChatMode && !showManualMode && showProductCatalog && (
-        <div className="fixed inset-x-0 bottom-16 top-0 overflow-y-auto bg-white dark:bg-gray-900 px-6 pt-4 pb-4">
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Available Products</h2>
+      {/* Price History Modal */}
+      {showPriceHistory && priceHistoryProduct && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl transform animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                  <TrendingUp size={24} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Price History</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{priceHistoryProduct.name}</p>
+                </div>
+              </div>
               <button
-                onClick={() => setShowProductCatalog(false)}
-                className="text-gray-600 dark:text-gray-400 hover:text-primary"
+                onClick={() => setShowPriceHistory(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
                 <X size={24} />
               </button>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Discover today's best deals!</p>
-          </div>
-          
-          <div className="grid grid-cols-1 gap-4">
-            {sampleProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                      {product.name}
-                    </h3>
+
+            {/* Price Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                <p className="text-xs text-green-700 dark:text-green-400 font-medium mb-1">Current Price</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">${priceHistoryProduct.price.toFixed(2)}</p>
+              </div>
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-blue-700 dark:text-blue-400 font-medium mb-1">Lowest (2mo)</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  ${Math.min(...priceHistoryProduct.priceHistory.map(h => h.price)).toFixed(2)}
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 rounded-xl p-4 border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-orange-700 dark:text-orange-400 font-medium mb-1">Highest (2mo)</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                  ${Math.max(...priceHistoryProduct.priceHistory.map(h => h.price)).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Simple Line Graph */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">2-Month Price Trend</h4>
+              <div className="relative h-64">
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400 pr-2">
+                  <span>${Math.max(...priceHistoryProduct.priceHistory.map(h => h.price)).toFixed(2)}</span>
+                  <span>${((Math.max(...priceHistoryProduct.priceHistory.map(h => h.price)) + Math.min(...priceHistoryProduct.priceHistory.map(h => h.price))) / 2).toFixed(2)}</span>
+                  <span>${Math.min(...priceHistoryProduct.priceHistory.map(h => h.price)).toFixed(2)}</span>
+                </div>
+                
+                {/* Graph area */}
+                <div className="ml-12 h-full relative">
+                  <svg className="w-full h-full" viewBox="0 0 800 240" preserveAspectRatio="none">
+                    {/* Grid lines */}
+                    <line x1="0" y1="0" x2="800" y2="0" stroke="currentColor" strokeWidth="1" className="text-gray-300 dark:text-gray-600" />
+                    <line x1="0" y1="120" x2="800" y2="120" stroke="currentColor" strokeWidth="1" className="text-gray-300 dark:text-gray-600" strokeDasharray="4" />
+                    <line x1="0" y1="240" x2="800" y2="240" stroke="currentColor" strokeWidth="1" className="text-gray-300 dark:text-gray-600" />
                     
-                    <div className="flex items-baseline gap-2 mb-3">
-                      <span className="text-3xl font-extrabold text-primary">
-                        ${product.price.toFixed(2)}
-                      </span>
-                      {product.isOnSale && product.originalPrice && (
-                        <span className="text-base text-gray-500 dark:text-gray-400 line-through">
-                          ${product.originalPrice.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
+                    {/* Price line */}
+                    <polyline
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      className="text-primary"
+                      points={priceHistoryProduct.priceHistory.map((point, index) => {
+                        const x = (index / (priceHistoryProduct.priceHistory.length - 1)) * 800;
+                        const minPrice = Math.min(...priceHistoryProduct.priceHistory.map(h => h.price));
+                        const maxPrice = Math.max(...priceHistoryProduct.priceHistory.map(h => h.price));
+                        const priceRange = maxPrice - minPrice || 1;
+                        const y = 240 - ((point.price - minPrice) / priceRange) * 240;
+                        return `${x},${y}`;
+                      }).join(' ')}
+                    />
                     
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      {product.isOnSale && (
-                        <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1.5 rounded-full shadow-md">
-                          🔥 On Sale!
-                        </span>
-                      )}
-                      <span className={`inline-flex items-center text-xs font-medium px-3 py-1.5 rounded-full ${
-                        product.stock > 0 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      }`}>
-                        {product.stock > 0 ? `✓ In Stock (${product.stock})` : '✗ Out of Stock'}
-                      </span>
-                    </div>
-                    
-                    {product.isOnSale && product.originalPrice && (
-                      <div className="inline-flex items-center text-sm font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg">
-                        💰 Save ${(product.originalPrice - product.price).toFixed(2)}
-                      </div>
-                    )}
-                  </div>
+                    {/* Data points */}
+                    {priceHistoryProduct.priceHistory.map((point, index) => {
+                      const x = (index / (priceHistoryProduct.priceHistory.length - 1)) * 800;
+                      const minPrice = Math.min(...priceHistoryProduct.priceHistory.map(h => h.price));
+                      const maxPrice = Math.max(...priceHistoryProduct.priceHistory.map(h => h.price));
+                      const priceRange = maxPrice - minPrice || 1;
+                      const y = 240 - ((point.price - minPrice) / priceRange) * 240;
+                      return (
+                        <circle
+                          key={index}
+                          cx={x}
+                          cy={y}
+                          r="5"
+                          fill="currentColor"
+                          className="text-primary"
+                        />
+                      );
+                    })}
+                  </svg>
                   
-                  <button
-                    onClick={() => handleShareClick(product)}
-                    className="ml-4 p-3 bg-primary/10 dark:bg-primary/20 text-primary rounded-xl hover:bg-primary hover:text-white hover:scale-110 transition-all duration-300 shadow-md hover:shadow-lg"
-                    aria-label={`Share ${product.name}`}
-                  >
-                    <Share2 size={20} />
-                  </button>
+                  {/* X-axis labels */}
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <span>{new Date(priceHistoryProduct.priceHistory[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span>{new Date(priceHistoryProduct.priceHistory[Math.floor(priceHistoryProduct.priceHistory.length / 2)].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span>{new Date(priceHistoryProduct.priceHistory[priceHistoryProduct.priceHistory.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-          
-          {/* Footer Message */}
-          <div className="mt-6 mb-4 text-center bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 rounded-2xl p-5 border border-primary/20 shadow-md">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="text-2xl">📈</span>
-              <p className="text-base font-bold text-gray-800 dark:text-gray-200">
-                Predicted price trends coming soon... <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-red-600">unlock for $1.99</span>
+            </div>
+
+            {/* Insights */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-4 border border-purple-200 dark:border-purple-800 mb-6">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="text-2xl">📊</span> <span className="font-semibold">Insight:</span> {
+                  priceHistoryProduct.price < priceHistoryProduct.priceHistory[priceHistoryProduct.priceHistory.length - 2].price
+                    ? 'Price is trending down! This might be a good time to buy.'
+                    : priceHistoryProduct.price > priceHistoryProduct.priceHistory[priceHistoryProduct.priceHistory.length - 2].price
+                    ? 'Price is trending up. Consider waiting for a better deal.'
+                    : 'Price has been stable recently.'
+                }
               </p>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Get AI-powered insights on the best time to buy
-            </p>
+
+            <button
+              onClick={() => setShowPriceHistory(false)}
+              className="w-full py-3 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl active:scale-95 transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 };
