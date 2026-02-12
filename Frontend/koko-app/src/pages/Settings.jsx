@@ -15,6 +15,7 @@ const Settings = () => {
   // Local state for form inputs
   const [name, setName] = useState(userPreferences.name);
   const [budget, setBudget] = useState(userPreferences.budget);
+  const [address, setAddress] = useState(userPreferences.address || '');
   const [transportPreference, setTransportPreference] = useState(userPreferences.transportPreference);
   const [localDarkMode, setLocalDarkMode] = useState(darkMode);
 
@@ -24,6 +25,7 @@ const Settings = () => {
       ...userPreferences,
       name,
       budget: parseFloat(budget),
+      address: address.trim(),
       transportPreference
     });
     
@@ -80,6 +82,22 @@ const Settings = () => {
           />
         </div>
         
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Home Address
+          </label>
+          <input 
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="e.g. 30 Campbell St, Parramatta NSW 2150"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Used to find nearby stores and calculate transport costs
+          </p>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Transport Preference

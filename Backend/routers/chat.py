@@ -59,6 +59,60 @@ def _get_or_create_agent(session_id: str | None):
     return new_id, agent
 
 
+# ── Helpers ───────────────────────────────────────────────────────────
+
+def _backfill_prices(shopping_list: list[dict], reply_text: str) -> list[dict]:
+    """
+    If any items on the list have no price (price=0 or missing), try to
+    extract a dollar amount from the agent's reply text and fill it in.
+
+    This handles the case where the agent called manage_list in parallel
+    with the price lookup, so items were added before prices were known.
+    """
+    if not shopping_list or not reply_text:
+        return shopping_list
+
+    # Strip markdown bold markers for cleaner matching
+    clean_reply = re.sub(r"\*{1,2}", "", reply_text)
+
+    items_needing_price = [
+        (idx, item) for idx, item in enumerate(shopping_list)
+        if not item.get("price") or item.get("price", 0) <= 0
+    ]
+
+    if not items_needing_price:
+        return shopping_list
+
+    for idx, item in items_needing_price:
+        name = item.get("name", "")
+        if not name:
+            continue
+
+        # Build a pattern: item name (fuzzy) … $X.XX on the same line / nearby
+        # e.g. "Bread: $2.60" or "Bread — $2.60" or "Bread $2.60"
+        # Use each word of the item name for a loose match
+        words = name.split()
+        # Try matching the first significant word (skip very short words)
+        search_words = [w for w in words if len(w) > 2] or words
+        for word in search_words:
+            # Find lines containing this word and a dollar amount
+            pattern = re.compile(
+                rf"{re.escape(word)}[^$\n]{{0,60}}\$(\d+\.?\d*)",
+                re.IGNORECASE,
+            )
+            match = pattern.search(clean_reply)
+            if match:
+                price = float(match.group(1))
+                if price > 0:
+                    shopping_list[idx]["price"] = price
+                    logger.info(
+                        f"Backfilled price for '{name}': ${price:.2f}"
+                    )
+                    break  # Found a price for this item, move on
+
+    return shopping_list
+
+
 # ── Request / Response models ────────────────────────────────────────
 
 class ChatRequest(BaseModel):
@@ -140,6 +194,12 @@ async def chat(request: ChatRequest):
 
         # Strip any <thinking>...</thinking> tags the model may leak
         reply_text = re.sub(r"<thinking>.*?</thinking>\s*", "", str(response), flags=re.DOTALL).strip()
+
+        # ── Price backfill ──────────────────────────────────────────
+        # The agent sometimes calls manage_list in parallel with the
+        # price lookup, resulting in items with price=0.  If the reply
+        # mentions a dollar amount next to an item name, backfill it.
+        final_list = _backfill_prices(final_list, reply_text)
 
         return ChatResponse(
             reply=reply_text,
