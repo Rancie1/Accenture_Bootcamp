@@ -14,7 +14,7 @@ from strands.models.bedrock import BedrockModel
 
 from services.strands_tools.fuel_lookup import lookup_fuel_prices
 from services.strands_tools.coles_lookup import lookup_coles_prices
-from services.strands_tools.maps_search import search_location
+from services.strands_tools.maps_search import get_directions
 from services.strands_tools.list_manager import manage_list
 
 logger = logging.getLogger(__name__)
@@ -37,13 +37,13 @@ SYSTEM_PROMPT = """You are Koko, a friendly koala mascot that helps university s
 
 You have access to these tools:
 - lookup_fuel_prices: Find current fuel/petrol prices near a location using the NSW Fuel API
-- lookup_coles_prices: Find current Coles grocery prices near a location
-- search_location: Resolve an address or place name using Google Maps, find nearby stores within a radius
+- lookup_coles_prices: Find current Coles grocery prices and nearby Coles stores (pass location if the user provides one)
+- get_directions: Get directions, travel time and distance between two locations (supports DRIVE and TRANSIT/bus)
 - manage_list: Add, remove, or update items on the user's shopping list
 
 When a user asks about prices at a location:
-1. If the location is vague (e.g. "near uni", "around here"), use search_location first to resolve it
-2. Then call the relevant price tool(s) with the resolved location
+1. Pass the location name directly to the relevant price tool(s) (e.g. lookup_coles_prices or lookup_fuel_prices)
+2. If the user wants directions to a store or station, use get_directions with their start location and the destination
 3. Summarise the results in a friendly, concise way with savings tips
 
 When a user wants to modify their shopping list:
@@ -67,5 +67,5 @@ def create_agent() -> Agent:
     return Agent(
         model=model,
         system_prompt=SYSTEM_PROMPT,
-        tools=[lookup_fuel_prices, lookup_coles_prices, search_location, manage_list],
+        tools=[lookup_fuel_prices, lookup_coles_prices, get_directions, manage_list],
     )

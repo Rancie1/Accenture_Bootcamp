@@ -5,6 +5,7 @@ Provides the POST /chat endpoint that accepts user messages and
 returns AI-generated responses using the Strands orchestrator agent.
 """
 
+import re
 import logging
 
 from fastapi import APIRouter, HTTPException, status
@@ -65,8 +66,11 @@ async def chat(request: ChatRequest):
         # Invoke the agent
         response = agent(context)
 
+        # Strip any <thinking>...</thinking> tags the model may leak
+        reply_text = re.sub(r"<thinking>.*?</thinking>\s*", "", str(response), flags=re.DOTALL).strip()
+
         return ChatResponse(
-            reply=str(response),
+            reply=reply_text,
             updatedList=request.shoppingList,
         )
 

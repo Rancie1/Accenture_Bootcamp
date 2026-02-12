@@ -21,7 +21,7 @@ class ServiceUnavailableError(Exception):
 async def call_n8n_webhook(
     webhook_url: str,
     payload: Dict[str, Any],
-    timeout: int = 60
+    timeout: int = 120
 ) -> Dict[str, Any]:
     """
     Generic n8n webhook caller with error handling.
@@ -59,7 +59,7 @@ async def call_n8n_webhook(
             
             # Log the response
             logger.info(f"n8n webhook response status: {response.status_code}")
-            logger.debug(f"Response body: {response.text}")
+            logger.info(f"Response body: {response.text[:500]}")
             
             # Handle non-200 responses
             if response.status_code != 200:

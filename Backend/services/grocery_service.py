@@ -11,7 +11,7 @@ from services.user_service import get_user_by_id, NotFoundError
 from services.n8n_service import ServiceUnavailableError
 from services.historical_price_service import get_historical_average
 from services.strands_tools.coles_lookup import lookup_coles_prices
-from services.strands_tools.maps_search import search_location
+from services.strands_tools.maps_search import get_directions
 
 
 async def optimize_groceries(
@@ -45,11 +45,8 @@ async def optimize_groceries(
     user = await get_user_by_id(db, user_id)
     home_address = user.home_address
 
-    # 2. Resolve location via Maps agent (filters stores within 5km)
-    try:
-        location_data = search_location(query=home_address, radius_km=5.0)
-    except Exception as e:
-        raise ServiceUnavailableError(f"Maps agent failed: {str(e)}")
+    # 2. Location resolution is now handled by the Coles agent directly
+    #    (it has Google Places access built in)
 
     # 3. Get Coles prices via Coles agent
     try:
