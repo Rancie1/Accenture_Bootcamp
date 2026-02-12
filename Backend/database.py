@@ -11,20 +11,26 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.pool import StaticPool
 
 # Get database URL from environment, default to in-memory SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///:memory:")
 
 # Determine if using SQLite
 is_sqlite = DATABASE_URL.startswith("sqlite")
+is_memory = ":memory:" in DATABASE_URL
 
 # Create SQLAlchemy engine with appropriate settings
 if is_sqlite:
     # SQLite-specific configuration
+    # StaticPool ensures all connections share the SAME in-memory database
+    # (without it, each connection gets its own empty database)
+    pool_args = {"poolclass": StaticPool} if is_memory else {}
     engine = create_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False},  # Allow multi-threading
-        echo=False  # Set to True for SQL query logging
+        echo=False,  # Set to True for SQL query logging
+        **pool_args,
     )
     
     # Enable foreign key constraints for SQLite
