@@ -19,6 +19,7 @@ import {
 import kokoSunglassesChef from "../assets/dlc/koko-sunglasses-chef.PNG";
 import kokoScubaChef from "../assets/dlc/koko-scuba-chef.PNG";
 import kokoChef from "../assets/dlc/koko-chef.PNG";
+import kokoCrown from "../assets/dlc/koko-crown.png";
 import { calculateWeeklySpending } from "../utils/calculations";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -47,6 +48,16 @@ const MINIMUM_BUDGET_THRESHOLD = 20; // Minimum weekly budget in dollars
 
 // Sample leaderboard data with realistic user profiles
 const sampleLeaderboardUsers = [
+  {
+    username: "L. James",
+    weeklyBudget: 1000,
+    weeklySpend: 1,
+    daysUnderBudget: 7,
+    totalDays: 7,
+    currentStreak: 365,
+    rankChange: 0,
+    isLegendary: true
+  },
   {
     username: "Sarah M.",
     weeklyBudget: 150,
@@ -678,20 +689,22 @@ const Leaderboard = () => {
                   >
                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                     <div className="relative text-center z-10">
-                      <div className="mb-2 flex justify-center">
+                      <div className="mb-2 flex justify-center items-center">
                         {user.isCurrentUser ? (
-                          <MascotPreview 
-                            equippedItems={equippedItems}
-                            mascotItems={mascotItems}
-                            size="small"
-                          />
+                          <div className="w-16 h-16 scale-[0.85] flex items-center justify-center">
+                            <MascotPreview 
+                              equippedItems={equippedItems}
+                              mascotItems={mascotItems}
+                              size="small"
+                            />
+                          </div>
                         ) : (
                           <div
                             className="w-16 h-16 rounded-full flex items-center justify-center relative"
                             style={{ backgroundColor: "#845EEE" }}
                           >
                             <img
-                              src={mascotImages[index]}
+                              src={user.isLegendary ? kokoCrown : mascotImages[index]}
                               alt={`${user.username} mascot`}
                               className="w-full h-full object-contain"
                             />
