@@ -367,7 +367,8 @@ const Leaderboard = () => {
           savingsPercentage: Math.round(user.average_score * 100),
           rank: user.rank,
           disqualified: false,
-          isCurrentUser: false
+          isCurrentUser: false,
+          isLegendary: user.username === "L. James" // Mark L. James as legendary
         }));
 
         setBackendLeaderboard(transformedData);
