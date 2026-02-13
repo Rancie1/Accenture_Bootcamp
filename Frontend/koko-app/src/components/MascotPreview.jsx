@@ -4,6 +4,9 @@ import kokoSunglasses from '../assets/dlc/koko-sunglasses.PNG';
 import kokoScuba from '../assets/dlc/koko-scuba.PNG';
 import kokoSunglassesChef from '../assets/dlc/koko-sunglasses-chef.PNG';
 import kokoScubaChef from '../assets/dlc/koko-scuba-chef.PNG';
+import kokoCrown from '../assets/dlc/koko-crown.png';
+import kokoSunglassesCrown from '../assets/dlc/koko-sunglasses-crown.PNG';
+import kokoScubaCrown from '../assets/dlc/koko-scuba-crown.PNG';
 
 /**
  * MascotPreview Component
@@ -48,7 +51,13 @@ const MascotPreview = ({ equippedItems = {}, mascotItems = [], size = 'medium' }
         'premium_sunglasses_chef': kokoSunglassesChef,
         'sunglasses_chef': kokoSunglassesChef,
         'premium_scuba_chef': kokoScubaChef,
-        'scuba_chef': kokoScubaChef
+        'scuba_chef': kokoScubaChef,
+        'premium_crown': kokoCrown,
+        'crown': kokoCrown,
+        'premium_sunglasses_crown': kokoSunglassesCrown,
+        'sunglasses_crown': kokoSunglassesCrown,
+        'premium_scuba_crown': kokoScubaCrown,
+        'scuba_crown': kokoScubaCrown
       };
       return costumeImages[costumeId] || kokoImage;
     }

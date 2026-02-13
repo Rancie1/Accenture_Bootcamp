@@ -45,7 +45,8 @@ const Mascot = () => {
   const premiumItems = [
     { id: "sunglasses", name: "Cool Sunglasses", type: "costume", rarity: "rare", icon: "Glasses", emoji: "😎", isPremium: true, image: "koko-sunglasses.PNG" },
     { id: "scuba", name: "Scuba Gear", type: "costume", rarity: "rare", icon: "Waves", emoji: "🤿", isPremium: true, image: "koko-scuba.PNG" },
-    { id: "chef", name: "Chef Hat", type: "costume", rarity: "rare", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" }
+    { id: "chef", name: "Chef Hat", type: "costume", rarity: "rare", icon: "ChefHat", emoji: "👨‍🍳", isPremium: true, image: "koko-chef.PNG" },
+    { id: "crown", name: "Royal Crown", type: "costume", rarity: "legendary", icon: "Crown", emoji: "👑", isPremium: true, image: "koko-crown.png" }
   ];
 
   // Shop items available for purchase
@@ -88,6 +89,16 @@ const Mascot = () => {
       icon: "Waves",
       emoji: "🤿",
       image: "koko-scuba.PNG"
+    },
+    { 
+      id: "crown", 
+      name: "Royal Crown", 
+      type: "costume", 
+      rarity: "legendary", 
+      cost: 500, 
+      icon: "Crown",
+      emoji: "👑",
+      image: "koko-crown.png"
     }
   ];
 
@@ -197,6 +208,10 @@ const Mascot = () => {
           newEquipped.costume = 'sunglasses_chef';
         } else if (eyewear === 'scuba' && headwear === 'chef') {
           newEquipped.costume = 'scuba_chef';
+        } else if (eyewear === 'sunglasses' && headwear === 'crown') {
+          newEquipped.costume = 'sunglasses_crown';
+        } else if (eyewear === 'scuba' && headwear === 'crown') {
+          newEquipped.costume = 'scuba_crown';
         }
       } else if (eyewear && !headwear) {
         // Only eyewear
@@ -355,7 +370,7 @@ const Mascot = () => {
                   </h3>
                   <div className="grid grid-cols-3 gap-4">
                     {mascotItems
-                      .filter(item => item.id === 'chef')
+                      .filter(item => ['chef', 'crown'].includes(item.id))
                       .map((item) => (
                         <button
                           key={item.id}
@@ -381,7 +396,7 @@ const Mascot = () => {
                           </span>
                         </button>
                       ))}
-                    {mascotItems.filter(item => item.id === 'chef').length === 0 && (
+                    {mascotItems.filter(item => ['chef', 'crown'].includes(item.id)).length === 0 && (
                       <div className="col-span-3 text-center py-6 text-gray-500 dark:text-gray-400 text-sm">
                         No headwear items yet
                       </div>
@@ -487,6 +502,10 @@ const Mascot = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Chef Hat</span>
                       <span className="font-semibold text-blue-600 dark:text-blue-400">Rare</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Royal Crown</span>
+                      <span className="font-semibold text-yellow-600 dark:text-yellow-400">Legendary</span>
                     </div>
                   </div>
                 </div>
