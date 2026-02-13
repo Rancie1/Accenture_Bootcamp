@@ -1123,79 +1123,106 @@ const Shop = () => {
 
                 {showListEditor && (
                   <div className="mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 dark:border-gray-700 max-h-52 overflow-y-auto">
-                    {shoppingList.map((item, idx) => (
-                      <div
-                        key={item.id || idx}
-                        className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                      >
-                        {/* Item name + price */}
-                        <div className="flex-1 min-w-0 mr-3">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {item.name}
-                          </p>
-                          {item.price > 0 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              ${item.price.toFixed(2)} ea
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Quantity controls */}
-                        <div className="flex items-center gap-1.5 mr-2">
-                          <button
-                            onClick={() => {
-                              if ((item.quantity || 1) <= 1) return;
-                              setShoppingList(
-                                shoppingList.map((it, i) =>
-                                  i === idx
-                                    ? {
-                                        ...it,
-                                        quantity: (it.quantity || 1) - 1
-                                      }
-                                    : it
-                                )
-                              );
-                            }}
-                            disabled={(item.quantity || 1) <= 1}
-                            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-6 text-center text-sm font-semibold text-gray-800 dark:text-gray-200">
-                            {item.quantity || 1}
-                          </span>
-                          <button
-                            onClick={() => {
-                              setShoppingList(
-                                shoppingList.map((it, i) =>
-                                  i === idx
-                                    ? {
-                                        ...it,
-                                        quantity: (it.quantity || 1) + 1
-                                      }
-                                    : it
-                                )
-                              );
-                            }}
-                            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-
-                        {/* Remove button */}
-                        <button
-                          onClick={() => {
-                            setShoppingList(
-                              shoppingList.filter((_, i) => i !== idx)
-                            );
-                          }}
-                          className="w-7 h-7 flex items-center justify-center rounded-full text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
+                    {shoppingList.map((item, idx) => {
+                      // Find matching product from catalog for price history
+                      const matchingProduct = sampleProducts.find(
+                        (p) => p.name === item.name || p.id === item.id
+                      );
+                      
+                      return (
+                        <div
+                          key={item.id || idx}
+                          className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                         >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
+                          {/* Item name + price - clickable to show price history */}
+                          <button
+                            onClick={() => {
+                              if (matchingProduct) {
+                                handlePriceHistoryClick(matchingProduct);
+                              }
+                            }}
+                            disabled={!matchingProduct}
+                            className={`flex-1 min-w-0 mr-3 text-left ${
+                              matchingProduct
+                                ? "cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg px-2 py-1 -mx-2 -my-1 transition-colors"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {item.name}
+                              </p>
+                              {matchingProduct && (
+                                <TrendingUp
+                                  size={14}
+                                  className="text-blue-500 shrink-0"
+                                />
+                              )}
+                            </div>
+                            {item.price > 0 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                ${item.price.toFixed(2)} ea
+                              </p>
+                            )}
+                          </button>
+
+                          {/* Quantity controls */}
+                          <div className="flex items-center gap-1.5 mr-2">
+                            <button
+                              onClick={() => {
+                                if ((item.quantity || 1) <= 1) return;
+                                setShoppingList(
+                                  shoppingList.map((it, i) =>
+                                    i === idx
+                                      ? {
+                                          ...it,
+                                          quantity: (it.quantity || 1) - 1
+                                        }
+                                      : it
+                                  )
+                                );
+                              }}
+                              disabled={(item.quantity || 1) <= 1}
+                              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="w-6 text-center text-sm font-semibold text-gray-800 dark:text-gray-200">
+                              {item.quantity || 1}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setShoppingList(
+                                  shoppingList.map((it, i) =>
+                                    i === idx
+                                      ? {
+                                          ...it,
+                                          quantity: (it.quantity || 1) + 1
+                                        }
+                                      : it
+                                  )
+                                );
+                              }}
+                              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+
+                          {/* Remove button */}
+                          <button
+                            onClick={() => {
+                              setShoppingList(
+                                shoppingList.filter((_, i) => i !== idx)
+                              );
+                            }}
+                            className="w-7 h-7 flex items-center justify-center rounded-full text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
