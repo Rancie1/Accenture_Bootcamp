@@ -175,7 +175,18 @@ const MINIMUM_BUDGET_THRESHOLD = 20; // Minimum weekly budget in dollars
 
 const Shop = () => {
   const navigate = useNavigate();
-  const { defaultItems, setDefaultItems, shoppingList, setShoppingList, mascotItems, equippedItems, userPreferences, history, xp, setXp } = useContext(AppContext);
+  const {
+    defaultItems,
+    setDefaultItems,
+    shoppingList,
+    setShoppingList,
+    mascotItems,
+    equippedItems,
+    userPreferences,
+    history,
+    xp,
+    setXp
+  } = useContext(AppContext);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showManualMode, setShowManualMode] = useState(false);
   const [isChatMode, setIsChatMode] = useState(false);
@@ -203,7 +214,8 @@ const Shop = () => {
   // Helper: is this product's price trending down? (good time to buy)
   const isGoodTimeToBuy = (product) => {
     if (!product.priceHistory || product.priceHistory.length < 2) return false;
-    const prevPrice = product.priceHistory[product.priceHistory.length - 2].price;
+    const prevPrice =
+      product.priceHistory[product.priceHistory.length - 2].price;
     return product.price < prevPrice;
   };
 
@@ -211,10 +223,10 @@ const Shop = () => {
 
   // Check if the agent flagged any newly added items as a good buy
   const checkForGoodBuys = (updatedList) => {
-    const goodBuyItems = updatedList.filter(item => item.isGoodBuy);
+    const goodBuyItems = updatedList.filter((item) => item.isGoodBuy);
     if (goodBuyItems.length > 0) {
-      const names = goodBuyItems.map(item => item.name).join(', ');
-      setXp(prev => prev + GOOD_CHOICE_XP_BONUS * goodBuyItems.length);
+      const names = goodBuyItems.map((item) => item.name).join(", ");
+      // Don't award XP here - it will be awarded on submission
       setGoodChoiceToast({
         productName: names,
         xpBonus: GOOD_CHOICE_XP_BONUS * goodBuyItems.length
@@ -717,7 +729,10 @@ const Shop = () => {
 
                             {product.isOnSale && product.originalPrice && (
                               <div className="inline-flex items-center text-sm font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg mb-3">
-                                💰 Save ${(product.originalPrice - product.price).toFixed(2)}
+                                💰 Save $
+                                {(
+                                  product.originalPrice - product.price
+                                ).toFixed(2)}
                               </div>
                             )}
 
@@ -740,7 +755,8 @@ const Shop = () => {
                               </span>
                               {isGoodTimeToBuy(product) && (
                                 <span className="inline-flex items-center text-xs font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1.5 rounded-full shadow-md animate-pulse">
-                                  📉 Good time to buy! +{GOOD_CHOICE_XP_BONUS} XP
+                                  📉 Good time to buy! +{GOOD_CHOICE_XP_BONUS}{" "}
+                                  XP
                                 </span>
                               )}
                             </div>
@@ -751,39 +767,55 @@ const Shop = () => {
                           <button
                             onClick={() => {
                               if (!inList) {
-                                setShoppingList([...shoppingList, {
-                                  id: product.id,
-                                  name: product.name,
-                                  icon: 'ShoppingBag',
-                                  quantity: quantity,
-                                  price: product.price
-                                }]);
+                                setShoppingList([
+                                  ...shoppingList,
+                                  {
+                                    id: product.id,
+                                    name: product.name,
+                                    icon: "ShoppingBag",
+                                    quantity: quantity,
+                                    price: product.price
+                                  }
+                                ]);
                                 // Reset quantity after adding
                                 setProductQuantities({
                                   ...productQuantities,
                                   [product.id]: 1
                                 });
-                                // Award bonus XP if the price is trending down
+                                // Show toast if the price is trending down (XP awarded on submission)
                                 if (isGoodTimeToBuy(product)) {
-                                  setXp(prev => prev + GOOD_CHOICE_XP_BONUS);
-                                  setGoodChoiceToast({ productName: product.name, xpBonus: GOOD_CHOICE_XP_BONUS });
-                                  setTimeout(() => setGoodChoiceToast(null), 3000);
+                                  setGoodChoiceToast({
+                                    productName: product.name,
+                                    xpBonus: GOOD_CHOICE_XP_BONUS
+                                  });
+                                  setTimeout(
+                                    () => setGoodChoiceToast(null),
+                                    3000
+                                  );
                                 }
                               } else {
                                 // Remove from list if already added
-                                setShoppingList(shoppingList.filter(i => i.id !== product.id));
+                                setShoppingList(
+                                  shoppingList.filter(
+                                    (i) => i.id !== product.id
+                                  )
+                                );
                               }
                             }}
                             disabled={product.stock === 0}
                             className={`flex-1 py-2.5 rounded-xl font-semibold transition-all ${
                               inList
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-400'
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-700 dark:hover:text-red-400"
                                 : product.stock === 0
-                                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                                  : 'bg-primary/10 hover:bg-primary text-primary hover:text-white'
+                                  ? "bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                                  : "bg-primary/10 hover:bg-primary text-primary hover:text-white"
                             }`}
                           >
-                            {inList ? 'In Cart ✓' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                            {inList
+                              ? "In Cart ✓"
+                              : product.stock === 0
+                                ? "Out of Stock"
+                                : "Add to Cart"}
                           </button>
                           <button
                             onClick={() => handlePriceHistoryClick(product)}
@@ -1027,7 +1059,9 @@ const Shop = () => {
                         : "bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white"
                     }`}
                   >
-                    {msg.isUser ? msg.text : (msg.text || '').replace(/\*\*/g, '')}
+                    {msg.isUser
+                      ? msg.text
+                      : (msg.text || "").replace(/\*\*/g, "")}
                   </div>
                 </div>
               ))}
@@ -1781,8 +1815,12 @@ const Shop = () => {
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3">
             <span className="text-2xl">🌟</span>
             <div>
-              <p className="font-bold text-sm">Good choice! +{goodChoiceToast.xpBonus} XP</p>
-              <p className="text-xs text-white/80">{goodChoiceToast.productName} is at a great price right now!</p>
+              <p className="font-bold text-sm">
+                Good choice! +{goodChoiceToast.xpBonus} XP
+              </p>
+              <p className="text-xs text-white/80">
+                {goodChoiceToast.productName} is at a great price right now!
+              </p>
             </div>
           </div>
         </div>

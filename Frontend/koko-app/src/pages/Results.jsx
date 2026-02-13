@@ -1,8 +1,22 @@
-import { useContext, useState, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
-import { calculateXpEarned } from '../utils/calculations';
-import { ArrowLeft, ShoppingCart, MessageSquare, DollarSign, ChevronDown, ChevronUp, Footprints, Bus, Car, MapPin, Fuel, Sparkles, TrendingDown } from 'lucide-react';
+import { useContext, useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
+import { calculateXpEarned } from "../utils/calculations";
+import {
+  ArrowLeft,
+  ShoppingCart,
+  MessageSquare,
+  DollarSign,
+  ChevronDown,
+  ChevronUp,
+  Footprints,
+  Bus,
+  Car,
+  MapPin,
+  Fuel,
+  Sparkles,
+  TrendingDown
+} from "lucide-react";
 
 /**
  * Results Component
@@ -75,10 +89,12 @@ const Results = () => {
   // ── Derived values from real shopping list ──────────────────────────
   // Filter out fuel/petrol items — fuel is NOT a grocery item
   const isFuelItem = (item) =>
-    /\bfuel\b|\bpetrol\b|\bgasoline\b|\blitres?\s+of\s+fuel\b/i.test(item.name || '');
+    /\bfuel\b|\bpetrol\b|\bgasoline\b|\blitres?\s+of\s+fuel\b/i.test(
+      item.name || ""
+    );
 
   const groceryItems = useMemo(
-    () => shoppingList.filter(item => !isFuelItem(item)),
+    () => shoppingList.filter((item) => !isFuelItem(item)),
     [shoppingList]
   );
 
@@ -98,7 +114,10 @@ const Results = () => {
   );
 
   // Items flagged as a good buy by the backend price-trend check
-  const goodBuyItems = useMemo(() => groceryItems.filter(item => item.isGoodBuy), [groceryItems]);
+  const goodBuyItems = useMemo(
+    () => groceryItems.filter((item) => item.isGoodBuy),
+    [groceryItems]
+  );
   const GOOD_CHOICE_XP_BONUS = 10;
 
   // ── Extract transport cost from agent's last message ────────────────
@@ -109,8 +128,8 @@ const Results = () => {
     const botMessages = [...chatMessages].reverse().filter((m) => !m.isUser);
     for (const msg of botMessages) {
       // Strip markdown bold markers so **transport cost**: parses cleanly
-      const text = (msg.text || '').replace(/\*{1,2}/g, '');
-      const lines = text.split('\n');
+      const text = (msg.text || "").replace(/\*{1,2}/g, "");
+      const lines = text.split("\n");
 
       // 1. "(round trip: $1.88)" or "round trip): $1.88" on any line
       for (const line of lines) {
@@ -119,16 +138,22 @@ const Results = () => {
       }
 
       // 2. "Transport cost (round trip): $0.02" — header line
-      const roundTripMatch = text.match(/transport cost\s*\(round[^)]*\)[^$]*\$(\d+\.?\d*)/i);
+      const roundTripMatch = text.match(
+        /transport cost\s*\(round[^)]*\)[^$]*\$(\d+\.?\d*)/i
+      );
       if (roundTripMatch) return parseFloat(roundTripMatch[1]);
 
       // 3. "transport cost is $X.XX" / "transport cost: $X.XX"
       //    Avoid matching "total trip cost"
-      const transportIsMatch = text.match(/(?<!total\s+(?:trip\s+)?)transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i);
+      const transportIsMatch = text.match(
+        /(?<!total\s+(?:trip\s+)?)transport cost\s*(?:is|:|=)\s*\$(\d+\.?\d*)/i
+      );
       if (transportIsMatch) return parseFloat(transportIsMatch[1]);
 
       // 4. "estimated transport cost is $X.XX" or just "transport cost is $9.23"
-      const estimatedMatch = text.match(/(?:estimated\s+)?transport cost[^$]*\$(\d+\.?\d*)/i);
+      const estimatedMatch = text.match(
+        /(?:estimated\s+)?transport cost[^$]*\$(\d+\.?\d*)/i
+      );
       if (estimatedMatch && !/total\s+trip/i.test(estimatedMatch[0])) {
         return parseFloat(estimatedMatch[1]);
       }
@@ -142,7 +167,9 @@ const Results = () => {
       }
 
       // 6. "fuel cost is $X.XX" / "fuel cost will be … $X.XX"
-      const fuelCostMatch = text.match(/fuel cost\s*(?:is|will be|:|=)[^$]*\$(\d+\.?\d*)/i);
+      const fuelCostMatch = text.match(
+        /fuel cost\s*(?:is|will be|:|=)[^$]*\$(\d+\.?\d*)/i
+      );
       if (fuelCostMatch) return parseFloat(fuelCostMatch[1]);
 
       // 7. Lines containing "Cost:" with a dollar amount (from agent breakdowns)
@@ -158,11 +185,16 @@ const Results = () => {
       }
 
       // 8. Match "fare" patterns — "fare.*$X.XX" or "$X.XX fare"
-      const fareMatch = text.match(/fare[^$]*\$(\d+\.?\d*)/i) || text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
+      const fareMatch =
+        text.match(/fare[^$]*\$(\d+\.?\d*)/i) ||
+        text.match(/\$(\d+\.?\d*)\s*(?:fare|ticket)/i);
       if (fareMatch) return parseFloat(fareMatch[1]);
 
       // 9. For walking, look for "$0" or "free" mentions
-      if (transportMode === 'walking' && /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)) {
+      if (
+        transportMode === "walking" &&
+        /free|no (?:transport )?cost|\$0(?:\.00)?/i.test(text)
+      ) {
         return 0;
       }
     }
@@ -174,12 +206,14 @@ const Results = () => {
 
   // ── Parse fuel price per litre from agent messages ──────────────────
   const parsedFuelPricePerLitre = useMemo(() => {
-    const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
+    const botMessages = [...chatMessages].reverse().filter((m) => !m.isUser);
     for (const msg of botMessages) {
-      const text = (msg.text || '').replace(/\*{1,2}/g, '');
+      const text = (msg.text || "").replace(/\*{1,2}/g, "");
 
       // "Fuel price: 1.519 $/L" or "fuel price: $1.47/L" or "1.47 dollars per litre"
-      const fuelPriceMatch = text.match(/fuel price[^$\d]*\$?(\d+\.?\d*)\s*(?:\/L|\$\/L|dollars?\s*per\s*litre|AUD\/L)/i);
+      const fuelPriceMatch = text.match(
+        /fuel price[^$\d]*\$?(\d+\.?\d*)\s*(?:\/L|\$\/L|dollars?\s*per\s*litre|AUD\/L)/i
+      );
       if (fuelPriceMatch) return parseFloat(fuelPriceMatch[1]);
 
       // "at 147.3 cents/L"
@@ -196,63 +230,79 @@ const Results = () => {
   // ── Parse fuel fill-up cost from chat (only when user specified an amount) ──
   const parsedFuelFillUp = useMemo(() => {
     // Check if the user mentioned fuel in any form (scan user messages)
-    const userMessages = chatMessages.filter(m => m.isUser);
-    const userMentionedFuel = userMessages.some(m => {
-      const txt = (m.text || '');
+    const userMessages = chatMessages.filter((m) => m.isUser);
+    const userMentionedFuel = userMessages.some((m) => {
+      const txt = m.text || "";
       // "fill up", "top up", "refuel"
       if (/fill\s*up|top\s*up|refuel/i.test(txt)) return true;
       // "X litres of fuel/petrol" or "get/buy/need fuel"
-      if (/\d+\s*(?:L|litres?|liters?)\s+(?:of\s+)?(?:fuel|petrol)/i.test(txt)) return true;
-      if (/(?:get|buy|need|want|grab|pick\s*up|also)\s+.*?\d+\s*(?:L|litres?|liters?).*?(?:fuel|petrol)/i.test(txt)) return true;
-      if (/(?:get|buy|need|want|grab)\s+(?:some\s+)?(?:fuel|petrol)/i.test(txt)) return true;
+      if (/\d+\s*(?:L|litres?|liters?)\s+(?:of\s+)?(?:fuel|petrol)/i.test(txt))
+        return true;
+      if (
+        /(?:get|buy|need|want|grab|pick\s*up|also)\s+.*?\d+\s*(?:L|litres?|liters?).*?(?:fuel|petrol)/i.test(
+          txt
+        )
+      )
+        return true;
+      if (/(?:get|buy|need|want|grab)\s+(?:some\s+)?(?:fuel|petrol)/i.test(txt))
+        return true;
       return false;
     });
     if (!userMentionedFuel) return null;
 
     // Now parse the agent's fill-up cost from bot messages
-    const botMessages = [...chatMessages].reverse().filter(m => !m.isUser);
+    const botMessages = [...chatMessages].reverse().filter((m) => !m.isUser);
     for (const msg of botMessages) {
-      const text = (msg.text || '').replace(/\*{1,2}/g, '');
-      const lines = text.split('\n');
+      const text = (msg.text || "").replace(/\*{1,2}/g, "");
+      const lines = text.split("\n");
 
       for (const line of lines) {
         // Match lines mentioning fuel fill-up with a dollar amount
         // e.g. "Fuel fill-up (20 L × $1.473/L): $29.46"
         // e.g. "- 20 L × $1.473/L = $29.46"
         // e.g. "filling up 20 litres ... $29.46"
-        if (/fuel\s*fill[- ]?up|fill[- ]?up\s*\(|filling\s+up\s+\d+/i.test(line)) {
+        if (
+          /fuel\s*fill[- ]?up|fill[- ]?up\s*\(|filling\s+up\s+\d+/i.test(line)
+        ) {
           const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
           if (allDollars.length > 0) {
             const cost = parseFloat(allDollars[allDollars.length - 1][1]);
             const litresMatch = line.match(/(\d+)\s*(?:L|litres?|liters?)/i);
             return {
               cost,
-              litres: litresMatch ? parseInt(litresMatch[1]) : null,
+              litres: litresMatch ? parseInt(litresMatch[1]) : null
             };
           }
         }
 
         // "cost of filling up 20 litres ... $29.46" or "20 litres of fuel ... $29.46"
-        if (/\d+\s*(?:L|litres?)\s+(?:of\s+)?fuel/i.test(line) || /cost\s+of\s+fill/i.test(line)) {
+        if (
+          /\d+\s*(?:L|litres?)\s+(?:of\s+)?fuel/i.test(line) ||
+          /cost\s+of\s+fill/i.test(line)
+        ) {
           const allDollars = [...line.matchAll(/\$(\d+\.?\d*)/g)];
           if (allDollars.length > 0) {
             const cost = parseFloat(allDollars[allDollars.length - 1][1]);
             const litresMatch = line.match(/(\d+)\s*(?:L|litres?|liters?)/i);
             return {
               cost,
-              litres: litresMatch ? parseInt(litresMatch[1]) : null,
+              litres: litresMatch ? parseInt(litresMatch[1]) : null
             };
           }
         }
       }
 
       // Fallback: "fill up cost: $29.46" or "filling up 20 litres ... $29.46"
-      const fillCostMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+\d+\s*(?:L|litres?|liters?).*?\$(\d+\.?\d*)/i);
+      const fillCostMatch = text.match(
+        /(?:fill[- ]?up|filling\s+up)\s+\d+\s*(?:L|litres?|liters?).*?\$(\d+\.?\d*)/i
+      );
       if (fillCostMatch) {
-        const litresMatch = text.match(/(?:fill[- ]?up|filling\s+up)\s+(\d+)\s*(?:L|litres?|liters?)/i);
+        const litresMatch = text.match(
+          /(?:fill[- ]?up|filling\s+up)\s+(\d+)\s*(?:L|litres?|liters?)/i
+        );
         return {
           cost: parseFloat(fillCostMatch[1]),
-          litres: litresMatch ? parseInt(litresMatch[1]) : null,
+          litres: litresMatch ? parseInt(litresMatch[1]) : null
         };
       }
     }
@@ -284,6 +334,7 @@ const Results = () => {
   const [showStreakSaverModal, setShowStreakSaverModal] = useState(false);
   const [showSavedModal, setShowSavedModal] = useState(false);
   const [showSubmittedModal, setShowSubmittedModal] = useState(false);
+  const [submissionData, setSubmissionData] = useState(null);
 
   // ── Budget-based gamification ──────────────────────────────────────
   const budget = userPreferences.budget || 0;
@@ -308,7 +359,6 @@ const Results = () => {
       setTransportCost(0);
     }
   };
-
 
   const handleCostInputChange = (value) => {
     setCustomCostInput(value);
@@ -371,7 +421,14 @@ const Results = () => {
   };
 
   const completeSubmission = () => {
-    setXp(xp + xpEarned);
+    // Capture XP breakdown before clearing shopping list
+    const finalXpEarned = xpEarned;
+    const finalBaseXp = baseXp;
+    const finalGoodBuyBonus = goodBuyBonus;
+    const finalGoodBuyCount = goodBuyItems.length;
+    const finalSavingsPercentage = savingsPercentage;
+
+    setXp(xp + finalXpEarned);
     setSavings(savings + Math.max(0, budgetDiff));
 
     // Always increment streak when submitting a shop
@@ -384,18 +441,27 @@ const Results = () => {
       items: shoppingList,
       results: {
         totalPrice: finalCost,
-        savingsPercentage,
-        xpEarned,
+        savingsPercentage: finalSavingsPercentage,
+        xpEarned: finalXpEarned,
         savingsAmount: budgetDiff,
         transportMode,
         storeName: hasAdjusted ? retailerName : "Coles", // Use adjusted retailer if edited
         timestamp
       },
-      xpEarned,
+      xpEarned: finalXpEarned,
       totalSpent: finalCost,
       timestamp
     };
     setHistory([...history, historyEntry]);
+
+    // Store XP breakdown for modal display
+    setSubmissionData({
+      xpEarned: finalXpEarned,
+      baseXp: finalBaseXp,
+      goodBuyBonus: finalGoodBuyBonus,
+      goodBuyCount: finalGoodBuyCount,
+      savingsPercentage: finalSavingsPercentage
+    });
 
     // Clear the shopping list after submission
     setShoppingList([]);
@@ -510,7 +576,9 @@ const Results = () => {
               </p>
             </div>
             <p className="text-xs text-emerald-600 dark:text-emerald-400/80 ml-6">
-              {goodBuyItems.map(i => i.name).join(', ')} {goodBuyItems.length === 1 ? 'is' : 'are'} at a great price right now based on recent trends!
+              {goodBuyItems.map((i) => i.name).join(", ")}{" "}
+              {goodBuyItems.length === 1 ? "is" : "are"} at a great price right
+              now based on recent trends!
             </p>
           </div>
         )}
@@ -574,13 +642,17 @@ const Results = () => {
         {/* Trip total summary */}
         <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Groceries</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Groceries
+            </p>
             <p className="text-sm font-bold text-gray-900 dark:text-white">
               ${groceryTotal.toFixed(2)}
             </p>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Transport</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Transport
+            </p>
             <p className={`text-sm font-bold ${transport.costClass}`}>
               {transportCost === 0 ? "$0.00" : `$${transportCost.toFixed(2)}`}
             </p>
@@ -592,7 +664,10 @@ const Results = () => {
               <div className="flex items-center gap-1.5">
                 <Fuel size={12} className="text-orange-500" />
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Fuel fill-up{parsedFuelFillUp.litres ? ` (${parsedFuelFillUp.litres}L)` : ''}
+                  Fuel fill-up
+                  {parsedFuelFillUp.litres
+                    ? ` (${parsedFuelFillUp.litres}L)`
+                    : ""}
                 </p>
               </div>
               <p className="text-sm font-bold text-orange-500 dark:text-orange-400">
@@ -602,7 +677,9 @@ const Results = () => {
           )}
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
-            <p className="text-sm font-bold text-gray-900 dark:text-white">Trip Total</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">
+              Trip Total
+            </p>
             <p className="text-lg font-extrabold text-primary">
               ${estimatedTotal.toFixed(2)}
             </p>
@@ -610,14 +687,20 @@ const Results = () => {
         </div>
 
         {/* Fuel price per litre note — only for driving mode when no fill-up specified */}
-        {transportMode === 'driving' && parsedFuelPricePerLitre !== null && !parsedFuelFillUp && (
-          <div className="mt-2 flex items-center justify-center gap-1.5">
-            <Fuel size={14} className="text-orange-500" />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Plus fuel at <span className="font-semibold text-orange-500 dark:text-orange-400">${parsedFuelPricePerLitre.toFixed(2)}/L</span> if you fill up
-            </p>
-          </div>
-        )}
+        {transportMode === "driving" &&
+          parsedFuelPricePerLitre !== null &&
+          !parsedFuelFillUp && (
+            <div className="mt-2 flex items-center justify-center gap-1.5">
+              <Fuel size={14} className="text-orange-500" />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Plus fuel at{" "}
+                <span className="font-semibold text-orange-500 dark:text-orange-400">
+                  ${parsedFuelPricePerLitre.toFixed(2)}/L
+                </span>{" "}
+                if you fill up
+              </p>
+            </div>
+          )}
       </div>
 
       {/* ── Budget Comparison Card ───────────────────────────────────── */}
@@ -740,7 +823,7 @@ const Results = () => {
                   key={msg.id}
                   className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap"
                 >
-                  {(msg.text || '').replace(/\*\*/g, '')}
+                  {(msg.text || "").replace(/\*\*/g, "")}
                 </div>
               ))}
             </div>
@@ -966,10 +1049,19 @@ const Results = () => {
               <p className="text-gray-600 dark:text-gray-400 mb-2">
                 Your shopping trip has been recorded successfully.
               </p>
-              {xpEarned > 0 && (
+              {submissionData && submissionData.xpEarned > 0 && (
                 <div className="bg-primary/10 dark:bg-primary/20 rounded-xl p-3 mb-6">
                   <p className="text-primary font-bold text-lg">
-                    +{xpEarned} XP earned!
+                    +{submissionData.xpEarned} XP earned!
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    {submissionData.baseXp > 0 &&
+                      `${submissionData.savingsPercentage.toFixed(1)}% saved = ${submissionData.baseXp} XP`}
+                    {submissionData.goodBuyBonus > 0 &&
+                      submissionData.baseXp > 0 &&
+                      ` + `}
+                    {submissionData.goodBuyBonus > 0 &&
+                      `${submissionData.goodBuyCount} good buy bonus = ${submissionData.goodBuyBonus} XP`}
                   </p>
                 </div>
               )}
