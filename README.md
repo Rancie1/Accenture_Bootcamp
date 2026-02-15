@@ -5,7 +5,7 @@ It is a full-stack application built with a React/TypeScript-based frontend, Pyt
 
 It also has first-class support for PWA technology, allowing the phone-centric university students of today to easily install the app on their phones and access it on the go, without needing the hassle of downloading from an app store.
 
-[Our Mascot, Koko the Koala.](Frontend/koko-app/src/assets/koko-favicon.png)
+![Our Mascot, Koko the Koala.](Frontend/koko-app/src/assets/koko-favicon.png)
 
 ---
 
